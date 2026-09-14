@@ -308,7 +308,89 @@
                         </div>
                     </div>
                 </div>
+            {{-- Employee HR Files / Documents Section --}}
+            @if (\Auth::user()->can('Manage Employee File Document') || \Auth::user()->can('View Employee File Document') || \Auth::user()->can('Download Employee File Document') || \Auth::user()->type == 'company')
+            @php
+                $empShowIds = array_values(array_unique(array_filter([$employee->id, $employee->employee_id])));
+                $empShowFileDocs = \App\Models\EmployeeFileDocument::whereIn('employee_id', $empShowIds)->with('uploader')->orderBy('id', 'desc')->get();
+            @endphp
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card mb-0">
+                        <div class="card-body employee-detail-body fulls-card">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <div>
+                                    <h5 class="mb-1 fw-bold text-dark">{{ __('Employee Documents') }}</h5>
+                                    <small class="text-muted">{{ __('View and download uploaded HR letters, certificates, and documents.') }}</small>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ __('DOCUMENT ID') }}</th>
+                                            <th>{{ __('DOCUMENT NAME') }}</th>
+                                            <th>{{ __('DOCUMENT TYPE') }}</th>
+                                            <th>{{ __('FILE TYPE') }}</th>
+                                            <th>{{ __('UPLOADED DATE') }}</th>
+                                            <th>{{ __('UPLOADED BY') }}</th>
+                                            <th width="200px">{{ __('ACTION') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($empShowFileDocs as $sIdx => $sDoc)
+                                            <tr>
+                                                <td>
+                                                    <a class="btn btn-outline-primary" href="{{ route('employee-file-documents.preview', $sDoc->id) }}" target="_blank">
+                                                        #DOC{{ sprintf('%05d', $sDoc->id) }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ $sDoc->document_name }}</td>
+                                                <td>
+                                                    <span class="badge rounded-pill px-3 py-1 fw-bold" style="background-color: {{ $sDoc->badge_style['bg'] }}; color: {{ $sDoc->badge_style['color'] }}; font-size: 0.76rem;">
+                                                        {{ $sDoc->document_type }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ strtoupper($sDoc->file_extension) }}</td>
+                                                <td>{{ $sDoc->created_at ? $sDoc->created_at->format('d M, Y') : '-' }}</td>
+                                                <td>{{ $sDoc->uploader ? $sDoc->uploader->name : __('Admin') }}</td>
+                                                <td class="Action">
+                                                    @if (\Auth::user()->can('View Employee File Document') || \Auth::user()->can('Manage Employee File Document') || \Auth::user()->type == 'company')
+                                                    <div class="action-btn bg-info me-2">
+                                                        <a href="{{ route('employee-file-documents.preview', $sDoc->id) }}" target="_blank"
+                                                           class="mx-3 btn btn-sm align-items-center"
+                                                           data-bs-toggle="tooltip" title="{{ __('View') }}">
+                                                            <span class="text-white"><i class="ti ti-eye"></i></span>
+                                                        </a>
+                                                    </div>
+                                                    @endif
+                                                    @if (\Auth::user()->can('Download Employee File Document') || \Auth::user()->type == 'company')
+                                                    <div class="action-btn bg-primary me-2">
+                                                        <a href="{{ route('employee-file-documents.download', $sDoc->id) }}"
+                                                           class="mx-3 btn btn-sm align-items-center"
+                                                           data-bs-toggle="tooltip" title="{{ __('Download') }}">
+                                                            <span class="text-white"><i class="ti ti-download"></i></span>
+                                                        </a>
+                                                    </div>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4 text-muted">
+                                                    {{ __('No employee documents uploaded yet.') }}
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+            @endif
         </div>
     </div>
 @endsection

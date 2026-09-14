@@ -906,7 +906,6 @@
                     </div>
                 </div>
                 @endif
-
                 {{-- ── Leave Type Assignment ─────────────────────────────────────────── --}}
                 @if (\Auth::user()->type != 'employee')
                 <div class="row">
@@ -987,13 +986,165 @@
                 @endif
 
                 @if (\Auth::user()->type != 'employee')
-                <div class="float-end">
-                    <button type="submit" class="btn  btn-primary">{{ 'Update' }}</button>
+                <div class="col-12 text-end my-3 clearfix">
+                    <button type="submit" class="btn btn-primary px-4">{{ 'Update' }}</button>
                 </div>
                 @endif
-                <div class="col-12">
-                    {!! Form::close() !!}
+                {!! Form::close() !!}
+
+                {{-- ── Employee Documents (HR Files Management - Standalone Section at Bottom) ── --}}
+                @if (\Auth::user()->can('Manage Employee File Document') || \Auth::user()->can('View Employee File Document') || \Auth::user()->can('Create Employee File Document') || \Auth::user()->can('Edit Employee File Document') || \Auth::user()->can('Delete Employee File Document') || \Auth::user()->can('Download Employee File Document') || \Auth::user()->type == 'company')
+                @php
+                    $empIds = array_values(array_unique(array_filter([$employee->id, $employee->employee_id])));
+                    $employeeFileDocs = \App\Models\EmployeeFileDocument::whereIn('employee_id', $empIds)->with('uploader')->orderBy('id', 'desc')->get();
+                @endphp
+                <div class="row mt-4 mb-4">
+                    <div class="col-md-12">
+                        <div class="card em-card" id="employee-hr-documents-card">
+                            <div class="card-header">
+                                <div class="row align-items-center">
+                                    <div class="col-6">
+                                        <h5 class="mb-0">{{ __('Employee Documents') }}</h5>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        @if (\Auth::user()->can('Create Employee File Document') || \Auth::user()->type == 'company')
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#uploadEmployeeDocModal" class="btn btn-sm btn-primary">
+                                            <i class="ti ti-plus me-1"></i>{{ __('Upload Document') }}
+                                        </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body table-border-style">
+                                <div class="table-responsive">
+                                    <table class="table" id="employee-file-docs-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ __('DOCUMENT ID') }}</th>
+                                                <th>{{ __('DOCUMENT NAME') }}</th>
+                                                <th>{{ __('DOCUMENT TYPE') }}</th>
+                                                <th>{{ __('FILE TYPE') }}</th>
+                                                <th>{{ __('UPLOADED DATE') }}</th>
+                                                <th>{{ __('UPLOADED BY') }}</th>
+                                                <th width="200px">{{ __('ACTION') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="employee-file-docs-list">
+                                            @forelse ($employeeFileDocs as $idx => $fDoc)
+                                                <tr id="emp-doc-row-{{ $fDoc->id }}">
+                                                    <td>
+                                                        <a class="btn btn-outline-primary" href="{{ route('employee-file-documents.preview', $fDoc->id) }}" target="_blank">
+                                                            #DOC{{ sprintf('%05d', $fDoc->id) }}
+                                                        </a>
+                                                    </td>
+                                                    <td>{{ $fDoc->document_name }}</td>
+                                                    <td>
+                                                        <span class="badge rounded-pill px-3 py-1 fw-bold" style="background-color: {{ $fDoc->badge_style['bg'] }}; color: {{ $fDoc->badge_style['color'] }}; font-size: 0.76rem;">
+                                                            {{ $fDoc->document_type }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ strtoupper($fDoc->file_extension) }}</td>
+                                                    <td>{{ $fDoc->created_at ? $fDoc->created_at->format('d M, Y') : '-' }}</td>
+                                                    <td>{{ $fDoc->uploader ? $fDoc->uploader->name : __('Admin') }}</td>
+                                                    <td class="Action">
+                                                        @if (\Auth::user()->can('View Employee File Document') || \Auth::user()->can('Manage Employee File Document') || \Auth::user()->type == 'company')
+                                                        <div class="action-btn bg-info me-2">
+                                                            <a href="{{ route('employee-file-documents.preview', $fDoc->id) }}" target="_blank"
+                                                               class="mx-3 btn btn-sm align-items-center"
+                                                               data-bs-toggle="tooltip" title="{{ __('View') }}">
+                                                                <span class="text-white"><i class="ti ti-eye"></i></span>
+                                                            </a>
+                                                        </div>
+                                                        @endif
+                                                        @if (\Auth::user()->can('Download Employee File Document') || \Auth::user()->type == 'company')
+                                                        <div class="action-btn bg-primary me-2">
+                                                            <a href="{{ route('employee-file-documents.download', $fDoc->id) }}"
+                                                               class="mx-3 btn btn-sm align-items-center"
+                                                               data-bs-toggle="tooltip" title="{{ __('Download') }}">
+                                                                <span class="text-white"><i class="ti ti-download"></i></span>
+                                                            </a>
+                                                        </div>
+                                                        @endif
+                                                        @if (\Auth::user()->can('Delete Employee File Document') || \Auth::user()->type == 'company')
+                                                        <div class="action-btn bg-danger me-2">
+                                                            <a href="#" onclick="deleteEmpFileDoc({{ $fDoc->id }}, '{{ addslashes($fDoc->document_name) }}')"
+                                                               class="mx-3 btn btn-sm align-items-center"
+                                                               data-bs-toggle="tooltip" title="{{ __('Delete') }}">
+                                                                <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                            </a>
+                                                        </div>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr id="no-emp-docs-row">
+                                                    <td colspan="7" class="text-center py-4 text-muted">
+                                                        {{ __('No employee documents uploaded yet.') }}
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Upload Employee Document Modal (Standard App Modal Design) -->
+                <div class="modal fade" id="uploadEmployeeDocModal" tabindex="-1" aria-labelledby="uploadEmployeeDocModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="uploadEmployeeDocModalLabel">{{ __('Upload Employee Document') }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form id="uploadEmployeeDocForm" action="{{ route('employee-file-documents.store') }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                <input type="hidden" name="employee_id" value="{{ $employee->id }}">
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-12 form-group mb-3">
+                                            <label for="modal_document_type" class="col-form-label pt-0">{{ __('Document Type') }} <span class="text-danger">*</span></label>
+                                            <select name="document_type" id="modal_document_type" class="form-select form-control" required>
+                                                <option value="Appointment Letter">{{ __('Appointment Letter') }}</option>
+                                                <option value="Offer Letter">{{ __('Offer Letter') }}</option>
+                                                <option value="Warning Letter">{{ __('Warning Letter') }}</option>
+                                                <option value="Office Letter">{{ __('Office Letter') }}</option>
+                                                <option value="Experience Letter">{{ __('Experience Letter') }}</option>
+                                                <option value="Increment Letter">{{ __('Salary / Increment Letter') }}</option>
+                                                <option value="Certificate">{{ __('Certificate') }}</option>
+                                                <option value="Other" selected>{{ __('Other') }}</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-12 form-group mb-3">
+                                            <label for="modal_document_name" class="col-form-label">{{ __('Document Title / Name') }} <small class="text-muted">({{ __('Optional') }})</small></label>
+                                            <input type="text" name="document_name" id="modal_document_name" class="form-control" placeholder="{{ __('e.g. Appointment Letter 2025') }}">
+                                        </div>
+
+                                        <div class="col-12 form-group mb-3">
+                                            <label for="modal_documents_files" class="col-form-label">{{ __('Select File(s)') }} <span class="text-danger">*</span></label>
+                                            <input type="file" name="documents[]" id="modal_documents_files" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png" required>
+                                            <small class="text-muted d-block mt-1">{{ __('Supported formats: PDF, JPG, JPEG, PNG (Max 5MB per file).') }}</small>
+                                        </div>
+
+                                        {{-- Upload Progress Bar --}}
+                                        <div class="col-12 progress d-none mb-2" id="upload-doc-progress-bar" style="height: 6px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;"></div>
+                                        </div>
+                                        <small class="text-primary d-none fw-semibold" id="upload-doc-status-text">{{ __('Uploading files, please wait...') }}</small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <input type="button" value="{{ __('Cancel') }}" class="btn btn-light" data-bs-dismiss="modal">
+                                    <input type="submit" value="{{ __('Upload Document') }}" class="btn btn-primary" id="upload-doc-submit-btn">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -1464,5 +1615,155 @@
                 }
             });
         });
+
+        // ── Employee HR Documents Drag & Drop, AJAX Upload, Preview & Delete ──
+        var $dragDropZone = $('#emp-doc-drag-drop-zone');
+        var $dragDropInput = $('#drag-drop-file-input');
+
+        $dragDropZone.on('click', function() {
+            $dragDropInput.trigger('click');
+        });
+
+        $dragDropZone.on('dragover dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).css('border-color', 'var(--bs-primary, #6c5ce7)').css('background', '#f1f5f9');
+        });
+
+        $dragDropZone.on('dragleave drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).css('border-color', '#cbd5e1').css('background', '#f8fafc');
+        });
+
+        $dragDropZone.on('drop', function(e) {
+            var files = e.originalEvent.dataTransfer.files;
+            if (files && files.length > 0) {
+                var modalEl = document.getElementById('uploadEmployeeDocModal');
+                var fileInput = document.getElementById('modal_documents_files');
+                fileInput.files = files;
+                var bsModal = new bootstrap.Modal(modalEl);
+                bsModal.show();
+            }
+        });
+
+        $dragDropInput.on('change', function() {
+            if (this.files && this.files.length > 0) {
+                var modalEl = document.getElementById('uploadEmployeeDocModal');
+                var fileInput = document.getElementById('modal_documents_files');
+                fileInput.files = this.files;
+                var bsModal = new bootstrap.Modal(modalEl);
+                bsModal.show();
+            }
+        });
+
+        $('#uploadEmployeeDocForm').on('submit', function(e) {
+            e.preventDefault();
+            var form = this;
+            var formData = new FormData(form);
+
+            var $btn = $('#upload-doc-submit-btn');
+            var $progress = $('#upload-doc-progress-bar');
+            var $progressBar = $progress.find('.progress-bar');
+            var $status = $('#upload-doc-status-text');
+
+            $btn.prop('disabled', true);
+            $progress.removeClass('d-none');
+            $status.removeClass('d-none');
+            $progressBar.css('width', '10%');
+
+            $.ajax({
+                url: "{{ route('employee-file-documents.store') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhr: function() {
+                    var xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener("progress", function(evt) {
+                        if (evt.lengthComputable) {
+                            var percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                            $progressBar.css('width', percentComplete + '%');
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    $btn.prop('disabled', false);
+                    $progress.addClass('d-none');
+                    $status.addClass('d-none');
+
+                    if (response.success) {
+                        show_toastr('Success', response.message, 'success');
+                        var modalEl = document.getElementById('uploadEmployeeDocModal');
+                        var bsModal = bootstrap.Modal.getInstance(modalEl);
+                        if (bsModal) bsModal.hide();
+
+                        setTimeout(function() {
+                            location.reload();
+                        }, 500);
+                    } else {
+                        show_toastr('Error', response.message || '{{ __("Upload failed.") }}', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false);
+                    $progress.addClass('d-none');
+                    $status.addClass('d-none');
+                    var msg = '{{ __("Upload failed. Please check file format and size.") }}';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    show_toastr('Error', msg, 'error');
+                }
+            });
+        });
+
+        window.deleteEmpFileDoc = function(docId, docName) {
+            const swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: 'btn btn-success',
+                    cancelButton: 'btn btn-danger'
+                },
+                buttonsStyling: false
+            });
+
+            swalWithBootstrapButtons.fire({
+                title: '{{ __("Are you sure?") }}',
+                text: '{{ __("This action can not be undone. Do you want to continue?") }}',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '{{ __("Yes") }}',
+                cancelButtonText: '{{ __("No") }}',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ url('employee-file-documents') }}/" + docId,
+                        type: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            _method: 'DELETE'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                show_toastr('Success', response.message, 'success');
+                                $('#emp-doc-row-' + docId).fadeOut(300, function() {
+                                    $(this).remove();
+                                    if ($('#employee-file-docs-list tr').length === 0) {
+                                        $('#employee-file-docs-list').html('<tr id="no-emp-docs-row"><td colspan="7" class="text-center py-4 text-muted"><i class="ti ti-files fs-1 text-secondary opacity-50 mb-2 d-block"></i>{{ __("No employee documents uploaded yet.") }}</td></tr>');
+                                    }
+                                });
+                            } else {
+                                show_toastr('Error', response.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            show_toastr('Error', '{{ __("Unable to delete document. Please try again.") }}', 'error');
+                        }
+                    });
+                }
+            });
+        };
     </script>
     @endpush

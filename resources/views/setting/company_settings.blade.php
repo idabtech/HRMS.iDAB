@@ -3171,7 +3171,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
             <div class="card-header d-flex align-items-center justify-content-between">
                 <div>
                     <h5 class="mb-1">{{ __('HRMS Employee Sync') }}</h5>
-                    <small class="text-muted">{{ __('Import employees from your iDAB card system into HRMS') }}</small>
+                    <small class="text-muted">{{ __('Import employees from your iDAB system into HRMS') }}</small>
                 </div>
                 <div>
                     <button type="button" class="btn btn-primary btn-sm btn-sync-idab-employees" id="btn-sync-idab-employees" onclick="syncIdabEmployeesNow(this)">

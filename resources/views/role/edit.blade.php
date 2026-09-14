@@ -81,6 +81,7 @@
                                     'Employee Last Login',
                                     'Attendance Request',
                                     'Employee',
+                                    'Employee File Document',
                                     'Set Salary',
                                     'Pay Slip',
                                     'Travel Expense',

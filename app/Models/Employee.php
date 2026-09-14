@@ -78,6 +78,11 @@ class Employee extends Model
         return $this->hasMany(EmployeeDocument::class, 'employee_id', 'employee_id');
     }
 
+    public function fileDocuments()
+    {
+        return $this->hasMany(EmployeeFileDocument::class, 'employee_id', 'id');
+    }
+
     public function salary_type()
     {
         return $this->hasOne(PayslipType::class, 'id', 'salary_type')->pluck('name')->first();

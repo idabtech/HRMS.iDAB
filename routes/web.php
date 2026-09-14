@@ -552,6 +552,12 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    // Employee File Documents Management Routes
+    Route::post('employee-file-documents/upload', [\App\Http\Controllers\EmployeeFileDocumentController::class, 'store'])->name('employee-file-documents.store')->middleware(['auth', 'XSS']);
+    Route::get('employee-file-documents/{id}/download', [\App\Http\Controllers\EmployeeFileDocumentController::class, 'download'])->name('employee-file-documents.download')->middleware(['auth', 'XSS']);
+    Route::get('employee-file-documents/{id}/preview', [\App\Http\Controllers\EmployeeFileDocumentController::class, 'preview'])->name('employee-file-documents.preview')->middleware(['auth', 'XSS']);
+    Route::delete('employee-file-documents/{id}', [\App\Http\Controllers\EmployeeFileDocumentController::class, 'destroy'])->name('employee-file-documents.destroy')->middleware(['auth', 'XSS']);
+
     Route::post('employee/getemployee', [EmployeeController::class, 'getEmployees'])->name('employee.getemployees')->middleware(
         [
             'auth',

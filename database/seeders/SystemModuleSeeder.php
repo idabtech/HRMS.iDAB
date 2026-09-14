@@ -52,6 +52,7 @@ class SystemModuleSeeder extends Seeder
             'Role' => 'ti ti-lock',
             'Employee Profile' => 'ti ti-id',
             'Employee' => 'ti ti-user-check',
+            'Employee File Document' => 'ti ti-file-text',
             'Employee Last Login' => 'ti ti-clock',
             'Attendance' => 'ti ti-calendar-check',
             'Attendance Request' => 'ti ti-calendar-event',
