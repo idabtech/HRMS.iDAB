@@ -1236,7 +1236,7 @@ class SettingsController extends Controller
 
     public function storeIp(Request $request)
     {
-        if (Auth::user()->can('Manage Company Settings')) {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'super admin' || Auth::user()->can('Manage Company Settings')) {
             $validator = Validator::make(
                 $request->all(),
                 [

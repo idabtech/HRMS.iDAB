@@ -10,6 +10,7 @@ use App\Models\Leave;
 use App\Models\LeaveDayDetail;
 use App\Models\LeaveType;
 use App\Models\Utility;
+use App\Models\IpRestrict;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -127,6 +128,20 @@ class AttendanceRequestController extends Controller
         }
 
         $settings = Utility::settings();
+
+        if (!empty($settings['ip_restrict']) && $settings['ip_restrict'] == 'on') {
+            $userIp = $request->input('client_ip') ?? $request->header('X-Forwarded-For') ?? $request->header('X-Real-IP') ?? $request->ip();
+            if (str_contains($userIp, ',')) {
+                $userIp = trim(explode(',', $userIp)[0]);
+            }
+            $ip = IpRestrict::where('created_by', Auth::user()->creatorId())->where('ip', $userIp)->first();
+            if (empty($ip)) {
+                if ($request->wantsJson() || $request->is('api/*')) {
+                    return response()->json(['success' => false, 'message' => __('This IP address (:ip) is not allowed to clock in & clock out.', ['ip' => $userIp])], 403);
+                }
+                return redirect()->back()->with('error', __('This IP address (:ip) is not allowed to clock in & clock out.', ['ip' => $userIp]));
+            }
+        }
         if (isset($settings['timezone']) && !empty($settings['timezone']) && $settings['timezone'] != 'UTC') {
             date_default_timezone_set($settings['timezone']);
         }

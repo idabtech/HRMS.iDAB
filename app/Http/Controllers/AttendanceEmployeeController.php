@@ -436,13 +436,16 @@ class AttendanceEmployeeController extends Controller
         $settings = Utility::settings();
 
         if (!empty($settings['ip_restrict']) && $settings['ip_restrict'] == 'on') {
-            $userIp = request()->ip();
+            $userIp = $request->input('client_ip') ?? $request->header('X-Forwarded-For') ?? $request->header('X-Real-IP') ?? request()->ip();
+            if (str_contains($userIp, ',')) {
+                $userIp = trim(explode(',', $userIp)[0]);
+            }
             $ip     = IpRestrict::where('created_by', Auth::user()->creatorId())->whereIn('ip', [$userIp])->first();
             if (empty($ip)) {
                 if ($request->wantsJson() || $request->is('api/*')) {
-                    return response()->json(['success' => false, 'message' => __('This IP is not allowed to clock in & clock out.')], 403);
+                    return response()->json(['success' => false, 'message' => __('This IP address (:ip) is not allowed to clock in & clock out.', ['ip' => $userIp])], 403);
                 }
-                return redirect()->back()->with('error', __('This IP is not allowed to clock in & clock out.'));
+                return redirect()->back()->with('error', __('This IP address (:ip) is not allowed to clock in & clock out.', ['ip' => $userIp]));
             }
         }
 
@@ -1208,6 +1211,21 @@ class AttendanceEmployeeController extends Controller
                     'success' => false,
                     'message' => __('Employee not found.'),
                 ], 404);
+            }
+
+            $settings = Utility::settings();
+            if (!empty($settings['ip_restrict']) && $settings['ip_restrict'] == 'on') {
+                $userIp = $request->input('client_ip') ?? $request->header('X-Forwarded-For') ?? $request->header('X-Real-IP') ?? $request->ip();
+                if (str_contains($userIp, ',')) {
+                    $userIp = trim(explode(',', $userIp)[0]);
+                }
+                $ip = IpRestrict::where('created_by', $user->creatorId())->where('ip', $userIp)->first();
+                if (empty($ip)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('This IP address (:ip) is not allowed to clock in & clock out.', ['ip' => $userIp]),
+                    ], 403);
+                }
             }
 
             $date = date("Y-m-d");
