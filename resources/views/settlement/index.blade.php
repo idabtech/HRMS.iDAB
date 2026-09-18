@@ -175,13 +175,13 @@
                                                     </div>
 
                                                     {{-- WhatsApp Share --}}
-                                                    @php
-                                                        $waText = urlencode("Hello " . $settlement->employee_name . ", please complete your Full & Final Settlement clearance form: " . $settlement->public_url);
-                                                        $waUrl = "https://api.whatsapp.com/send?text=" . $waText;
-                                                    @endphp
                                                     <div class="action-btn bg-success me-2">
-                                                        <a href="{{ $waUrl }}" target="_blank"
-                                                            class="mx-3 btn btn-sm align-items-center"
+                                                        <a href="javascript:void(0)"
+                                                            class="mx-3 btn btn-sm align-items-center open-wa-modal"
+                                                            data-name="{{ $settlement->employee_name }}"
+                                                            data-code="{{ $settlement->employee_code }}"
+                                                            data-phone="{{ preg_replace('/[^0-9]/', '', $settlement->employee->phone ?? '') }}"
+                                                            data-url="{{ $settlement->public_url }}"
                                                             data-bs-toggle="tooltip" title=""
                                                             data-bs-original-title="{{ __('Share via WhatsApp') }}">
                                                             <span class="text-white"><i class="ti ti-brand-whatsapp"></i></span>
@@ -272,6 +272,79 @@
             </div>
         </div>
     </div>
+
+    {{-- WhatsApp Custom Message Modal --}}
+    <div class="modal fade" id="indexWhatsappModal" tabindex="-1" aria-labelledby="indexWhatsappModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white py-3">
+                    <h5 class="modal-title text-white d-flex align-items-center gap-2" id="indexWhatsappModalLabel">
+                        <i class="ti ti-brand-whatsapp fs-3"></i> {{ __('Share Settlement via WhatsApp') }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Recipient Employee') }}</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="ti ti-user"></i></span>
+                            <input type="text" id="modalWaRecipientName" class="form-control bg-light" readonly>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase d-flex justify-content-between align-items-center">
+                            <span>
+                                {{ __('Phone Number') }} 
+                                <small class="text-muted fw-normal">({{ __('Optional with Country Code') }})</small>
+                            </span>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnIndexResetPhone" style="display: none;">
+                                <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Profile Number') }}
+                            </button>
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="ti ti-phone"></i></span>
+                            <input type="text" id="modalWaRecipientPhone" class="form-control" 
+                                placeholder="{{ __('e.g. 919876543210 (Country code + Number)') }}">
+                        </div>
+                        <small class="text-muted fs-8 d-block mt-1">
+                            <i class="ti ti-edit text-primary me-1"></i>
+                            {{ __('Pre-filled from employee profile. You can edit this to any different number, or leave blank to select inside WhatsApp.') }}
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bold text-dark small text-uppercase mb-0">{{ __('WhatsApp Message') }}</label>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnIndexResetWa">
+                                <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Default') }}
+                            </button>
+                        </div>
+                        <textarea id="modalWaMessage" class="form-control font-sans" rows="5" placeholder="{{ __('Type your message here...') }}"></textarea>
+                        <small class="text-muted fs-8 mt-1 d-block">
+                            <i class="ti ti-info-circle"></i> {{ __('You can freely modify this message, add greetings, or customize instructions before sending.') }}
+                        </small>
+                    </div>
+
+                    <div class="p-3 bg-light rounded border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold small text-dark"><i class="ti ti-link me-1"></i>{{ __('Clearance Form URL:') }}</span>
+                            <button type="button" class="btn btn-xs btn-outline-secondary copy-settlement-link" id="modalWaCopyBtn" data-url="">
+                                <i class="ti ti-copy"></i> {{ __('Copy') }}
+                            </button>
+                        </div>
+                        <div id="modalWaUrlDisplay" class="small text-muted text-break font-monospace"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-success" id="btnIndexSendWa">
+                        <i class="ti ti-brand-whatsapp me-1"></i> {{ __('Open in WhatsApp') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script-page')
@@ -298,5 +371,64 @@
         document.body.removeChild(dummy);
         show_toastr('Success', '{{ __("Secure settlement form link copied to clipboard!") }}', 'success');
     }
+
+    // Index WhatsApp Modal Handler
+    var currentSelectedEmpName = '';
+    var currentSelectedUrl = '';
+    var currentSelectedPhone = '';
+
+    $(document).on('click', '.open-wa-modal', function () {
+        var name = $(this).data('name') || '';
+        var code = $(this).data('code') || '';
+        var phone = $(this).data('phone') || '';
+        var url = $(this).data('url') || '';
+
+        currentSelectedEmpName = name;
+        currentSelectedUrl = url;
+        currentSelectedPhone = phone;
+
+        $('#modalWaRecipientName').val(name + (code ? ' (' + code + ')' : ''));
+        $('#modalWaRecipientPhone').val(phone);
+        if (phone) {
+            $('#btnIndexResetPhone').show();
+        } else {
+            $('#btnIndexResetPhone').hide();
+        }
+        $('#modalWaCopyBtn').attr('data-url', url);
+        $('#modalWaUrlDisplay').text(url);
+
+        var defaultMsg = "Hello " + name + ", please review and complete your Full & Final Settlement & Departmental Clearance form: " + url;
+        $('#modalWaMessage').val(defaultMsg);
+
+        $('#indexWhatsappModal').modal('show');
+    });
+
+    $('#btnIndexResetPhone').on('click', function () {
+        $('#modalWaRecipientPhone').val(currentSelectedPhone);
+    });
+
+    $('#btnIndexResetWa').on('click', function () {
+        var defaultMsg = "Hello " + currentSelectedEmpName + ", please review and complete your Full & Final Settlement & Departmental Clearance form: " + currentSelectedUrl;
+        $('#modalWaMessage').val(defaultMsg);
+    });
+
+    $('#btnIndexSendWa').on('click', function () {
+        var msg = $('#modalWaMessage').val().trim();
+        if (!msg) {
+            alert('{{ __("Please enter a message to send.") }}');
+            return;
+        }
+        var phone = $('#modalWaRecipientPhone').val().trim().replace(/[^0-9]/g, '');
+        var waUrl = "https://api.whatsapp.com/send?";
+        var params = [];
+        if (phone) {
+            params.push("phone=" + encodeURIComponent(phone));
+        }
+        params.push("text=" + encodeURIComponent(msg));
+        waUrl += params.join('&');
+
+        window.open(waUrl, '_blank');
+        $('#indexWhatsappModal').modal('hide');
+    });
 </script>
 @endpush
