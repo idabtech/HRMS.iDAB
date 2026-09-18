@@ -675,7 +675,7 @@
 
         /* Responsive Table Container Safeguards */
         .table-responsive {
-            width: 100% !important;
+            width: 100%;
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
         }

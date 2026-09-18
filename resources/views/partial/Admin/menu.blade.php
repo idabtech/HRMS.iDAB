@@ -502,9 +502,15 @@
                             </li>
                         @endcan
                         @can('Manage Termination')
-                            <li class="dash-item">
+                            <li class="dash-item {{ Request::segment(1) == 'termination' ? 'active' : '' }}">
                                 <a class="dash-link"
                                     href="{{ route('termination.index') }}">{{ __('Termination') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Settlement')
+                            <li class="dash-item {{ Request::segment(1) == 'settlement' ? 'active' : '' }}">
+                                <a class="dash-link"
+                                    href="{{ route('settlement.index') }}">{{ __('Full & Final Settlement') }}</a>
                             </li>
                         @endcan
                         @can('Manage Announcement')
