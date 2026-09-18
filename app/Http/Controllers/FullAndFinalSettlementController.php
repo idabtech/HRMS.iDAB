@@ -688,4 +688,18 @@ class FullAndFinalSettlementController extends Controller
 
         return view('settlement.pdf', compact('settlement', 'company'));
     }
+
+    /**
+     * Public download of settlement PDF for separating employee using sharing token.
+     */
+    public function publicDownloadPdf($token)
+    {
+        $settlement = FullAndFinalSettlement::where('sharing_token', $token)->with(['employee', 'creator'])->firstOrFail();
+        if ($settlement->isLinkExpired()) {
+            return view('settlement.expired', compact('settlement'));
+        }
+        $company = User::find($settlement->created_by);
+
+        return view('settlement.pdf', compact('settlement', 'company'));
+    }
 }
