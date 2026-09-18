@@ -2379,6 +2379,7 @@ Route::group(['middleware' => ['verified']], function () {
 
 // Full & Final Settlement Secure Employee Clearance Form Routes (External access for separating employee)
 Route::get('settlement/clearance/{token}', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'publicView'])->name('settlement.clearance.view');
+Route::get('settlement/clearance/{token}/download-pdf', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'publicDownloadPdf'])->name('settlement.clearance.download.pdf');
 Route::post('settlement/clearance/{token}/sign', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'publicSubmitSignature'])->name('settlement.clearance.sign');
 
 // Backward-compatible fallback for legacy links

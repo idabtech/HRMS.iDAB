@@ -4,13 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('Full & Final Settlement') }} - {{ $settlement->settlement_number }}</title>
+    @php
+        $creatorId = $settlement->created_by ?: (\Auth::check() ? \Auth::user()->creatorId() : 1);
+        $companySettings = \App\Models\Utility::getCompanySettings($creatorId);
+        $companyName = !empty($companySettings['company_name']) ? $companySettings['company_name'] : ($company ? $company->name : 'N/A');
+        $companyLogoBase = \App\Models\Utility::get_file('uploads/logo/');
+        $companyLogoFile = !empty($companySettings['company_logo']) ? $companySettings['company_logo'] : (!empty($companySettings['dark_logo']) ? $companySettings['dark_logo'] : 'logo-dark.png');
+        $companyLogoUrl = $companyLogoBase . $companyLogoFile;
+
+        $color = !empty($companySettings['theme_color']) ? $companySettings['theme_color'] : 'theme-2';
+        if (isset($companySettings['color_flag']) && $companySettings['color_flag'] == 'true') {
+            $themeColorHex = !empty($companySettings['color']) ? $companySettings['color'] : (!empty($color) ? $color : '#584ed2');
+        } else {
+            $themeHexMap = [
+                'theme-1'  => '#0CAF60',
+                'theme-2'  => '#584ED2',
+                'theme-3'  => '#6FD943',
+                'theme-4'  => '#145388',
+                'theme-5'  => '#B94065',
+                'theme-6'  => '#008ECB',
+                'theme-7'  => '#7A3F93',
+                'theme-8'  => '#C6A44E',
+                'theme-9'  => '#42474C',
+                'theme-10' => '#127384',
+            ];
+            $themeColorHex = isset($themeHexMap[$color]) ? $themeHexMap[$color] : '#584ed2';
+        }
+    @endphp
     <link rel="stylesheet" href="{{ asset('assets/css/plugins/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/plugins/flatpickr.min.css') }}">
     <style>
         :root {
-            --primary-color: #584ed2;
+            --primary-color: {{ $themeColorHex }};
             --primary-light: #eef2ff;
             --success-color: #0ea5e9;
             --dark-color: #1e293b;
@@ -253,12 +280,15 @@
         <div class="document-header">
             <div class="row align-items-center">
                 <div class="col-md-7">
-                    <span class="badge bg-white text-dark mb-2 px-3 py-1 fw-bold text-uppercase" style="letter-spacing: 0.5px;">
-                        {{ __('Official Clearance Form') }}
-                    </span>
+                    <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                        <img src="{{ $companyLogoUrl }}" alt="{{ $companyName }}" style="max-height: 42px; max-width: 170px; object-fit: contain; filter: brightness(0) invert(1);" onerror="this.style.display='none'">
+                        <span class="badge bg-white text-dark px-3 py-1 fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                            {{ __('Official Clearance Form') }}
+                        </span>
+                    </div>
                     <h2 class="fw-bold mb-1 text-white">{{ __('FULL & FINAL SETTLEMENT') }}</h2>
                     <div class="text-white-50 fs-6">
-                        {{ $company ? $company->name : __('Karma Mark Start Consultancy LLP') }}
+                        {{ $companyName }}
                     </div>
                 </div>
                 <div class="col-md-5 text-md-end mt-3 mt-md-0">
@@ -552,6 +582,11 @@
                     </div>
                     <h4 class="fw-bold text-success mb-1">{{ __('Settlement Signed & Confirmed') }}</h4>
                     <p class="text-muted mb-3">{{ __('Your acceptance, comments, and digital signature have been recorded successfully.') }}</p>
+                    <div class="mb-4">
+                        <a href="{{ route('settlement.clearance.download.pdf', $settlement->sharing_token) }}" target="_blank" class="btn btn-sm btn-outline-success px-3 shadow-sm">
+                            <i class="ti ti-printer me-1"></i> {{ __('Download / Print Official Statement') }}
+                        </a>
+                    </div>
 
                     @php
                         $employeeCustomQuestions = collect($settlement->custom_fields_schema ?? [])->where('target', 'employee');
