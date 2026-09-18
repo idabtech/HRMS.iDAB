@@ -331,20 +331,32 @@
         </div>
 
         {{-- Section 3: Departmental Clearance Matrix --}}
+        @php
+            $clearanceItems = $settlement->clearance_data ?? [];
+            $totalClearanceCount = count($clearanceItems);
+            $clearedClearanceCount = count(array_filter($clearanceItems, fn($c) => ($c['status'] ?? '') === 'Returned'));
+        @endphp
         <div class="col-md-12 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="mb-0 text-white"><i class="ti ti-checklist me-2"></i>{{ __('3. Departmental & Asset Clearances Checklist') }}</h5>
-                    @if (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
+                <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <h5 class="mb-0 text-dark">
+                            <i class="ti ti-checklist me-2 text-primary"></i>{{ __('3. Departmental & Asset Clearances Checklist') }}
+                        </h5>
+                        <span class="badge {{ $clearedClearanceCount === $totalClearanceCount && $totalClearanceCount > 0 ? 'bg-success' : 'bg-primary-subtle text-primary border border-primary-subtle' }} px-2.5 py-1.5" id="clearanceSummaryBadge">
+                            <i class="ti ti-checks me-1"></i><span id="clearedCountText">{{ $clearedClearanceCount }}</span> / {{ $totalClearanceCount }} {{ __('Cleared') }}
+                        </span>
+                    </div>
+                    @if (\Auth::user()->can('Manage Settlement') || \Auth::user()->can('Edit Settlement'))
                         <div class="d-flex align-items-center gap-2">
                             <form action="{{ route('settlement.clearance.update', $settlement->id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ __('Mark all departmental clearance items as Returned / Cleared?') }}');">
                                 @csrf
                                 <input type="hidden" name="mark_all_cleared" value="1">
-                                <button type="submit" class="btn btn-xs btn-success text-white shadow-none">
+                                <button type="submit" class="btn btn-sm btn-outline-success shadow-none">
                                     <i class="ti ti-checks me-1"></i> {{ __('Mark All Cleared') }}
                                 </button>
                             </form>
-                            <button type="button" class="btn btn-xs btn-light text-dark shadow-none" data-bs-toggle="modal" data-bs-target="#editClearanceModal">
+                            <button type="button" class="btn btn-sm btn-primary shadow-none" data-bs-toggle="modal" data-bs-target="#editClearanceModal">
                                 <i class="ti ti-edit me-1"></i> {{ __('Update Checklist') }}
                             </button>
                         </div>
@@ -352,26 +364,28 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-sm align-middle">
+                        <table class="table table-bordered table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th width="18%">{{ __('Category') }}</th>
                                     <th width="42%">{{ __('Clearance Checkpoint / Handover Note') }}</th>
                                     <th width="18%">{{ __('Current Status') }}</th>
-                                    @if (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
+                                    @if (\Auth::user()->can('Manage Settlement') || \Auth::user()->can('Edit Settlement'))
                                         <th width="22%">{{ __('Verify / Quick Action') }}</th>
                                     @endif
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($settlement->clearance_data ?? [] as $chk)
+                                @forelse ($clearanceItems as $chk)
                                     <tr id="clearance_row_{{ $loop->index }}">
-                                        <td><strong class="text-dark">{{ $chk['category'] }}</strong></td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border font-monospace">{{ $chk['category'] ?? 'General' }}</span>
+                                        </td>
                                         <td>
                                             <div class="fw-semibold text-dark">{{ $chk['item'] }}</div>
                                             @if(!empty($chk['remarks']))
-                                                <div class="p-1.5 px-2 bg-light-primary rounded border border-primary border-opacity-25 small mt-1 text-dark">
-                                                    <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Handover Note:') }}</strong> {{ $chk['remarks'] }}
+                                                <div class="p-2 bg-light rounded border border-primary border-opacity-25 small mt-1 text-dark">
+                                                    <i class="ti ti-notes me-1 text-primary"></i><strong class="text-secondary">{{ __('Handover Note:') }}</strong> {{ $chk['remarks'] }}
                                                 </div>
                                             @endif
                                         </td>
@@ -384,20 +398,20 @@
                                                 <span class="badge bg-warning text-dark"><i class="ti ti-clock me-1"></i>{{ __('Pending') }}</span>
                                             @endif
                                         </td>
-                                        @if (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
+                                        @if (\Auth::user()->can('Manage Settlement') || \Auth::user()->can('Edit Settlement'))
                                             <td>
-                                                <div class="d-flex align-items-center gap-1.5">
-                                                    <select class="form-select form-select-xs quick-clearance-status-select"
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <select class="form-select form-select-sm quick-clearance-status-select"
                                                             data-idx="{{ $loop->index }}"
                                                             data-url="{{ route('settlement.clearance.update', $settlement->id) }}"
-                                                            style="font-size: 11px; padding: 2px 6px; width: auto; display: inline-block;">
-                                                        <option value="Pending" {{ ($chk['status'] ?? '') === 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
-                                                        <option value="Returned" {{ ($chk['status'] ?? '') === 'Returned' ? 'selected' : '' }}>{{ __('Returned / Cleared') }}</option>
-                                                        <option value="Not Applicable" {{ ($chk['status'] ?? '') === 'Not Applicable' ? 'selected' : '' }}>{{ __('Not Applicable') }}</option>
+                                                            style="min-width: 140px; font-size: 12px;">
+                                                        <option value="Pending" {{ ($chk['status'] ?? '') === 'Pending' ? 'selected' : '' }}>⏱ {{ __('Pending') }}</option>
+                                                        <option value="Returned" {{ ($chk['status'] ?? '') === 'Returned' ? 'selected' : '' }}>✓ {{ __('Returned / Cleared') }}</option>
+                                                        <option value="Not Applicable" {{ ($chk['status'] ?? '') === 'Not Applicable' ? 'selected' : '' }}>— {{ __('Not Applicable') }}</option>
                                                     </select>
                                                     @if (($chk['status'] ?? '') !== 'Returned')
                                                         <button type="button"
-                                                                class="btn btn-xs btn-outline-success quick-mark-cleared-btn"
+                                                                class="btn btn-sm btn-success quick-mark-cleared-btn flex-shrink-0 text-white"
                                                                 data-idx="{{ $loop->index }}"
                                                                 data-url="{{ route('settlement.clearance.update', $settlement->id) }}"
                                                                 data-bs-toggle="tooltip"
@@ -410,7 +424,7 @@
                                         @endif
                                     </tr>
                                 @empty
-                                    <tr><td colspan="{{ (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement')) ? '4' : '3' }}" class="text-center text-muted">{{ __('No clearance checkpoints recorded.') }}</td></tr>
+                                    <tr><td colspan="{{ (\Auth::user()->can('Manage Settlement') || \Auth::user()->can('Edit Settlement')) ? '4' : '3' }}" class="text-center text-muted py-3">{{ __('No clearance checkpoints recorded.') }}</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -443,123 +457,156 @@
         </div>
 
         {{-- Section 4: Stage 1 — Employee Handover & Signature --}}
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark"><i class="ti ti-writing me-2 text-primary"></i>{{ __('4. Stage 1: Employee Clearance & Signature') }}</h5>
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 text-dark">
+                        <i class="ti ti-writing me-2 text-primary"></i>{{ __('4. Stage 1: Employee Clearance & Signature') }}
+                    </h5>
                     @if ($settlement->employee_declaration_accepted)
-                        <span class="badge bg-success"><i class="ti ti-check me-1"></i>{{ __('Signed') }}</span>
+                        <span class="badge bg-success fs-7"><i class="ti ti-check me-1"></i>{{ __('Signed & Undertaking Accepted') }}</span>
                     @else
-                        <span class="badge bg-warning text-dark"><i class="ti ti-clock me-1"></i>{{ __('Pending') }}</span>
+                        <span class="badge bg-warning text-dark fs-7"><i class="ti ti-clock me-1"></i>{{ __('Awaiting Employee Sign-off') }}</span>
                     @endif
                 </div>
                 <div class="card-body">
-                    {{-- Legal Undertaking Terms --}}
-                    <div class="mb-3">
-                        <span class="text-muted small d-block mb-1">
-                            <i class="ti ti-file-certificate text-primary me-1"></i><strong>{{ __('Legal Declaration & Undertaking Terms:') }}</strong>
-                        </span>
-                        <div class="p-2.5 bg-light rounded border small text-dark" style="max-height: 120px; overflow-y: auto; line-height: 1.55;">
-                            @php
-                                $showParagraphs = array_filter(array_map('trim', explode("\n", $settlement->getDeclarationText())));
-                            @endphp
-                            @foreach($showParagraphs as $p)
-                                <p class="mb-1">{{ $p }}</p>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    {{-- Policy & Rules Information --}}
-                    <div class="mb-3 p-2.5 rounded bg-light border">
-                        <div class="d-flex align-items-start justify-content-between gap-2">
-                            <div>
-                                <span class="text-muted small d-block mb-1">
-                                    <i class="ti ti-shield-check text-primary me-1"></i><strong>{{ __('Company Policy & Separation Rules:') }}</strong>
-                                    @if($settlement->policy_rules_accepted || $settlement->employee_declaration_accepted)
-                                        <span class="badge bg-success-subtle text-success ms-1"><i class="ti ti-check me-0.5"></i>{{ __('Accepted by Employee') }}</span>
-                                    @endif
-                                </span>
-                                <div class="small text-dark">{{ $settlement->getPolicyRulesText() }}</div>
-                            </div>
-                            @if(!empty($settlement->policy_rules_link))
-                                <a href="{{ $settlement->policy_rules_link }}" target="_blank" class="btn btn-xs btn-outline-primary flex-shrink-0 mt-1">
-                                    <i class="ti ti-external-link me-1"></i>{{ $settlement->policy_rules_title ?: __('View Policy') }}
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-
-                    {{-- Custom Employee Questions --}}
-                    @if (!empty($fieldsBySection['employee']))
-                        <div class="mb-3">
-                            <h6 class="fw-bold text-dark mb-2"><i class="ti ti-forms text-primary me-1"></i>{{ __('Employee Question Responses:') }}</h6>
-                            @foreach ($fieldsBySection['employee'] as $f)
-                                <div class="p-2 bg-light rounded border mb-2">
-                                    <small class="text-muted d-block">{{ $f['label'] }}</small>
-                                    <strong class="text-dark">
-                                        @if(($f['type'] ?? '') === 'date' && !empty($customValues[$f['key']]))
-                                            {{ $settlement->formatDate($customValues[$f['key']]) }}
-                                        @else
-                                            {{ $customValues[$f['key']] ?? '— (Not answered yet)' }}
-                                        @endif
-                                    </strong>
+                    <div class="row g-4">
+                        {{-- Left Column: Legal Declaration, Policy Rules & Custom Questions --}}
+                        <div class="col-lg-7 border-end">
+                            {{-- Legal Undertaking Terms --}}
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between mb-1.5">
+                                    <span class="text-dark fw-bold small">
+                                        <i class="ti ti-file-certificate text-primary me-1"></i>{{ __('Legal Declaration & Undertaking Terms:') }}
+                                    </span>
+                                    <span class="badge bg-light text-muted border font-monospace" style="font-size: 10px;">{{ __('Standard NDA / Exit Terms') }}</span>
                                 </div>
-                            @endforeach
-                        </div>
-                    @endif
-
-                    @if ($settlement->employee_declaration_accepted)
-                        <div class="alert alert-success mb-3 py-2">
-                            <i class="ti ti-check-circle me-1"></i> {{ __('Employee confirmed compliance with IP, non-disclosure & data removal.') }}
-                        </div>
-                        <div class="mb-3">
-                            <span class="text-muted small">{{ __('Employee Digital Signature:') }}</span>
-                            <div class="border rounded p-2 text-center bg-light mt-1">
-                                @if ($settlement->employee_signature)
-                                    <img src="{{ $settlement->employee_signature }}" alt="Employee Signature" style="max-height: 90px; max-width: 100%;">
-                                @else
-                                    <span class="text-muted">{{ __('No signature image') }}</span>
-                                @endif
+                                <div class="p-3 bg-light rounded border small text-dark" style="max-height: 135px; overflow-y: auto; line-height: 1.6;">
+                                    @php
+                                        $showParagraphs = array_filter(array_map('trim', explode("\n", $settlement->getDeclarationText())));
+                                    @endphp
+                                    @foreach($showParagraphs as $p)
+                                        <p class="mb-1.5 text-secondary">{{ $p }}</p>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
-                        <div class="small text-muted">
-                            <div><strong>{{ __('Signed Timestamp: ') }}</strong>{{ $settlement->employee_signed_at ? $settlement->formatDate($settlement->employee_signed_at, true) : '-' }}</div>
-                            <div><strong>{{ __('IP Address: ') }}</strong>{{ $settlement->employee_signed_ip ?: '-' }}</div>
-                            @if ($settlement->employee_remarks)
-                                <div class="mt-1"><strong>{{ __('Handover Remarks: ') }}</strong>{{ $settlement->employee_remarks }}</div>
+
+                            {{-- Policy & Rules Information --}}
+                            <div class="p-3 rounded bg-light border mb-3">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div class="d-flex align-items-start gap-2.5">
+                                        <div class="p-2 bg-primary-subtle text-primary rounded mt-0.5">
+                                            <i class="ti ti-shield-check fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark small">
+                                                {{ __('Company Policy & Separation Rules') }}
+                                                @if($settlement->policy_rules_accepted || $settlement->employee_declaration_accepted)
+                                                    <span class="badge bg-success-subtle text-success ms-1"><i class="ti ti-check me-0.5"></i>{{ __('Accepted by Employee') }}</span>
+                                                @endif
+                                            </div>
+                                            <div class="text-muted small mt-0.5">{{ $settlement->getPolicyRulesText() }}</div>
+                                        </div>
+                                    </div>
+                                    @if(!empty($settlement->policy_rules_link))
+                                        <a href="{{ $settlement->policy_rules_link }}" target="_blank" class="btn btn-sm btn-outline-primary flex-shrink-0">
+                                            <i class="ti ti-external-link me-1"></i>{{ $settlement->policy_rules_title ?: __('View Policy') }}
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Custom Employee Questions --}}
+                            @if (!empty($fieldsBySection['employee']))
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-2"><i class="ti ti-forms text-primary me-1"></i>{{ __('Employee Question Responses:') }}</h6>
+                                    <div class="row g-2">
+                                        @foreach ($fieldsBySection['employee'] as $f)
+                                            <div class="col-md-6">
+                                                <div class="p-2.5 bg-light rounded border h-100">
+                                                    <small class="text-muted d-block">{{ $f['label'] }}</small>
+                                                    <strong class="text-dark">
+                                                        @if(($f['type'] ?? '') === 'date' && !empty($customValues[$f['key']]))
+                                                            {{ $settlement->formatDate($customValues[$f['key']]) }}
+                                                        @else
+                                                            {{ $customValues[$f['key']] ?? '— (Not answered yet)' }}
+                                                        @endif
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             @endif
                         </div>
-                    @else
-                        <div class="alert alert-warning mb-0 text-center py-4">
-                            <i class="ti ti-clock fs-1 d-block mb-2 text-warning"></i>
-                            <h6>{{ __('Awaiting Employee Digital Signature') }}</h6>
-                            <p class="small text-muted mb-3">{{ __('The employee has not submitted their clearance sign-off yet. Share the link via WhatsApp or email.') }}</p>
-                            <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                <button type="button" class="btn btn-sm btn-primary copy-settlement-link" data-url="{{ $settlement->public_url }}">
-                                    <i class="ti ti-link"></i> {{ __('Copy Link') }}
-                                </button>
-                                <button type="button" class="btn btn-sm btn-success" onclick="$('#whatsappShareModal').modal('show');">
-                                    <i class="ti ti-brand-whatsapp"></i> {{ __('Share on WhatsApp') }}
-                                </button>
-                                <button type="button" class="btn btn-sm btn-warning text-white" onclick="$('#emailShareModal').modal('show');">
-                                    <i class="ti ti-mail"></i> {{ __('Send Email') }}
-                                </button>
-                            </div>
+
+                        {{-- Right Column: Employee Digital Signature Status --}}
+                        <div class="col-lg-5">
+                            @if ($settlement->employee_declaration_accepted)
+                                <div class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2.5">
+                                    <i class="ti ti-check-circle fs-4 text-success flex-shrink-0"></i>
+                                    <div class="small">
+                                        <strong>{{ __('Clearance Undertaking Confirmed') }}</strong><br>
+                                        {{ __('Employee confirmed compliance with IP, non-disclosure & asset handover.') }}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <span class="text-muted small d-block mb-1">{{ __('Employee Digital Signature:') }}</span>
+                                    <div class="border rounded p-3 text-center bg-white shadow-xs">
+                                        @if ($settlement->employee_signature)
+                                            <img src="{{ $settlement->employee_signature }}" alt="Employee Signature" style="max-height: 95px; max-width: 100%; object-fit: contain;">
+                                        @else
+                                            <span class="text-muted small">{{ __('No signature image recorded') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-light rounded border small">
+                                    <div class="mb-1.5"><strong><i class="ti ti-calendar-time text-primary me-1"></i>{{ __('Signed Timestamp:') }}</strong> {{ $settlement->employee_signed_at ? $settlement->formatDate($settlement->employee_signed_at, true) : '-' }}</div>
+                                    <div class="mb-1.5"><strong><i class="ti ti-map-pin text-primary me-1"></i>{{ __('IP Address:') }}</strong> <span class="font-monospace text-dark">{{ $settlement->employee_signed_ip ?: '-' }}</span></div>
+                                    @if ($settlement->employee_remarks)
+                                        <div class="mt-2 pt-2 border-top">
+                                            <strong><i class="ti ti-message text-primary me-1"></i>{{ __('Handover Remarks:') }}</strong>
+                                            <div class="mt-1 text-secondary fst-italic">"{{ $settlement->employee_remarks }}"</div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="border rounded p-4 text-center bg-light h-100 d-flex flex-column justify-content-center align-items-center">
+                                    <div class="p-3 bg-warning-subtle text-warning rounded-circle d-inline-block mb-3">
+                                        <i class="ti ti-clock fs-1 text-warning"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">{{ __('Awaiting Employee Digital Signature') }}</h6>
+                                    <p class="small text-muted mb-3" style="max-width: 320px;">
+                                        {{ __('The employee has not submitted their clearance sign-off yet. Share the secure link via WhatsApp or email.') }}
+                                    </p>
+                                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-sm btn-primary copy-settlement-link" data-url="{{ $settlement->public_url }}">
+                                            <i class="ti ti-link me-1"></i> {{ __('Copy Link') }}
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-success" onclick="$('#whatsappShareModal').modal('show');">
+                                            <i class="ti ti-brand-whatsapp me-1"></i> {{ __('WhatsApp') }}
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-warning text-white" onclick="$('#emailShareModal').modal('show');">
+                                            <i class="ti ti-mail me-1"></i> {{ __('Email') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
-                    @endif
+                    </div>
                 </div>
             </div>
         </div>
 
         {{-- Section 5: Stage 2 — Department Manager / HOD Countersign --}}
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0 text-dark"><i class="ti ti-user-check me-2 text-info"></i>{{ __('5. Stage 2: Manager / HOD Countersign') }}</h5>
                     @if ($settlement->manager_signed_at)
-                        <span class="badge bg-success"><i class="ti ti-check me-1"></i>{{ __('Verified & Signed') }}</span>
+                        <span class="badge bg-success fs-7"><i class="ti ti-check me-1"></i>{{ __('Verified & Signed') }}</span>
                     @else
-                        <span class="badge bg-secondary"><i class="ti ti-clock me-1"></i>{{ __('Pending') }}</span>
+                        <span class="badge bg-secondary fs-7"><i class="ti ti-clock me-1"></i>{{ __('Pending') }}</span>
                     @endif
                 </div>
                 <div class="card-body">
@@ -567,38 +614,43 @@
                         <div class="alert alert-success mb-3 py-2">
                             <i class="ti ti-check-circle me-1"></i> {{ __('Handover items verified and countersigned by Department Manager.') }}
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <span class="text-muted small">{{ __('Manager / HOD Name') }}</span>
-                                <div class="fw-bold">{{ $settlement->manager_name }}</div>
-                            </div>
-                            <div class="col-6">
-                                <span class="text-muted small">{{ __('Countersigned Date') }}</span>
-                                <div class="fw-bold">{{ $settlement->formatDate($settlement->manager_signed_at, true) }}</div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <span class="text-muted small">{{ __('Manager Signature:') }}</span>
-                            <div class="border rounded p-2 text-center bg-light mt-1">
-                                @if ($settlement->manager_signature)
-                                    <img src="{{ $settlement->manager_signature }}" alt="Manager Signature" style="max-height: 90px; max-width: 100%;">
-                                @else
-                                    <span class="text-muted">{{ __('No signature recorded') }}</span>
+                        <div class="row g-4 align-items-center">
+                            <div class="col-lg-7 border-end">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-sm-6">
+                                        <span class="text-muted small d-block">{{ __('Manager / HOD Name') }}</span>
+                                        <div class="fw-bold fs-6 text-dark">{{ $settlement->manager_name }}</div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <span class="text-muted small d-block">{{ __('Countersigned Date') }}</span>
+                                        <div class="fw-bold fs-6 text-dark">{{ $settlement->formatDate($settlement->manager_signed_at, true) }}</div>
+                                    </div>
+                                </div>
+                                @if ($settlement->manager_remarks)
+                                    <div class="p-3 bg-light rounded border small text-dark">
+                                        <strong><i class="ti ti-notes text-info me-1"></i>{{ __('Manager Verification Remarks:') }}</strong>
+                                        <div class="mt-1 text-secondary">{{ $settlement->manager_remarks }}</div>
+                                    </div>
                                 @endif
                             </div>
-                        </div>
-                        @if ($settlement->manager_remarks)
-                            <div class="small text-muted">
-                                <strong>{{ __('Manager Verification Remarks: ') }}</strong>{{ $settlement->manager_remarks }}
+                            <div class="col-lg-5">
+                                <span class="text-muted small d-block mb-1">{{ __('Manager Signature:') }}</span>
+                                <div class="border rounded p-3 text-center bg-white shadow-xs">
+                                    @if ($settlement->manager_signature)
+                                        <img src="{{ $settlement->manager_signature }}" alt="Manager Signature" style="max-height: 90px; max-width: 100%; object-fit: contain;">
+                                    @else
+                                        <span class="text-muted small">{{ __('No signature recorded') }}</span>
+                                    @endif
+                                </div>
                             </div>
-                        @endif
+                        </div>
                     @else
                         <div class="text-center py-4">
                             <i class="ti ti-signature fs-1 d-block mb-2 text-info"></i>
-                            <h6>{{ __('Manager Handover Verification') }}</h6>
-                            <p class="small text-muted mb-3">{{ __('Department Manager or HOD reviews asset handover and provides digital verification countersignature.') }}</p>
-                            @if(Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
-                                <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#managerCountersignModal">
+                            <h6 class="fw-bold text-dark">{{ __('Manager Handover Verification') }}</h6>
+                            <p class="small text-muted mb-3" style="max-width: 480px; margin: 0 auto;">{{ __('Department Manager or HOD reviews asset handover and provides digital verification countersignature.') }}</p>
+                            @if(\Auth::user()->can('Manage Settlement') || \Auth::user()->can('Edit Settlement'))
+                                <button type="button" class="btn btn-sm btn-info text-white shadow-none" data-bs-toggle="modal" data-bs-target="#managerCountersignModal">
                                     <i class="ti ti-pencil me-1"></i> {{ __('Countersign as Manager / HOD') }}
                                 </button>
                             @endif
@@ -956,7 +1008,7 @@
             <div class="modal-content shadow-lg border-0">
                 <form action="{{ route('settlement.clearance.update', $settlement->id) }}" method="POST" id="editClearanceChecklistForm">
                     @csrf
-                    <div class="modal-header bg-secondary text-white py-3">
+                    <div class="modal-header bg-primary text-white py-3">
                         <h5 class="modal-title text-white d-flex align-items-center gap-2" id="editClearanceModalLabel">
                             <i class="ti ti-checklist fs-3"></i> {{ __('Update Departmental Clearances & Verification') }}
                         </h5>
@@ -1483,11 +1535,22 @@
                 } else {
                     badgeEl.html('<span class="badge bg-warning text-dark"><i class="ti ti-clock me-1"></i>{{ __("Pending") }}</span>');
                 }
+
+                if (res.cleared_count !== undefined) {
+                    $('#clearedCountText').text(res.cleared_count);
+                    var summaryBadge = $('#clearanceSummaryBadge');
+                    if (res.cleared_count === res.total_count && res.total_count > 0) {
+                        summaryBadge.removeClass('bg-primary-subtle text-primary border-primary-subtle').addClass('bg-success text-white');
+                    } else {
+                        summaryBadge.removeClass('bg-success text-white').addClass('bg-primary-subtle text-primary border-primary-subtle');
+                    }
+                }
                 show_toastr('Success', res.message || '{{ __("Status updated successfully") }}', 'success');
             },
-            error: function () {
+            error: function (xhr) {
                 select.prop('disabled', false);
-                show_toastr('Error', '{{ __("Failed to update status") }}', 'error');
+                var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '{{ __("Failed to update status") }}';
+                show_toastr('Error', errMsg, 'error');
             }
         });
     });
@@ -1515,12 +1578,22 @@
                 if (select.length) {
                     select.val('Returned');
                 }
+                if (res.cleared_count !== undefined) {
+                    $('#clearedCountText').text(res.cleared_count);
+                    var summaryBadge = $('#clearanceSummaryBadge');
+                    if (res.cleared_count === res.total_count && res.total_count > 0) {
+                        summaryBadge.removeClass('bg-primary-subtle text-primary border-primary-subtle').addClass('bg-success text-white');
+                    } else {
+                        summaryBadge.removeClass('bg-success text-white').addClass('bg-primary-subtle text-primary border-primary-subtle');
+                    }
+                }
                 btn.remove();
                 show_toastr('Success', res.message || '{{ __("Marked as Returned / Cleared") }}', 'success');
             },
-            error: function () {
+            error: function (xhr) {
                 btn.prop('disabled', false).html('<i class="ti ti-check"></i>');
-                show_toastr('Error', '{{ __("Failed to update status") }}', 'error');
+                var errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '{{ __("Failed to update status") }}';
+                show_toastr('Error', errMsg, 'error');
             }
         });
     });
