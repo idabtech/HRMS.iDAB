@@ -278,18 +278,25 @@
 @php
     $clearanceList = $settlement->clearance_data ?? [];
     $totalChecklistItems = count($clearanceList);
-    $clearedCount = 0;
-    $checklistByCategory = [];
+    $completedItems = [];
+    $pendingItems = [];
+    $naItems = [];
 
     foreach ($clearanceList as $idx => $chk) {
-        $cat = !empty($chk['category']) ? $chk['category'] : __('General Clearance');
         $chk['_orig_idx'] = $idx;
-        $checklistByCategory[$cat][] = $chk;
-        if (($chk['status'] ?? '') === 'Returned') {
-            $clearedCount++;
+        $st = $chk['status'] ?? 'Pending';
+        if ($st === 'Returned') {
+            $completedItems[] = $chk;
+        } elseif ($st === 'Not Applicable') {
+            $naItems[] = $chk;
+        } else {
+            $pendingItems[] = $chk;
         }
     }
 
+    $clearedCount = count($completedItems);
+    $pendingCount = count($pendingItems);
+    $naCount = count($naItems);
     $clearancePercentage = $totalChecklistItems > 0 ? round(($clearedCount / $totalChecklistItems) * 100) : 100;
 @endphp
 
@@ -557,137 +564,200 @@
                 </div>
             </div>
 
-            {{-- 3. SECTION-WISE DEPARTMENTAL CLEARANCE CHECKLIST --}}
+            {{-- 3. DEPARTMENTAL CLEARANCE & ASSET VERIFICATION STATUS --}}
             <div class="section-card">
                 <div class="section-card-header">
                     <div>
-                        <h5><i class="ti ti-checkbox text-primary fs-4"></i> {{ __('3. Section-Wise Clearance Checklist') }}</h5>
-                        <small class="text-muted">{{ __('Check each completed item and add handover details or notes') }}</small>
+                        <h5><i class="ti ti-checklist text-primary fs-4"></i> {{ __('3. Departmental Clearance & Asset Verification Status') }}</h5>
+                        <small class="text-muted">{{ __('Verified & certified by Company Departments (IT, Accounts, HR, Admin)') }}</small>
                     </div>
-                    <div class="text-end">
-                        <span id="overallClearanceBadge" class="badge {{ $clearancePercentage === 100 ? 'bg-success' : 'bg-primary' }} fs-7 px-3 py-1.5 rounded-pill">
-                            <i class="ti ti-circle-check me-1"></i> <span id="overallClearedCountText">{{ $clearedCount }}</span> / {{ $totalChecklistItems }} {{ __('Cleared') }} (<span id="overallPercentageText">{{ $clearancePercentage }}</span>%)
-                        </span>
+                    <div class="d-flex align-items-center gap-2">
+                        @if ($clearedCount === $totalChecklistItems && $totalChecklistItems > 0)
+                            <span class="badge bg-success text-white fs-7 px-3 py-1.5 rounded-pill shadow-none">
+                                <i class="ti ti-circle-check me-1"></i> {{ __('All ') . $totalChecklistItems . __(' Cleared by Company') }}
+                            </span>
+                        @else
+                            <span class="badge bg-success text-white fs-7 px-3 py-1.5 rounded-pill shadow-none">
+                                <i class="ti ti-circle-check me-1"></i> {{ $clearedCount }} {{ __('Cleared by Company') }}
+                            </span>
+                            @if ($pendingCount > 0)
+                                <span class="badge bg-warning text-dark fs-7 px-3 py-1.5 rounded-pill shadow-none">
+                                    <i class="ti ti-clock me-1"></i> {{ $pendingCount }} {{ __('Pending Handover') }}
+                                </span>
+                            @endif
+                        @endif
                     </div>
                 </div>
                 <div class="section-card-body">
-                    {{-- Overall Progress Indicator --}}
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1 small text-muted">
-                            <span>{{ __('Clearance Completion Progress') }}</span>
-                            <span class="fw-bold text-dark" id="progressPercentageLabel">{{ $clearancePercentage }}%</span>
-                        </div>
-                        <div class="progress" style="height: 8px; border-radius: 4px; background: #e2e8f0;">
-                            <div id="overallProgressBar" class="progress-bar {{ $clearancePercentage === 100 ? 'bg-success' : 'bg-primary' }}"
-                                role="progressbar"
-                                style="width: {{ $clearancePercentage }}%"
-                                aria-valuenow="{{ $clearancePercentage }}"
-                                aria-valuemin="0"
-                                aria-valuemax="100">
-                            </div>
+                    {{-- Reassuring Informative Notice --}}
+                    <div class="alert alert-info border-0 bg-light-primary text-primary d-flex align-items-center gap-2 p-3 mb-4 rounded-3">
+                        <i class="ti ti-shield-check fs-2 flex-shrink-0"></i>
+                        <div class="small">
+                            <strong>{{ __('Company Departmental Verification:') }}</strong>
+                            {{ __('The clearance checklist below has been reviewed and certified by your respective department managers and IT desk. Items already verified and approved by the company are listed under Completed Clearances. For any pending items, you may review the status or provide handover remarks below before signing in Section 4.') }}
                         </div>
                     </div>
 
-                    {{-- Section-wise categories --}}
-                    @if (empty($checklistByCategory))
-                        <div class="text-center py-4 text-muted">
-                            <i class="ti ti-clipboard-check fs-2 d-block mb-1 text-secondary"></i>
-                            {{ __('No specific departmental checklist items configured for this settlement.') }}
+                    {{-- Progress Bar for Pending / Unchecked Handover Items --}}
+                    @if ($pendingCount > 0)
+                        <div class="p-3 mb-4 rounded-3 border border-warning bg-light-warning bg-opacity-25">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    <span class="d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle" style="width: 24px; height: 24px; font-size: 12px;">
+                                        <i class="ti ti-clock"></i>
+                                    </span>
+                                    {{ __('Pending Handover Items:') }}
+                                    <span class="text-danger fw-bold ms-1">{{ $pendingCount }} {{ __('Item(s) Remaining') }}</span>
+                                </span>
+                                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
+                                    0 / {{ $pendingCount }} {{ __('Pending') }}
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 10px; border-radius: 6px; background: #e2e8f0;">
+                                <div class="progress-bar bg-warning"
+                                    role="progressbar"
+                                    style="width: 0%"
+                                    aria-valuenow="0"
+                                    aria-valuemin="0"
+                                    aria-valuemax="{{ $pendingCount }}">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 small text-muted">
+                                <span><i class="ti ti-info-circle me-1 text-primary"></i>{{ __('Review the pending items below and provide handover notes or asset serial numbers.') }}</span>
+                                <span class="fw-semibold text-success"><i class="ti ti-circle-check me-1"></i>{{ $clearedCount }} {{ __('already cleared by company (listed below)') }}</span>
+                            </div>
                         </div>
                     @else
-                        @foreach ($checklistByCategory as $categoryName => $items)
-                            @php
-                                $catSlug = Str::slug($categoryName, '_');
-                                $catTotal = count($items);
-                                $catCleared = collect($items)->where('status', 'Returned')->count();
-                                $allCatCleared = ($catCleared === $catTotal);
-                            @endphp
-                            <div class="checklist-group" data-cat="{{ $catSlug }}">
-                                <div class="checklist-group-header">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="ti {{ $allCatCleared ? 'ti-circle-check text-success' : 'ti-folder text-primary' }} fs-5 cat-icon-{{ $catSlug }}"></i>
-                                        <strong class="text-dark">{{ $categoryName }}</strong>
-                                    </div>
-                                    <div>
-                                        <span id="catBadge_{{ $catSlug }}" class="badge {{ $allCatCleared ? 'bg-light-success text-success border border-success' : 'bg-light text-secondary border' }} px-2 py-1 rounded">
-                                            <span class="cat-cleared-count">{{ $catCleared }}</span> / {{ $catTotal }} {{ __('Cleared') }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div>
-                                    @foreach ($items as $chk)
-                                        @php
-                                            $origIdx = $chk['_orig_idx'];
-                                            $isReturned = ($chk['status'] === 'Returned');
-                                            $isReadOnly = ($settlement->status === 'signed' || $settlement->status === 'cleared');
-                                        @endphp
-                                        <div class="checklist-item {{ $isReturned ? 'is-cleared' : '' }}" id="item_row_{{ $origIdx }}">
+                        <div class="alert alert-success border-0 bg-light-success text-success d-flex align-items-center gap-3 p-3 mb-4 rounded-3">
+                            <i class="ti ti-circle-check fs-1 flex-shrink-0"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-0 text-success">{{ __('All Handover Items Cleared (100% Completed)') }}</h6>
+                                <small class="text-dark">{{ __('All company assets, accounts, and credentials have been verified and confirmed by respective departments.') }}</small>
+                            </div>
+                            <span class="badge bg-success fs-7 px-3 py-1.5 rounded-pill">{{ __('0 Pending') }}</span>
+                        </div>
+                    @endif
+
+                    {{-- 1. PENDING ITEMS LIST (Unchecked Items) --}}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle" style="width: 24px; height: 24px; font-size: 12px;">
+                                    <i class="ti ti-clock"></i>
+                                </span>
+                                {{ __('Items Awaiting Handover & Department Verification') }}
+                                <span class="badge bg-warning text-dark rounded-pill">{{ $pendingCount }}</span>
+                            </h6>
+                            @if ($pendingCount > 0)
+                                <small class="text-muted">{{ __('Add asset serial numbers or handover notes below if applicable') }}</small>
+                            @endif
+                        </div>
+
+                        @if ($pendingCount === 0)
+                            <div class="p-3 bg-light rounded border text-muted small">
+                                <i class="ti ti-check text-success me-1"></i> {{ __('No items pending. All clearances have been completed.') }}
+                            </div>
+                        @else
+                            <div class="d-flex flex-column gap-2">
+                                @foreach ($pendingItems as $chk)
+                                    @php
+                                        $origIdx = $chk['_orig_idx'];
+                                    @endphp
+                                    <div class="p-3 rounded-3 border border-warning-subtle bg-white shadow-xs">
+                                        <div class="d-flex align-items-start justify-content-between gap-3">
                                             <div class="d-flex align-items-start gap-3 flex-grow-1">
-                                                @if ($isReadOnly)
-                                                    <div class="mt-1">
-                                                        @if ($isReturned)
-                                                            <span class="text-success fs-5"><i class="ti ti-circle-check"></i></span>
-                                                        @elseif ($chk['status'] === 'Not Applicable')
-                                                            <span class="text-secondary fs-5"><i class="ti ti-minus"></i></span>
-                                                        @else
-                                                            <span class="text-warning fs-5"><i class="ti ti-clock"></i></span>
-                                                        @endif
+                                                <span class="text-warning fs-4 mt-0.5"><i class="ti ti-clock"></i></span>
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <span class="badge bg-light text-secondary border font-monospace fs-8">{{ $chk['category'] ?? __('General') }}</span>
+                                                        <strong class="text-dark">{{ $chk['item'] }}</strong>
                                                     </div>
-                                                    <div class="flex-grow-1">
-                                                        <div class="fw-semibold text-dark">{{ $chk['item'] }}</div>
-                                                        @if(!empty($chk['remarks']))
-                                                            <small class="text-muted d-block mt-1">
-                                                                <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Handover Note:') }}</strong> {{ $chk['remarks'] }}
-                                                            </small>
-                                                        @endif
-                                                    </div>
-                                                @else
-                                                    {{-- Interactive Checkbox & Comment input for Employee/Customer filling --}}
-                                                    <div class="mt-0.5">
-                                                        <input type="checkbox"
-                                                               class="form-check-input clearance-chk"
-                                                               id="chk_{{ $origIdx }}"
-                                                               data-idx="{{ $origIdx }}"
-                                                               data-cat="{{ $catSlug }}"
-                                                               {{ $isReturned ? 'checked' : '' }}
-                                                               onchange="onClearanceItemToggle(this)">
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                        <label for="chk_{{ $origIdx }}" class="fw-semibold text-dark mb-0 cursor-pointer user-select-none" style="cursor: pointer;">
-                                                            {{ $chk['item'] }}
-                                                        </label>
-                                                        <div class="mt-1">
+
+                                                    @if(!empty($chk['remarks']))
+                                                        <small class="text-muted d-block mt-1">
+                                                            <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Department Note:') }}</strong> {{ $chk['remarks'] }}
+                                                        </small>
+                                                    @endif
+
+                                                    @if (!$isReadOnly)
+                                                        <div class="mt-2">
                                                             <input type="text"
-                                                                   class="form-control form-control-sm clearance-comment-input"
+                                                                   class="form-control form-control-sm clearance-comment-input bg-light"
                                                                    data-idx="{{ $origIdx }}"
-                                                                   placeholder="{{ __('e.g., Handed over to IT desk, Asset serial #, or notes (optional)') }}"
+                                                                   placeholder="{{ __('Add handover note, courier tracking #, or asset serial no. (optional)...') }}"
                                                                    value="{{ $chk['remarks'] ?? '' }}">
                                                         </div>
-                                                    </div>
-                                                @endif
-                                            </div>
-
-                                            <div class="text-end flex-shrink-0 ms-2">
-                                                @if ($isReadOnly)
-                                                    @if ($isReturned)
-                                                        <span class="badge bg-success p-2 px-3 rounded"><i class="ti ti-check me-1"></i>{{ __('Cleared / Handed Over') }}</span>
-                                                    @elseif ($chk['status'] === 'Not Applicable')
-                                                        <span class="badge bg-secondary p-2 px-3 rounded">{{ __('Not Applicable') }}</span>
-                                                    @else
-                                                        <span class="badge bg-warning text-dark p-2 px-3 rounded"><i class="ti ti-clock me-1"></i>{{ __('Pending Clearance') }}</span>
                                                     @endif
-                                                @else
-                                                    <span class="badge {{ $isReturned ? 'bg-success' : 'bg-warning text-dark' }} p-2 px-3 rounded status-badge-item" id="badge_{{ $origIdx }}">
-                                                        <i class="ti {{ $isReturned ? 'ti-check' : 'ti-clock' }} me-1"></i>
-                                                        <span class="badge-text">{{ $isReturned ? __('Completed / Handed Over') : __('Pending Clearance') }}</span>
-                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0 ms-2">
+                                                <span class="badge bg-warning text-dark p-2 px-3 rounded shadow-none">
+                                                    <i class="ti ti-clock me-1"></i>{{ __('Pending Verification') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- 2. SEPARATE COMPLETED CHECKLIST LIST --}}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
+                            <h6 class="fw-bold text-success mb-0 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle" style="width: 24px; height: 24px; font-size: 12px;">
+                                    <i class="ti ti-check"></i>
+                                </span>
+                                {{ __('Completed & Approved Clearances by Company') }}
+                                <span class="badge bg-success text-white rounded-pill">{{ $clearedCount }}</span>
+                            </h6>
+                            <small class="text-muted">{{ __('Verified & confirmed by department HODs') }}</small>
+                        </div>
+
+                        @if ($clearedCount === 0)
+                            <div class="p-3 text-center text-muted bg-light rounded border small">
+                                <i class="ti ti-info-circle me-1"></i> {{ __('No items marked as completed yet.') }}
+                            </div>
+                        @else
+                            <div class="d-flex flex-column gap-2">
+                                @foreach ($completedItems as $chk)
+                                    <div class="p-2.5 px-3 rounded-3 border border-success-subtle bg-light-success bg-opacity-10 d-flex align-items-center justify-content-between gap-3">
+                                        <div class="d-flex align-items-center gap-3 flex-grow-1">
+                                            <span class="text-success fs-5"><i class="ti ti-circle-check"></i></span>
+                                            <div>
+                                                <span class="badge bg-white text-secondary border font-monospace fs-8 me-2">{{ $chk['category'] ?? __('General') }}</span>
+                                                <strong class="text-dark">{{ $chk['item'] }}</strong>
+                                                @if(!empty($chk['remarks']))
+                                                    <small class="text-muted d-block mt-0.5">
+                                                        <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Department Note:') }}</strong> {{ $chk['remarks'] }}
+                                                    </small>
                                                 @endif
                                             </div>
                                         </div>
-                                    @endforeach
-                                </div>
+                                        <div class="flex-shrink-0 ms-2">
+                                            <span class="badge bg-success p-1.5 px-3 rounded text-white shadow-none">
+                                                <i class="ti ti-check me-1"></i>{{ __('Cleared / Returned') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-                        @endforeach
+                        @endif
+                    </div>
+
+                    {{-- 3. NOT APPLICABLE ITEMS (If Any) --}}
+                    @if ($naCount > 0)
+                        <div class="mt-3 pt-2 border-top">
+                            <small class="text-muted fw-bold d-block mb-1">{{ __('Not Applicable Items (') . $naCount . '):' }}</small>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach ($naItems as $chk)
+                                    <span class="badge bg-light text-secondary border py-1 px-2.5 rounded">
+                                        <i class="ti ti-minus me-1"></i>{{ $chk['category'] ? $chk['category'] . ': ' : '' }}{{ $chk['item'] }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
                     @endif
 
                     {{-- Section 3 Custom Questions & Answers (Assets & Handover) --}}
@@ -1085,93 +1155,6 @@
         document.getElementById('dropzoneArea').style.display = 'block';
     }
 
-    function onClearanceItemToggle(chk) {
-        const idx = chk.getAttribute('data-idx');
-        const catSlug = chk.getAttribute('data-cat');
-        const isChecked = chk.checked;
-        const row = document.getElementById('item_row_' + idx);
-        const badge = document.getElementById('badge_' + idx);
-
-        if (row) {
-            if (isChecked) {
-                row.classList.add('is-cleared');
-            } else {
-                row.classList.remove('is-cleared');
-            }
-        }
-
-        if (badge) {
-            if (isChecked) {
-                badge.className = 'badge bg-success p-2 px-3 rounded status-badge-item';
-                badge.innerHTML = '<i class="ti ti-check me-1"></i><span class="badge-text">{{ __("Completed / Handed Over") }}</span>';
-            } else {
-                badge.className = 'badge bg-warning text-dark p-2 px-3 rounded status-badge-item';
-                badge.innerHTML = '<i class="ti ti-clock me-1"></i><span class="badge-text">{{ __("Pending Clearance") }}</span>';
-            }
-        }
-
-        // Recalculate Category Stats
-        const groupEl = document.querySelector(`.checklist-group[data-cat="${catSlug}"]`);
-        if (groupEl) {
-            const catCheckboxes = groupEl.querySelectorAll('.clearance-chk');
-            const catTotal = catCheckboxes.length;
-            let catCleared = 0;
-            catCheckboxes.forEach(c => { if (c.checked) catCleared++; });
-
-            const catBadge = document.getElementById('catBadge_' + catSlug);
-            const catIcon = groupEl.querySelector('.cat-icon-' + catSlug);
-            if (catBadge) {
-                catBadge.innerHTML = `<span class="cat-cleared-count">${catCleared}</span> / ${catTotal} {{ __("Cleared") }}`;
-                if (catCleared === catTotal) {
-                    catBadge.className = 'badge bg-light-success text-success border border-success px-2 py-1 rounded';
-                } else {
-                    catBadge.className = 'badge bg-light text-secondary border px-2 py-1 rounded';
-                }
-            }
-            if (catIcon) {
-                if (catCleared === catTotal) {
-                    catIcon.className = `ti ti-circle-check text-success fs-5 cat-icon-${catSlug}`;
-                } else {
-                    catIcon.className = `ti ti-folder text-primary fs-5 cat-icon-${catSlug}`;
-                }
-            }
-        }
-
-        // Recalculate Overall Stats
-        const allCheckboxes = document.querySelectorAll('.clearance-chk');
-        const totalItems = allCheckboxes.length;
-        let totalCleared = 0;
-        allCheckboxes.forEach(c => { if (c.checked) totalCleared++; });
-
-        const pct = totalItems > 0 ? Math.round((totalCleared / totalItems) * 100) : 100;
-        
-        const overallCountText = document.getElementById('overallClearedCountText');
-        const overallPctText = document.getElementById('overallPercentageText');
-        const overallBadge = document.getElementById('overallClearanceBadge');
-        const progressLabel = document.getElementById('progressPercentageLabel');
-        const progressBar = document.getElementById('overallProgressBar');
-
-        if (overallCountText) overallCountText.innerText = totalCleared;
-        if (overallPctText) overallPctText.innerText = pct;
-        if (progressLabel) progressLabel.innerText = pct + '%';
-        if (progressBar) {
-            progressBar.style.width = pct + '%';
-            progressBar.setAttribute('aria-valuenow', pct);
-            if (pct === 100) {
-                progressBar.className = 'progress-bar bg-success';
-            } else {
-                progressBar.className = 'progress-bar bg-primary';
-            }
-        }
-        if (overallBadge) {
-            if (pct === 100) {
-                overallBadge.className = 'badge bg-success fs-7 px-3 py-1.5 rounded-pill';
-            } else {
-                overallBadge.className = 'badge bg-primary fs-7 px-3 py-1.5 rounded-pill';
-            }
-        }
-    }
-
     // Form Submission
     const clearanceForm = document.getElementById('settlementClearanceForm');
     if (clearanceForm) {
@@ -1225,16 +1208,16 @@
 
             const remarks = document.getElementById('employee_remarks') ? document.getElementById('employee_remarks').value : '';
 
-            // Collect clearance checklist items with checked status and remarks
+            // Collect any handover remarks entered by employee on pending clearance items
             const clearanceItems = [];
-            document.querySelectorAll('.clearance-chk').forEach(chk => {
-                const idx = chk.getAttribute('data-idx');
-                const commentInput = document.querySelector(`.clearance-comment-input[data-idx="${idx}"]`);
-                clearanceItems.push({
-                    idx: parseInt(idx, 10),
-                    checked: chk.checked ? 1 : 0,
-                    remarks: commentInput ? commentInput.value.trim() : ''
-                });
+            document.querySelectorAll('.clearance-comment-input').forEach(inp => {
+                const idx = inp.getAttribute('data-idx');
+                if (idx !== null && inp.value.trim() !== '') {
+                    clearanceItems.push({
+                        idx: parseInt(idx, 10),
+                        remarks: inp.value.trim()
+                    });
+                }
             });
 
             // Collect any custom employee field inputs

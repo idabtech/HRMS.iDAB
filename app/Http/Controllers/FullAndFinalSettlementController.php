@@ -484,14 +484,13 @@ class FullAndFinalSettlementController extends Controller
             'employee_signature' => 'required|string',
         ]);
 
-        // Update clearance checklist items with employee checks and comments
+        // Update clearance checklist items with optional employee handover remarks
         $clearanceData = $settlement->clearance_data ?? [];
         if ($request->has('clearance_items') && is_array($request->clearance_items)) {
             foreach ($request->clearance_items as $itemData) {
                 $idx = $itemData['idx'] ?? null;
                 if ($idx !== null && isset($clearanceData[$idx])) {
-                    $clearanceData[$idx]['status'] = !empty($itemData['checked']) ? 'Returned' : 'Pending';
-                    if (isset($itemData['remarks'])) {
+                    if (isset($itemData['remarks']) && trim($itemData['remarks']) !== '') {
                         $clearanceData[$idx]['remarks'] = trim($itemData['remarks']);
                     }
                 }
