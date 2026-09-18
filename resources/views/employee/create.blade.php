@@ -3,23 +3,126 @@
         float: right;
     }
 
-    /* Document preview styles */
+    /* Document Preview Card Styles */
     .doc-preview-area {
         min-height: 30px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+        margin-top: 10px;
     }
-    .doc-preview-img {
-        border-radius: 6px;
-        border: 1px solid #dee2e6;
+    .doc-card-item {
+        position: relative;
+        width: 120px;
+        height: 85px;
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        background: #ffffff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        overflow: visible !important;
+        transition: all 0.2s ease-in-out;
     }
-    .doc-file-icon-link {
-        text-decoration: none;
+    .doc-card-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        border-color: #cbd5e1;
     }
-    .doc-file-icon {
+    .doc-card-img-wrapper {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8fafc;
+    }
+    .doc-card-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.25s ease;
+    }
+    .doc-card-item:hover .doc-card-img-wrapper img {
+        transform: scale(1.06);
+    }
+    .doc-card-file-wrapper {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 6px;
+        text-align: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        text-decoration: none !important;
+        position: relative;
+        transition: all 0.2s ease-in-out;
+    }
+    .doc-card-file-wrapper:hover {
+        background: #f1f5f9;
+        text-decoration: none !important;
+    }
+    .doc-card-file-icon {
+        font-size: 1.65rem;
         line-height: 1;
+        margin-bottom: 3px;
+        transition: transform 0.2s ease;
     }
-    .doc-file-icon-link:hover .doc-file-icon {
-        opacity: 0.8;
+    .doc-card-item:hover .doc-card-file-icon {
+        transform: scale(1.1);
     }
+    .doc-card-file-badge {
+        font-size: 0.55rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 1px 5px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        line-height: 1.2;
+    }
+    .doc-card-file-name {
+        font-size: 0.65rem;
+        color: #334155;
+        font-weight: 600;
+        max-width: 105px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        margin-top: 3px;
+    }
+
+    /* Extension Specific Color Badges & Icons */
+    .doc-type-pdf .doc-card-file-icon { color: #dc2626; }
+    .doc-type-pdf .doc-card-file-badge { background: #fee2e2; color: #b91c1c; }
+
+    .doc-type-word .doc-card-file-icon { color: #2563eb; }
+    .doc-type-word .doc-card-file-badge { background: #dbeafe; color: #1d4ed8; }
+
+    .doc-type-excel .doc-card-file-icon { color: #16a34a; }
+    .doc-type-excel .doc-card-file-badge { background: #dcfce7; color: #15803d; }
+
+    .doc-type-csv .doc-card-file-icon { color: #0d9488; }
+    .doc-type-csv .doc-card-file-badge { background: #ccfbf1; color: #0f766e; }
+
+    .doc-type-ppt .doc-card-file-icon { color: #ea580c; }
+    .doc-type-ppt .doc-card-file-badge { background: #ffedd5; color: #c2410c; }
+
+    .doc-type-archive .doc-card-file-icon { color: #9333ea; }
+    .doc-type-archive .doc-card-file-badge { background: #f3e8ff; color: #7e22ce; }
+
+    .doc-type-text .doc-card-file-icon { color: #64748b; }
+    .doc-type-text .doc-card-file-badge { background: #f1f5f9; color: #475569; }
+
+    .doc-type-code .doc-card-file-icon { color: #0284c7; }
+    .doc-type-code .doc-card-file-badge { background: #e0f2fe; color: #0369a1; }
+
+    .doc-type-default .doc-card-file-icon { color: #64748b; }
+    .doc-type-default .doc-card-file-badge { background: #f1f5f9; color: #475569; }
 </style>
 @extends('layouts.admin')
 @section('page-title')
@@ -913,49 +1016,65 @@
         });
     }
 
-    // Document preview handler — shows image preview or file-type icon on new file selection
+    // Helper to resolve file type details (icon, badge, CSS class)
+    function getDocFileInfo(fileName) {
+        var ext = (fileName || '').split('.').pop().toLowerCase();
+        var map = {
+            'pdf':  { typeClass: 'doc-type-pdf',     icon: 'fas fa-file-pdf',        label: 'PDF' },
+            'doc':  { typeClass: 'doc-type-word',    icon: 'fas fa-file-word',       label: 'DOC' },
+            'docx': { typeClass: 'doc-type-word',    icon: 'fas fa-file-word',       label: 'DOCX' },
+            'xls':  { typeClass: 'doc-type-excel',   icon: 'fas fa-file-excel',      label: 'XLS' },
+            'xlsx': { typeClass: 'doc-type-excel',   icon: 'fas fa-file-excel',      label: 'XLSX' },
+            'csv':  { typeClass: 'doc-type-csv',     icon: 'fas fa-file-csv',        label: 'CSV' },
+            'ppt':  { typeClass: 'doc-type-ppt',     icon: 'fas fa-file-powerpoint', label: 'PPT' },
+            'pptx': { typeClass: 'doc-type-ppt',     icon: 'fas fa-file-powerpoint', label: 'PPTX' },
+            'txt':  { typeClass: 'doc-type-text',    icon: 'fas fa-file-alt',        label: 'TXT' },
+            'rtf':  { typeClass: 'doc-type-text',    icon: 'fas fa-file-alt',        label: 'RTF' },
+            'zip':  { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'ZIP' },
+            'rar':  { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'RAR' },
+            '7z':   { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: '7Z' },
+            'tar':  { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'TAR' },
+            'gz':   { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'GZ' },
+        };
+        return map[ext] || { typeClass: 'doc-type-default', icon: 'fas fa-file', label: (ext ? ext.toUpperCase().substring(0, 4) : 'FILE') };
+    }
+
+    // Document preview handler — shows image preview or file-type card preview on file selection
     function handleDocPreview(input) {
         var previewId = input.getAttribute('data-preview-id');
         var previewArea = document.getElementById(previewId);
-        if (!input.files || !input.files[0]) return;
-
-        var file = input.files[0];
-        var fileName = file.name;
-        var ext = fileName.split('.').pop().toLowerCase();
-        var imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
-
-        var fileIconMap = {
-            'pdf':  { icon: 'ti ti-file-type-pdf',    color: '#e74c3c', label: 'PDF'  },
-            'doc':  { icon: 'ti ti-file-type-doc',    color: '#2980b9', label: 'DOC'  },
-            'docx': { icon: 'ti ti-file-type-docx',   color: '#2980b9', label: 'DOCX' },
-            'xls':  { icon: 'ti ti-file-type-xls',    color: '#27ae60', label: 'XLS'  },
-            'xlsx': { icon: 'ti ti-file-type-xlsx',   color: '#27ae60', label: 'XLSX' },
-            'csv':  { icon: 'ti ti-file-spreadsheet', color: '#27ae60', label: 'CSV'  },
-            'txt':  { icon: 'ti ti-file-text',        color: '#7f8c8d', label: 'TXT'  },
-            'zip':  { icon: 'ti ti-file-zip',         color: '#8e44ad', label: 'ZIP'  },
-            'rar':  { icon: 'ti ti-file-zip',         color: '#8e44ad', label: 'RAR'  },
-        };
+        if (!input.files || !input.files.length) return;
 
         previewArea.innerHTML = '';
+        var imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
 
-        if (imageExts.indexOf(ext) !== -1) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                previewArea.innerHTML =
-                    '<img src="' + e.target.result + '" ' +
-                    'class="img-thumbnail doc-preview-img" ' +
-                    'style="max-height:80px; max-width:120px; object-fit:cover;" ' +
-                    'alt="' + fileName + '">';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            var info = fileIconMap[ext] || { icon: 'ti ti-file', color: '#95a5a6', label: ext.toUpperCase() };
-            previewArea.innerHTML =
-                '<span class="doc-file-icon-link d-inline-flex align-items-center gap-1">' +
-                    '<i class="' + info.icon + ' doc-file-icon" style="font-size:2.2rem; color:' + info.color + ';"></i>' +
-                    '<span class="badge" style="background:' + info.color + '; font-size:0.7rem;">' + info.label + '</span>' +
-                '</span>' +
-                '<div class="text-muted small mt-1" style="word-break:break-all; max-width:160px;">' + fileName + '</div>';
+        for (var i = 0; i < input.files.length; i++) {
+            (function(file) {
+                var fileName = file.name;
+                var ext = fileName.split('.').pop().toLowerCase();
+
+                var card = document.createElement('div');
+                card.className = 'doc-card-item';
+
+                if (imageExts.indexOf(ext) !== -1) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        card.innerHTML = '<div class="doc-card-img-wrapper">' +
+                            '<img src="' + e.target.result + '" alt="' + fileName + '" title="' + fileName + '">' +
+                            '</div>';
+                        previewArea.appendChild(card);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    var info = getDocFileInfo(fileName);
+                    card.innerHTML = '<div class="doc-card-file-wrapper ' + info.typeClass + '">' +
+                        '<i class="' + info.icon + ' doc-card-file-icon"></i>' +
+                        '<span class="doc-card-file-badge">' + info.label + '</span>' +
+                        '<span class="doc-card-file-name" title="' + fileName + '">' + fileName + '</span>' +
+                        '</div>';
+                    previewArea.appendChild(card);
+                }
+            })(input.files[i]);
         }
     }
 
