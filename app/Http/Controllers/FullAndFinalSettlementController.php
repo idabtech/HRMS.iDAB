@@ -94,8 +94,9 @@ class FullAndFinalSettlementController extends Controller
             }
 
             $defaultClearance = FullAndFinalSettlement::getDefaultClearanceChecklist();
+            $defaultDeclaration = FullAndFinalSettlement::defaultDeclarationText();
 
-            return view('settlement.create', compact('employees', 'selectedEmployee', 'defaultClearance'));
+            return view('settlement.create', compact('employees', 'selectedEmployee', 'defaultClearance', 'defaultDeclaration'));
         }
 
         return redirect()->back()->with('error', __('Permission denied.'));
@@ -220,6 +221,7 @@ class FullAndFinalSettlementController extends Controller
                 'clearance_data' => $clearance,
                 'custom_fields_schema' => $customFieldsSchema,
                 'custom_fields_data' => $customFieldsData,
+                'declaration_text' => $request->input('declaration_text', FullAndFinalSettlement::defaultDeclarationText()),
                 'sharing_token' => Str::random(64),
                 'token_expires_at' => now()->addDays(30),
             ]);
@@ -366,6 +368,7 @@ class FullAndFinalSettlementController extends Controller
                 'clearance_data' => $clearance,
                 'custom_fields_schema' => $customFieldsSchema,
                 'custom_fields_data' => $existingData,
+                'declaration_text' => $request->input('declaration_text', $settlement->getDeclarationText()),
                 'final_settlement_status' => $request->final_settlement_status ?? $settlement->final_settlement_status,
                 'payment_date' => $request->payment_date,
                 'payment_mode' => $request->payment_mode,

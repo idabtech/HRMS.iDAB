@@ -133,6 +133,22 @@
             </div>
         </div>
 
+        {{-- Employee Declaration & Legal Undertaking --}}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="ti ti-file-certificate me-2 text-primary"></i>{{ __('Employee Legal Declaration & Undertaking Terms') }}</h5>
+                <button type="button" class="btn btn-xs btn-outline-secondary" id="reset_declaration_btn">
+                    <i class="ti ti-rotate-clockwise me-1"></i> {{ __('Reset to Default Terms') }}
+                </button>
+            </div>
+            <div class="card-body">
+                <small class="text-muted d-block mb-2">
+                    {{ __('This declaration and undertaking is presented to the employee above their digital signature on the public form. You can add more paragraphs, modify clauses, or customize it to your company requirements.') }}
+                </small>
+                <textarea name="declaration_text" id="declaration_text" class="form-control font-monospace" rows="6" required style="line-height: 1.6; font-size: 13px;">{{ old('declaration_text', $settlement->getDeclarationText()) }}</textarea>
+            </div>
+        </div>
+
         {{-- Management & Payment --}}
         <div class="card mb-4">
             <div class="card-header bg-dark text-white">
@@ -188,6 +204,13 @@
 
 @push('script-page')
 <script>
+    const defaultDeclarationText = @json(App\Models\FullAndFinalSettlement::defaultDeclarationText());
+    $('#reset_declaration_btn').on('click', function () {
+        if (confirm('{{ __("Reset declaration text to default legal terms?") }}')) {
+            $('#declaration_text').val(defaultDeclarationText);
+        }
+    });
+
     function recalculateTotals() {
         let gross = 0;
         $('.calc-earning').each(function () { gross += parseFloat($(this).val()) || 0; });

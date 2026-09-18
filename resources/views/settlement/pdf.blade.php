@@ -398,6 +398,19 @@
 
 {{-- SECTION D: CUSTOM QUESTIONNAIRE & RECORDS (If configured) --}}
 @if (!empty($settlement->custom_fields_schema))
+@php
+    $sectionLabels = [
+        'separation' => __('Section 1: Separation Details'),
+        'financial' => __('Section 2: Financial Breakdown'),
+        'assets' => __('Section 3: Clearance & Handover Checklist'),
+        'employee' => __('Section 4: Undertaking & Employee Info'),
+    ];
+    $pdfFieldsBySection = [];
+    foreach ($settlement->custom_fields_schema as $field) {
+        $secKey = $field['section'] ?? 'employee';
+        $pdfFieldsBySection[$secKey][] = $field;
+    }
+@endphp
 <div class="sec-title">SECTION D: CUSTOM QUESTIONNAIRE & ADDITIONAL RECORDS</div>
 <table>
     <thead>
@@ -407,17 +420,24 @@
         </tr>
     </thead>
     <tbody>
-        @foreach ($settlement->custom_fields_schema as $field)
-            <tr>
-                <td><strong>{{ $field['label'] }}</strong></td>
-                <td>
-                    @if(($field['type'] ?? '') === 'date' && !empty($settlement->custom_fields_data[$field['key']]))
-                        {{ $settlement->formatDate($settlement->custom_fields_data[$field['key']]) }}
-                    @else
-                        {{ $settlement->custom_fields_data[$field['key']] ?? '-' }}
-                    @endif
+        @foreach ($pdfFieldsBySection as $secKey => $secFields)
+            <tr style="background-color: #f1f5f9;">
+                <td colspan="2" style="font-weight: bold; color: #1e293b; font-size: 11px; padding: 6px 8px; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;">
+                    {{ $sectionLabels[$secKey] ?? ucfirst($secKey) }}
                 </td>
             </tr>
+            @foreach ($secFields as $field)
+                <tr>
+                    <td style="padding-left: 14px;"><strong>{{ $field['label'] }}</strong></td>
+                    <td>
+                        @if(($field['type'] ?? '') === 'date' && !empty($settlement->custom_fields_data[$field['key']]))
+                            {{ $settlement->formatDate($settlement->custom_fields_data[$field['key']]) }}
+                        @else
+                            {{ $settlement->custom_fields_data[$field['key']] ?? '-' }}
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
         @endforeach
     </tbody>
 </table>
@@ -426,7 +446,12 @@
 {{-- SECTION E: MULTI-STAGE SIGN-OFF & FINAL VERIFICATION --}}
 <div class="sec-title">SECTION E: MULTI-STAGE SIGN-OFF & FINAL VERIFICATION</div>
 <div class="declaration">
-    I confirm that I have completed the required handover and returned all company property, software code, credentials, documents, and data in my possession. Except for the amount stated as payable in this settlement, I have no further claims against the Company. For a period of three (3) months, I will remain reasonably available for handover assistance. I undertake not to copy, replicate, or misuse any company code, designs, or proprietary material.
+    @php
+        $pdfParagraphs = array_filter(array_map('trim', explode("\n", $settlement->getDeclarationText())));
+    @endphp
+    @foreach($pdfParagraphs as $p)
+        <p style="margin-bottom: 6px; margin-top: 0;">{{ $p }}</p>
+    @endforeach
 </div>
 
 <table class="sig-block" style="border: none; width: 100%; margin-top: 12px; border-collapse: collapse;">

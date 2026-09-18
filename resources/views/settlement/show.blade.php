@@ -373,6 +373,21 @@
                     @endif
                 </div>
                 <div class="card-body">
+                    {{-- Legal Undertaking Terms --}}
+                    <div class="mb-3">
+                        <span class="text-muted small d-block mb-1">
+                            <i class="ti ti-file-certificate text-primary me-1"></i><strong>{{ __('Legal Declaration & Undertaking Terms:') }}</strong>
+                        </span>
+                        <div class="p-2.5 bg-light rounded border small text-dark" style="max-height: 120px; overflow-y: auto; line-height: 1.55;">
+                            @php
+                                $showParagraphs = array_filter(array_map('trim', explode("\n", $settlement->getDeclarationText())));
+                            @endphp
+                            @foreach($showParagraphs as $p)
+                                <p class="mb-1">{{ $p }}</p>
+                            @endforeach
+                        </div>
+                    </div>
+
                     {{-- Custom Employee Questions --}}
                     @if (!empty($fieldsBySection['employee']))
                         <div class="mb-3">

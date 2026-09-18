@@ -290,9 +290,25 @@
                 <span class="badge bg-info text-white">{{ __('Interactive for Employee Online') }}</span>
             </div>
             <div class="card-body">
+                {{-- Custom Editable Declaration & Undertaking Terms --}}
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label fw-bold text-dark mb-0">
+                            <i class="ti ti-file-certificate text-primary me-1"></i> {{ __('Employee Legal Declaration & Undertaking Terms') }} <span class="text-danger">*</span>
+                        </label>
+                        <button type="button" class="btn btn-xs btn-outline-secondary" id="reset_declaration_btn">
+                            <i class="ti ti-rotate-clockwise me-1"></i> {{ __('Reset to Default Terms') }}
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mb-2">
+                        {{ __('This declaration and undertaking will appear directly above the employee digital signature on the public form. You can add more paragraphs, modify clauses, or customize it to your company requirements.') }}
+                    </small>
+                    <textarea name="declaration_text" id="declaration_text" class="form-control font-monospace" rows="6" required style="line-height: 1.6; font-size: 13px;">{{ old('declaration_text', $defaultDeclaration ?? App\Models\FullAndFinalSettlement::defaultDeclarationText()) }}</textarea>
+                </div>
+
                 <div class="p-3 bg-light rounded small text-muted border mb-3">
                     <i class="ti ti-info-circle text-primary me-1"></i>
-                    {{ __('The standard legal declaration, NDA confirmation, and digital signature canvas will be presented to the employee automatically. You can add specific custom questions for the employee to answer below.') }}
+                    {{ __('The digital signature canvas and confirmation checkbox will be presented to the employee automatically. You can also add specific custom questions for the employee to answer below.') }}
                 </div>
 
                 {{-- In-Section Google Form Builder: Section 4 Custom Questions --}}
@@ -327,6 +343,13 @@
 
 @push('script-page')
 <script>
+    const defaultDeclarationText = @json(App\Models\FullAndFinalSettlement::defaultDeclarationText());
+    $('#reset_declaration_btn').on('click', function () {
+        if (confirm('{{ __("Reset declaration text to default legal terms?") }}')) {
+            $('#declaration_text').val(defaultDeclarationText);
+        }
+    });
+
     // Dynamic Financial Calculations
     function recalculateTotals() {
         let gross = 0;

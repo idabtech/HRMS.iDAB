@@ -30,6 +30,25 @@
             ];
             $themeColorHex = isset($themeHexMap[$color]) ? $themeHexMap[$color] : '#584ed2';
         }
+
+        $isReadOnly = ($settlement->status === 'signed' || $settlement->status === 'cleared');
+        $allCustomFields = $settlement->custom_fields_schema ?? [];
+        $customValues = $settlement->custom_fields_data ?? [];
+
+        $fieldsBySection = [
+            'separation' => [],
+            'financial' => [],
+            'assets' => [],
+            'employee' => [],
+        ];
+        foreach ($allCustomFields as $f) {
+            $sec = $f['section'] ?? 'employee';
+            if (isset($fieldsBySection[$sec])) {
+                $fieldsBySection[$sec][] = $f;
+            } else {
+                $fieldsBySection['employee'][] = $f;
+            }
+        }
     @endphp
     <link rel="stylesheet" href="{{ asset('assets/css/plugins/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
@@ -357,6 +376,56 @@
                             <div class="info-value text-dark">{{ $settlement->reason_for_separation ?: __('Resignation / End of Tenure') }}</div>
                         </div>
                     </div>
+
+                    {{-- Section 1 Custom Questions & Answers --}}
+                    @if (!empty($fieldsBySection['separation']))
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="fw-bold text-dark mb-3"><i class="ti ti-forms text-primary me-2"></i>{{ __('Additional Separation Details:') }}</h6>
+                            <div class="row g-3">
+                                @foreach ($fieldsBySection['separation'] as $field)
+                                    @php
+                                        $isEmployeeTarget = ($field['target'] ?? 'hr') === 'employee';
+                                        $val = $customValues[$field['key']] ?? '';
+                                    @endphp
+                                    <div class="col-md-{{ ($field['type'] ?? '') === 'textarea' ? '12' : '6' }}">
+                                        @if (!$isReadOnly && $isEmployeeTarget)
+                                            <label class="form-label fw-semibold small text-dark mb-1">
+                                                {{ $field['label'] }}
+                                                @if(!empty($field['required'])) <span class="text-danger">*</span> @endif
+                                            </label>
+                                            @if(($field['type'] ?? '') === 'textarea')
+                                                <textarea name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" rows="2" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                            @elseif(($field['type'] ?? '') === 'select')
+                                                <select name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                    <option value="">{{ __('Please select an option') }}</option>
+                                                    @foreach($field['options'] ?? [] as $opt)
+                                                        <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @elseif(($field['type'] ?? '') === 'date')
+                                                <input type="date" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @elseif(($field['type'] ?? '') === 'number')
+                                                <input type="number" step="any" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" placeholder="{{ __('e.g., 12345') }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @else
+                                                <input type="text" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @endif
+                                        @else
+                                            <div class="p-2.5 bg-light rounded border">
+                                                <small class="text-muted d-block mb-1">{{ $field['label'] }}:</small>
+                                                <strong class="text-dark small">
+                                                    @if(($field['type'] ?? '') === 'date' && !empty($val))
+                                                        {{ $settlement->formatDate($val) }}
+                                                    @else
+                                                        {{ !empty($val) ? $val : '—' }}
+                                                    @endif
+                                                </strong>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -435,8 +504,60 @@
                             {{ $settlement->formatPrice($settlement->net_amount) }}
                         </div>
                     </div>
+
+                    {{-- Section 2 Custom Questions & Answers --}}
+                    @if (!empty($fieldsBySection['financial']))
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="fw-bold text-dark mb-3"><i class="ti ti-forms text-primary me-2"></i>{{ __('Additional Financial Details & Notes:') }}</h6>
+                            <div class="row g-3">
+                                @foreach ($fieldsBySection['financial'] as $field)
+                                    @php
+                                        $isEmployeeTarget = ($field['target'] ?? 'hr') === 'employee';
+                                        $val = $customValues[$field['key']] ?? '';
+                                    @endphp
+                                    <div class="col-md-{{ ($field['type'] ?? '') === 'textarea' ? '12' : '6' }}">
+                                        @if (!$isReadOnly && $isEmployeeTarget)
+                                            <label class="form-label fw-semibold small text-dark mb-1">
+                                                {{ $field['label'] }}
+                                                @if(!empty($field['required'])) <span class="text-danger">*</span> @endif
+                                            </label>
+                                            @if(($field['type'] ?? '') === 'textarea')
+                                                <textarea name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" rows="2" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                            @elseif(($field['type'] ?? '') === 'select')
+                                                <select name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                    <option value="">{{ __('Please select an option') }}</option>
+                                                    @foreach($field['options'] ?? [] as $opt)
+                                                        <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @elseif(($field['type'] ?? '') === 'date')
+                                                <input type="date" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @elseif(($field['type'] ?? '') === 'number')
+                                                <input type="number" step="any" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" placeholder="{{ __('e.g., 12345') }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @else
+                                                <input type="text" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @endif
+                                        @else
+                                            <div class="p-2.5 bg-light rounded border">
+                                                <small class="text-muted d-block mb-1">{{ $field['label'] }}:</small>
+                                                <strong class="text-dark small">
+                                                    @if(($field['type'] ?? '') === 'date' && !empty($val))
+                                                        {{ $settlement->formatDate($val) }}
+                                                    @else
+                                                        {{ !empty($val) ? $val : '—' }}
+                                                    @endif
+                                                </strong>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
-              {{-- 3. SECTION-WISE DEPARTMENTAL CLEARANCE CHECKLIST --}}
+            </div>
+
+            {{-- 3. SECTION-WISE DEPARTMENTAL CLEARANCE CHECKLIST --}}
             <div class="section-card">
                 <div class="section-card-header">
                     <div>
@@ -568,6 +689,56 @@
                             </div>
                         @endforeach
                     @endif
+
+                    {{-- Section 3 Custom Questions & Answers (Assets & Handover) --}}
+                    @if (!empty($fieldsBySection['assets']))
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="fw-bold text-dark mb-3"><i class="ti ti-forms text-primary me-2"></i>{{ __('Additional Clearance & Handover Details:') }}</h6>
+                            <div class="row g-3">
+                                @foreach ($fieldsBySection['assets'] as $field)
+                                    @php
+                                        $isEmployeeTarget = ($field['target'] ?? 'hr') === 'employee';
+                                        $val = $customValues[$field['key']] ?? '';
+                                    @endphp
+                                    <div class="col-md-{{ ($field['type'] ?? '') === 'textarea' ? '12' : '6' }}">
+                                        @if (!$isReadOnly && $isEmployeeTarget)
+                                            <label class="form-label fw-semibold small text-dark mb-1">
+                                                {{ $field['label'] }}
+                                                @if(!empty($field['required'])) <span class="text-danger">*</span> @endif
+                                            </label>
+                                            @if(($field['type'] ?? '') === 'textarea')
+                                                <textarea name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" rows="2" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                            @elseif(($field['type'] ?? '') === 'select')
+                                                <select name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                    <option value="">{{ __('Please select an option') }}</option>
+                                                    @foreach($field['options'] ?? [] as $opt)
+                                                        <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @elseif(($field['type'] ?? '') === 'date')
+                                                <input type="date" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @elseif(($field['type'] ?? '') === 'number')
+                                                <input type="number" step="any" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" placeholder="{{ __('e.g., 12345') }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @else
+                                                <input type="text" name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @endif
+                                        @else
+                                            <div class="p-2.5 bg-light rounded border">
+                                                <small class="text-muted d-block mb-1">{{ $field['label'] }}:</small>
+                                                <strong class="text-dark small">
+                                                    @if(($field['type'] ?? '') === 'date' && !empty($val))
+                                                        {{ $settlement->formatDate($val) }}
+                                                    @else
+                                                        {{ !empty($val) ? $val : '—' }}
+                                                    @endif
+                                                </strong>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -589,7 +760,7 @@
                     </div>
 
                     @php
-                        $employeeCustomQuestions = collect($settlement->custom_fields_schema ?? [])->where('target', 'employee');
+                        $employeeCustomQuestions = collect($fieldsBySection['employee'] ?? []);
                     @endphp
                     @if($employeeCustomQuestions->count() > 0)
                         <div class="p-3 bg-white rounded border text-start mx-auto mb-3" style="max-width: 600px;">
@@ -641,16 +812,18 @@
                         <div class="section-card-body">
                             {{-- Formal Undertaking Box --}}
                             <div class="undertaking-box">
-                                <div class="fw-bold text-dark mb-1 d-flex align-items-center">
+                                <div class="fw-bold text-dark mb-2 d-flex align-items-center">
                                     <i class="ti ti-file-certificate me-2 text-primary fs-5"></i>
                                     {{ __('DECLARATION & UNDERTAKING') }}
                                 </div>
-                                <p class="mb-2">
-                                    I confirm that I have reviewed the Full & Final Settlement statement above. I acknowledge that I have handed over all company equipment, software code, security credentials, client accounts, files, and physical property in my possession.
-                                </p>
-                                <p class="mb-0">
-                                    I agree that upon receipt of the final net amount stated above, I have no further financial or employment-related claims against the Company. I will maintain strict confidentiality regarding all proprietary information, software, designs, and company secrets.
-                                </p>
+                                <div class="declaration-paragraphs text-dark" style="line-height: 1.65; font-size: 0.92rem;">
+                                    @php
+                                        $paragraphs = array_filter(array_map('trim', explode("\n", $settlement->getDeclarationText())));
+                                    @endphp
+                                    @foreach($paragraphs as $p)
+                                        <p class="mb-2">{{ $p }}</p>
+                                    @endforeach
+                                </div>
                             </div>
 
                             {{-- Declaration Checkbox --}}
@@ -661,35 +834,52 @@
                                 </label>
                             </div>
 
-                            {{-- Optional Employee-Targeted Custom Questions (if configured by HR) --}}
+                            {{-- Section 4 Custom Questions (Undertaking / Employee) --}}
                             @php
-                                $employeeFields = collect($settlement->custom_fields_schema ?? [])->where('target', 'employee');
+                                $employeeFields = collect($fieldsBySection['employee'] ?? []);
                             @endphp
                             @if($employeeFields->count() > 0)
                                 <div class="mb-4 p-3 bg-light rounded-3 border">
                                     <h6 class="fw-bold text-dark mb-3"><i class="ti ti-forms text-primary me-2"></i>{{ __('Additional Information Required from You:') }}</h6>
                                     <div class="row g-3">
                                         @foreach($employeeFields as $field)
-                                            <div class="col-md-{{ $field['type'] === 'textarea' ? '12' : '6' }}">
-                                                <label class="form-label fw-semibold small text-dark mb-1">
-                                                    {{ $field['label'] }}
-                                                    @if(!empty($field['required'])) <span class="text-danger">*</span> @endif
-                                                </label>
-                                                @if($field['type'] === 'textarea')
-                                                    <textarea name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" rows="2" placeholder="{{ __('e.g., Enter your details or remarks for ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $settlement->custom_fields_data[$field['key']] ?? '' }}</textarea>
-                                                @elseif($field['type'] === 'select')
-                                                    <select name="custom_fields[{{ $field['key'] }}]" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
-                                                        <option value="">{{ __('Please select an option') }}</option>
-                                                        @foreach($field['options'] ?? [] as $opt)
-                                                            <option value="{{ $opt }}" {{ ($settlement->custom_fields_data[$field['key']] ?? '') == $opt ? 'selected' : '' }}>{{ $opt }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                @elseif($field['type'] === 'date')
-                                                    <input type="date" name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" value="{{ $settlement->custom_fields_data[$field['key']] ?? '' }}" {{ !empty($field['required']) ? 'required' : '' }}>
-                                                @elseif($field['type'] === 'number')
-                                                    <input type="number" step="any" name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" placeholder="{{ __('e.g., 12345') }}" value="{{ $settlement->custom_fields_data[$field['key']] ?? '' }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                            @php
+                                                $isEmployeeTarget = ($field['target'] ?? 'employee') === 'employee';
+                                                $val = $settlement->custom_fields_data[$field['key']] ?? '';
+                                            @endphp
+                                            <div class="col-md-{{ ($field['type'] ?? '') === 'textarea' ? '12' : '6' }}">
+                                                @if($isEmployeeTarget)
+                                                    <label class="form-label fw-semibold small text-dark mb-1">
+                                                        {{ $field['label'] }}
+                                                        @if(!empty($field['required'])) <span class="text-danger">*</span> @endif
+                                                    </label>
+                                                    @if(($field['type'] ?? '') === 'textarea')
+                                                        <textarea name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" rows="2" placeholder="{{ __('e.g., Enter your details or remarks for ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                                    @elseif(($field['type'] ?? '') === 'select')
+                                                        <select name="custom_fields[{{ $field['key'] }}]" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                            <option value="">{{ __('Please select an option') }}</option>
+                                                            @foreach($field['options'] ?? [] as $opt)
+                                                                <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif(($field['type'] ?? '') === 'date')
+                                                        <input type="date" name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                    @elseif(($field['type'] ?? '') === 'number')
+                                                        <input type="number" step="any" name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" placeholder="{{ __('e.g., 12345') }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                    @else
+                                                        <input type="text" name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" placeholder="{{ __('e.g., Enter ') . strtolower($field['label']) }}" value="{{ $val }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                    @endif
                                                 @else
-                                                    <input type="text" name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" placeholder="{{ __('e.g., Enter ') . strtolower($field['label']) }}" value="{{ $settlement->custom_fields_data[$field['key']] ?? '' }}" {{ !empty($field['required']) ? 'required' : '' }}>
+                                                    <div class="p-2.5 bg-white rounded border">
+                                                        <small class="text-muted d-block mb-1">{{ $field['label'] }}:</small>
+                                                        <strong class="text-dark small">
+                                                            @if(($field['type'] ?? '') === 'date' && !empty($val))
+                                                                {{ $settlement->formatDate($val) }}
+                                                            @else
+                                                                {{ !empty($val) ? $val : '—' }}
+                                                            @endif
+                                                        </strong>
+                                                    </div>
                                                 @endif
                                             </div>
                                         @endforeach
@@ -992,6 +1182,25 @@
             if (!declCheckbox.checked) {
                 alert('Please check the declaration box to confirm your undertaking.');
                 declCheckbox.focus();
+                return;
+            }
+
+            // Check required custom fields across all sections
+            let missingRequiredField = null;
+            let missingFieldLabel = '';
+            document.querySelectorAll('[name^="custom_fields["][required]').forEach(inp => {
+                if (!missingRequiredField && !inp.value.trim()) {
+                    missingRequiredField = inp;
+                    const container = inp.closest('.col-md-6, .col-md-12');
+                    const labelEl = container ? container.querySelector('label') : null;
+                    missingFieldLabel = labelEl ? labelEl.innerText.replace('*', '').trim() : 'required field';
+                }
+            });
+
+            if (missingRequiredField) {
+                alert(`Please complete the required field "${missingFieldLabel}" before submitting.`);
+                missingRequiredField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                missingRequiredField.focus();
                 return;
             }
 
