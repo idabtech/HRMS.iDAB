@@ -426,6 +426,26 @@
                         </div>
                     </div>
 
+                    {{-- Policy & Rules Information --}}
+                    <div class="mb-3 p-2.5 rounded bg-light border">
+                        <div class="d-flex align-items-start justify-content-between gap-2">
+                            <div>
+                                <span class="text-muted small d-block mb-1">
+                                    <i class="ti ti-shield-check text-primary me-1"></i><strong>{{ __('Company Policy & Separation Rules:') }}</strong>
+                                    @if($settlement->policy_rules_accepted || $settlement->employee_declaration_accepted)
+                                        <span class="badge bg-success-subtle text-success ms-1"><i class="ti ti-check me-0.5"></i>{{ __('Accepted by Employee') }}</span>
+                                    @endif
+                                </span>
+                                <div class="small text-dark">{{ $settlement->getPolicyRulesText() }}</div>
+                            </div>
+                            @if(!empty($settlement->policy_rules_link))
+                                <a href="{{ $settlement->policy_rules_link }}" target="_blank" class="btn btn-xs btn-outline-primary flex-shrink-0 mt-1">
+                                    <i class="ti ti-external-link me-1"></i>{{ $settlement->policy_rules_title ?: __('View Policy') }}
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
                     {{-- Custom Employee Questions --}}
                     @if (!empty($fieldsBySection['employee']))
                         <div class="mb-3">

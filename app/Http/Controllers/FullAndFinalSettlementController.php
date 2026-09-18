@@ -95,8 +95,10 @@ class FullAndFinalSettlementController extends Controller
 
             $defaultClearance = FullAndFinalSettlement::getDefaultClearanceChecklist();
             $defaultDeclaration = FullAndFinalSettlement::defaultDeclarationText();
+            $defaultPolicyRules = FullAndFinalSettlement::defaultPolicyRulesText();
+            $companyPolicies = \App\Models\CompanyPolicy::where('created_by', $creatorId)->get();
 
-            return view('settlement.create', compact('employees', 'selectedEmployee', 'defaultClearance', 'defaultDeclaration'));
+            return view('settlement.create', compact('employees', 'selectedEmployee', 'defaultClearance', 'defaultDeclaration', 'defaultPolicyRules', 'companyPolicies'));
         }
 
         return redirect()->back()->with('error', __('Permission denied.'));
@@ -222,6 +224,9 @@ class FullAndFinalSettlementController extends Controller
                 'custom_fields_schema' => $customFieldsSchema,
                 'custom_fields_data' => $customFieldsData,
                 'declaration_text' => $request->input('declaration_text', FullAndFinalSettlement::defaultDeclarationText()),
+                'policy_rules_text' => $request->input('policy_rules_text', FullAndFinalSettlement::defaultPolicyRulesText()),
+                'policy_rules_link' => $request->input('policy_rules_link'),
+                'policy_rules_title' => $request->input('policy_rules_title'),
                 'sharing_token' => Str::random(64),
                 'token_expires_at' => now()->addDays(30),
             ]);
@@ -263,8 +268,9 @@ class FullAndFinalSettlementController extends Controller
             $creatorId = Auth::user()->creatorId();
             $settlement = FullAndFinalSettlement::where('created_by', $creatorId)->findOrFail($id);
             $employees = Employee::where('created_by', $creatorId)->get();
+            $companyPolicies = \App\Models\CompanyPolicy::where('created_by', $creatorId)->get();
 
-            return view('settlement.edit', compact('settlement', 'employees'));
+            return view('settlement.edit', compact('settlement', 'employees', 'companyPolicies'));
         }
 
         return redirect()->back()->with('error', __('Permission denied.'));
@@ -369,6 +375,9 @@ class FullAndFinalSettlementController extends Controller
                 'custom_fields_schema' => $customFieldsSchema,
                 'custom_fields_data' => $existingData,
                 'declaration_text' => $request->input('declaration_text', $settlement->getDeclarationText()),
+                'policy_rules_text' => $request->input('policy_rules_text', $settlement->getPolicyRulesText()),
+                'policy_rules_link' => $request->input('policy_rules_link'),
+                'policy_rules_title' => $request->input('policy_rules_title'),
                 'final_settlement_status' => $request->final_settlement_status ?? $settlement->final_settlement_status,
                 'payment_date' => $request->payment_date,
                 'payment_mode' => $request->payment_mode,
@@ -558,10 +567,14 @@ class FullAndFinalSettlementController extends Controller
             ], 422);
         }
 
-        $request->validate([
+        $validationRules = [
             'employee_declaration' => 'required',
             'employee_signature' => 'required|string',
-        ]);
+        ];
+        if (!empty($settlement->policy_rules_text) || !empty($settlement->policy_rules_link)) {
+            $validationRules['employee_policy_rules'] = 'required';
+        }
+        $request->validate($validationRules);
 
         // Update clearance checklist items with optional employee handover remarks
         $clearanceData = $settlement->clearance_data ?? [];
@@ -586,6 +599,7 @@ class FullAndFinalSettlementController extends Controller
 
         $settlement->update([
             'employee_declaration_accepted' => true,
+            'policy_rules_accepted' => (bool) $request->input('employee_policy_rules', true),
             'employee_signature' => $request->employee_signature,
             'employee_signed_at' => now(),
             'employee_signed_ip' => $request->ip(),

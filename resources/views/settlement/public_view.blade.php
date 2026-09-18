@@ -896,12 +896,48 @@
                                 </div>
                             </div>
 
-                            {{-- Declaration Checkbox --}}
-                            <div class="form-check mb-4 ps-4">
-                                <input class="form-check-input" type="checkbox" id="employee_declaration" name="employee_declaration" value="1" required style="width: 1.25rem; height: 1.25rem; margin-left: -1.75rem; cursor: pointer;">
-                                <label class="form-check-label fw-bold text-dark ms-2 cursor-pointer" for="employee_declaration" style="cursor: pointer; padding-top: 2px;">
+                            {{-- Step 1: Policy & Separation Rules Review & Acceptance Checkbox --}}
+                            @php
+                                $policyText = $settlement->getPolicyRulesText();
+                                $policyLink = $settlement->policy_rules_link;
+                                $policyTitle = $settlement->policy_rules_title ?: __('Company Separation & Exit Policy');
+                                $hasPolicy = !empty($policyText) || !empty($policyLink);
+                            @endphp
+                            @if($hasPolicy)
+                                <div class="policy-rules-box mb-3 p-3 rounded-3" id="policy_rules_container" style="background: #f0f7ff; border: 1.5px solid #bfdbfe; transition: all 0.25s ease;">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom border-primary border-opacity-10">
+                                        <div class="d-flex align-items-center text-primary fw-bold small">
+                                            <i class="ti ti-shield-check fs-5 me-1.5"></i>
+                                            <span>{{ __('Step 1: Review Company Policy & Separation Rules') }}</span>
+                                        </div>
+                                        @if(!empty($policyLink))
+                                            <a href="{{ $policyLink }}" target="_blank" rel="noopener noreferrer" id="view_policy_btn" class="btn btn-sm btn-primary text-white d-inline-flex align-items-center shadow-none" style="padding: 0.25rem 0.75rem; font-size: 0.82rem; font-weight: 600; border-radius: 6px;">
+                                                <i class="ti ti-external-link me-1.5"></i>
+                                                <span>{{ $policyTitle }}</span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                    <div class="form-check ps-4 mb-0">
+                                        <input class="form-check-input" type="checkbox" id="employee_policy_rules" name="employee_policy_rules" value="1" required style="width: 1.25rem; height: 1.25rem; margin-left: -1.75rem; cursor: pointer;">
+                                        <label class="form-check-label fw-bold text-dark ms-2 cursor-pointer" for="employee_policy_rules" style="cursor: pointer; font-size: 0.90rem; line-height: 1.5; padding-top: 1px;">
+                                            {{ $policyText }} <span class="text-danger">*</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Step 2: Declaration & Legal Undertaking Checkbox --}}
+                            <div class="form-check mb-4 ps-4 p-2 rounded-2" id="declaration_check_container" style="transition: all 0.2s ease;">
+                                <input class="form-check-input" type="checkbox" id="employee_declaration" name="employee_declaration" value="1" required {{ $hasPolicy ? 'disabled' : '' }} style="width: 1.25rem; height: 1.25rem; margin-left: -1.75rem; cursor: {{ $hasPolicy ? 'not-allowed' : 'pointer' }};">
+                                <label class="form-check-label fw-bold {{ $hasPolicy ? 'text-muted' : 'text-dark' }} ms-2" id="employee_declaration_label" for="employee_declaration" style="cursor: {{ $hasPolicy ? 'not-allowed' : 'pointer' }}; padding-top: 2px;">
                                     {{ __('I have read, understood, and agree to the declaration and undertaking terms above.') }} <span class="text-danger">*</span>
                                 </label>
+                                @if($hasPolicy)
+                                    <div class="small text-muted mt-1 ps-2" id="declaration_lock_hint">
+                                        <i class="ti ti-lock me-1 text-warning"></i>
+                                        <span>{{ __('Please accept the company policy and rules above first to unlock this confirmation.') }}</span>
+                                    </div>
+                                @endif
                             </div>
 
                             {{-- Section 4 Custom Questions (Undertaking / Employee) --}}
@@ -1155,16 +1191,86 @@
         document.getElementById('dropzoneArea').style.display = 'block';
     }
 
+    // Policy Rules & Declaration Checkbox Sequential Dependency
+    const policyRulesCheckbox = document.getElementById('employee_policy_rules');
+    const declCheckbox = document.getElementById('employee_declaration');
+    const declLabel = document.getElementById('employee_declaration_label');
+    const lockHint = document.getElementById('declaration_lock_hint');
+    const policyContainer = document.getElementById('policy_rules_container');
+    const declContainer = document.getElementById('declaration_check_container');
+
+    if (policyRulesCheckbox && declCheckbox) {
+        policyRulesCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+                declCheckbox.disabled = false;
+                declCheckbox.style.cursor = 'pointer';
+                if (declLabel) {
+                    declLabel.classList.remove('text-muted');
+                    declLabel.classList.add('text-dark');
+                    declLabel.style.cursor = 'pointer';
+                }
+                if (lockHint) lockHint.style.display = 'none';
+                if (policyContainer) {
+                    policyContainer.style.background = '#f0fdf4';
+                    policyContainer.style.borderColor = '#86efac';
+                }
+            } else {
+                declCheckbox.checked = false;
+                declCheckbox.disabled = true;
+                declCheckbox.style.cursor = 'not-allowed';
+                if (declLabel) {
+                    declLabel.classList.remove('text-dark');
+                    declLabel.classList.add('text-muted');
+                    declLabel.style.cursor = 'not-allowed';
+                }
+                if (lockHint) lockHint.style.display = 'block';
+                if (policyContainer) {
+                    policyContainer.style.background = '#f0f7ff';
+                    policyContainer.style.borderColor = '#bfdbfe';
+                }
+            }
+        });
+
+        if (declContainer) {
+            declContainer.addEventListener('click', function (e) {
+                if (declCheckbox.disabled) {
+                    e.preventDefault();
+                    if (policyContainer) {
+                        policyContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        policyContainer.style.borderColor = '#ef4444';
+                        setTimeout(() => {
+                            policyContainer.style.borderColor = policyRulesCheckbox.checked ? '#86efac' : '#bfdbfe';
+                        }, 1800);
+                    }
+                    if (policyRulesCheckbox) policyRulesCheckbox.focus();
+                }
+            });
+        }
+    }
+
     // Form Submission
     const clearanceForm = document.getElementById('settlementClearanceForm');
     if (clearanceForm) {
         clearanceForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const declCheckbox = document.getElementById('employee_declaration');
+            // Validate Step 1: Policy & Rules Checkbox (if present)
+            if (policyRulesCheckbox && !policyRulesCheckbox.checked) {
+                alert('Please review and check the Company Policy & Rules box (Step 1) before proceeding.');
+                if (policyContainer) {
+                    policyContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    policyContainer.style.borderColor = '#ef4444';
+                    setTimeout(() => { policyContainer.style.borderColor = '#bfdbfe'; }, 2000);
+                }
+                policyRulesCheckbox.focus();
+                return;
+            }
+
+            // Validate Step 2: Declaration & Legal Undertaking Checkbox
             if (!declCheckbox.checked) {
-                alert('Please check the declaration box to confirm your undertaking.');
+                alert('Please check the declaration box to confirm your legal undertaking (Step 2).');
                 declCheckbox.focus();
+                declCheckbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
 
@@ -1235,6 +1341,7 @@
                 },
                 body: JSON.stringify({
                     employee_declaration: 1,
+                    employee_policy_rules: policyRulesCheckbox && policyRulesCheckbox.checked ? 1 : 0,
                     employee_signature: finalSignature,
                     employee_remarks: remarks,
                     clearance_items: clearanceItems,
