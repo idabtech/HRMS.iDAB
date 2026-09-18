@@ -452,6 +452,13 @@
     @foreach($pdfParagraphs as $p)
         <p style="margin-bottom: 6px; margin-top: 0;">{{ $p }}</p>
     @endforeach
+
+    <div style="margin-top: 8px; padding: 6px 8px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; font-size: 9px; color: #1e3a8a;">
+        <strong>{{ __('Company Policy & Rules:') }}</strong> {{ $settlement->getPolicyRulesText() }}
+        @if(!empty($settlement->policy_rules_link))
+            <br><span style="color: #2563eb; font-weight: bold;">{{ __('Policy Reference Link:') }}</span> <a href="{{ $settlement->policy_rules_link }}" target="_blank" style="color: #2563eb; text-decoration: underline;">{{ $settlement->policy_rules_title ?: $settlement->policy_rules_link }}</a>
+        @endif
+    </div>
 </div>
 
 {{-- Disbursal & Payment Settlement Record Strip --}}

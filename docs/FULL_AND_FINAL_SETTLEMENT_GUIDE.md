@@ -135,9 +135,11 @@ Real-time dual-table financial calculator:
 - HR departments can pre-approve and certify cleared items directly before sending the form.
 - **In-Section Custom Questions (`assets`)**: Add laptop serial numbers, BYOD remote wipe declarations, access badge returns.
 
-### Section 4 — Employee Handover & Legal Undertaking
+### Section 4 — Employee Handover, Policy & Legal Undertaking
 - **Custom Legal Declaration Terms**: A dedicated editor allows HR to customize exact legal terms, non-compete clauses, and IP undertakings.
 - **Reset to Default Terms**: One-click button reverts to company standard legal wording.
+- **Policy & Rules Attachment**: HR can attach an external document URL or select directly from existing HRMS Company Policies. Includes an editable agreement statement line and custom link button label (e.g., *Company Separation & Exit Policy*).
+- **Interactive Policy Review on Public View**: Displayed directly above the declaration confirmation checkbox with a prominent clickable button opening the policy document in a new tab.
 - **In-Section Custom Questions (`employee`)**: Add questions departing employees must complete online before signing (e.g. personal email, forwarding address).
 
 ### Section 5 — Management Sign-off & Payment Information (Edit Mode)
@@ -153,7 +155,7 @@ Every settlement receives a **64-character encrypted token URL** that does not e
 
 | Sharing Channel | Action |
 |---|---|
-| **📧 Auto Email** | Click **Send to Employee**. Sends a formatted HTML email with net payable amount and a direct **"Open Clearance Form"** button. |
+| **📧 Auto Email** | Click **Send to Employee**. Opens an interactive modal allowing HR to customize the recipient email (pre-filled from profile, editable to any personal/alternate email), adjust the subject, and personalize instructions before dispatching. |
 | **💬 WhatsApp** | Click **Share on WhatsApp**. Opens an interactive modal where HR can personalize/modify the message, specify an optional phone number, or reset to standard template before opening in WhatsApp. |
 | **🔗 Copy Link** | One-click button copies the URL to your clipboard for Slack, Teams, or manual email. |
 | **🔄 Link Expiry & Regeneration** | Links expire in 30 days. HR can click **Regenerate Link** at any time to generate a fresh token and extend validity by 30 days. |
@@ -170,7 +172,8 @@ The employee opens the secure public view on any browser (mobile, tablet, or des
 3. **Section 3**: Departmental clearance status (see details below).
 4. **Section 4 — Formal Sign-Off**:
    - Reads company-configured legal undertaking.
-   - Checks mandatory declaration confirmation.
+   - **Reviews Policy & Rules Document**: Clicks the direct policy link to review all separation and conduct rules.
+   - Checks mandatory declaration and policy agreement confirmation.
    - Completes any required employee questionnaire fields.
    - Enters optional remarks or forwarding contact information.
    - **Digital Signature**: Draws on canvas (with touch-action support for mobile) or uploads signature image.

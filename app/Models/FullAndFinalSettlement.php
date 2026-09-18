@@ -31,6 +31,10 @@ class FullAndFinalSettlement extends Model
         'custom_fields_schema',
         'custom_fields_data',
         'declaration_text',
+        'policy_rules_text',
+        'policy_rules_link',
+        'policy_rules_title',
+        'policy_rules_accepted',
         'employee_declaration_accepted',
         'employee_signature',
         'employee_signed_at',
@@ -63,6 +67,7 @@ class FullAndFinalSettlement extends Model
         'custom_fields_schema' => 'array',
         'custom_fields_data' => 'array',
         'activity_logs' => 'array',
+        'policy_rules_accepted' => 'boolean',
         'employee_declaration_accepted' => 'boolean',
         'date_of_joining' => 'date',
         'last_working_day' => 'date',
@@ -262,5 +267,21 @@ class FullAndFinalSettlement extends Model
     public function getDeclarationText(): string
     {
         return !empty(trim($this->declaration_text ?? '')) ? $this->declaration_text : self::defaultDeclarationText();
+    }
+
+    /**
+     * Default policy & rules confirmation statement
+     */
+    public static function defaultPolicyRulesText(): string
+    {
+        return "I confirm that I have reviewed the applicable company policy and exit rules, and agree to abide by all post-employment terms.";
+    }
+
+    /**
+     * Get the active policy rules text or fallback to default
+     */
+    public function getPolicyRulesText(): string
+    {
+        return !empty(trim($this->policy_rules_text ?? '')) ? $this->policy_rules_text : self::defaultPolicyRulesText();
     }
 }

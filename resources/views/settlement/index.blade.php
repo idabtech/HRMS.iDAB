@@ -191,8 +191,15 @@
                                                     {{-- Send Mail --}}
                                                     @can('Send Settlement Mail')
                                                         <div class="action-btn bg-warning me-2">
-                                                            <a href="{{ route('settlement.send.mail', $settlement->id) }}"
-                                                                class="mx-3 btn btn-sm align-items-center"
+                                                            <a href="javascript:void(0)"
+                                                                class="mx-3 btn btn-sm align-items-center open-email-modal"
+                                                                data-id="{{ $settlement->id }}"
+                                                                data-name="{{ $settlement->employee_name }}"
+                                                                data-code="{{ $settlement->employee_code }}"
+                                                                data-email="{{ $settlement->employee->email ?? '' }}"
+                                                                data-number="{{ $settlement->settlement_number }}"
+                                                                data-url="{{ $settlement->public_url }}"
+                                                                data-action="{{ route('settlement.send.mail', $settlement->id) }}"
                                                                 data-bs-toggle="tooltip" title=""
                                                                 data-bs-original-title="{{ __('Send Form via Email') }}">
                                                                 <span class="text-white"><i class="ti ti-mail"></i></span>
@@ -345,6 +352,87 @@
             </div>
         </div>
     </div>
+
+    {{-- Send Email Custom Message Modal (Index) --}}
+    <div class="modal fade" id="indexEmailModal" tabindex="-1" aria-labelledby="indexEmailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <form action="" method="POST" id="indexEmailForm">
+                    @csrf
+                    <div class="modal-header bg-warning text-white py-3">
+                        <h5 class="modal-title text-white d-flex align-items-center gap-2" id="indexEmailModalLabel">
+                            <i class="ti ti-mail fs-3"></i> {{ __('Send Clearance Form via Email') }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Recipient Employee') }}</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light"><i class="ti ti-user"></i></span>
+                                    <input type="text" id="modalEmailRecipientName" class="form-control bg-light" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-dark small text-uppercase d-flex justify-content-between align-items-center">
+                                    <span>
+                                        {{ __('Recipient Email Address') }} <span class="text-danger">*</span>
+                                    </span>
+                                    <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnIndexResetEmail" style="display: none;">
+                                        <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Profile Email') }}
+                                    </button>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light"><i class="ti ti-mail"></i></span>
+                                    <input type="email" id="modalEmailRecipientAddress" name="recipient_email" class="form-control" 
+                                        placeholder="{{ __('e.g. employee.personal@gmail.com') }}" required>
+                                </div>
+                                <small class="text-muted fs-8 d-block mt-1">
+                                    <i class="ti ti-edit text-primary me-1"></i>
+                                    {{ __('Pre-filled from employee profile. You can edit this to any personal or alternate email address.') }}
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Email Subject') }}</label>
+                            <input type="text" id="modalEmailSubject" name="email_subject" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-bold text-dark small text-uppercase mb-0">{{ __('Custom Email Message') }}</label>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnIndexResetEmailMessage">
+                                    <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Default') }}
+                                </button>
+                            </div>
+                            <textarea id="modalEmailCustomMessage" name="custom_message" class="form-control font-sans" rows="6" placeholder="{{ __('Type your message here...') }}"></textarea>
+                            <small class="text-muted fs-8 mt-1 d-block">
+                                <i class="ti ti-info-circle"></i> {{ __('You can freely customize this message, add instructions, or specify personal contact requests.') }}
+                            </small>
+                        </div>
+
+                        <div class="p-3 bg-light rounded border">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small text-dark"><i class="ti ti-link me-1"></i>{{ __('Clearance Form URL (Included in Email):') }}</span>
+                                <button type="button" class="btn btn-xs btn-outline-secondary copy-settlement-link" id="modalEmailCopyBtn" data-url="">
+                                    <i class="ti ti-copy"></i> {{ __('Copy') }}
+                                </button>
+                            </div>
+                            <div id="modalEmailUrlDisplay" class="small text-muted text-break font-monospace"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light py-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="submit" class="btn btn-warning text-white" id="btnIndexSendEmailSubmit">
+                            <i class="ti ti-send me-1"></i> {{ __('Send Email Now') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script-page')
@@ -429,6 +517,63 @@
 
         window.open(waUrl, '_blank');
         $('#indexWhatsappModal').modal('hide');
+    });
+
+    // Index Email Modal Handler
+    var currentSelectedEmpEmail = '';
+    var currentSelectedEmpEmailName = '';
+    var currentSelectedEmpEmailUrl = '';
+    var currentSelectedSettlementNumber = '';
+
+    $(document).on('click', '.open-email-modal', function () {
+        var name = $(this).data('name') || '';
+        var code = $(this).data('code') || '';
+        var email = $(this).data('email') || '';
+        var number = $(this).data('number') || '';
+        var url = $(this).data('url') || '';
+        var action = $(this).data('action') || '';
+
+        currentSelectedEmpEmail = email;
+        currentSelectedEmpEmailName = name;
+        currentSelectedEmpEmailUrl = url;
+        currentSelectedSettlementNumber = number;
+
+        $('#indexEmailForm').attr('action', action);
+        $('#modalEmailRecipientName').val(name + (code ? ' (' + code + ')' : ''));
+        $('#modalEmailRecipientAddress').val(email);
+        if (email) {
+            $('#btnIndexResetEmail').show();
+        } else {
+            $('#btnIndexResetEmail').hide();
+        }
+
+        $('#modalEmailSubject').val('{{ __("Full & Final Settlement & Clearance — ") }}' + number);
+        $('#modalEmailCopyBtn').attr('data-url', url);
+        $('#modalEmailUrlDisplay').text(url);
+
+        var defaultMsg = "Dear " + name + ",\n\n" +
+            "Your Full & Final Settlement and Departmental Clearance statement (Ref: " + number + ") has been prepared for review.\n\n" +
+            "Please review your financial breakdown, departmental clearance checkpoints, and submit your digital sign-off using the link below:\n\n" +
+            url + "\n\n" +
+            "Regards,\n" + {!! json_encode(\Auth::user()->name ?? 'HR Operations Team') !!};
+
+        $('#modalEmailCustomMessage').val(defaultMsg);
+
+        $('#indexEmailModal').modal('show');
+    });
+
+    $('#btnIndexResetEmail').on('click', function () {
+        $('#modalEmailRecipientAddress').val(currentSelectedEmpEmail);
+    });
+
+    $('#btnIndexResetEmailMessage').on('click', function () {
+        var defaultMsg = "Dear " + currentSelectedEmpEmailName + ",\n\n" +
+            "Your Full & Final Settlement and Departmental Clearance statement (Ref: " + currentSelectedSettlementNumber + ") has been prepared for review.\n\n" +
+            "Please review your financial breakdown, departmental clearance checkpoints, and submit your digital sign-off using the link below:\n\n" +
+            currentSelectedEmpEmailUrl + "\n\n" +
+            "Regards,\n" + {!! json_encode(\Auth::user()->name ?? 'HR Operations Team') !!};
+
+        $('#modalEmailCustomMessage').val(defaultMsg);
     });
 </script>
 @endpush

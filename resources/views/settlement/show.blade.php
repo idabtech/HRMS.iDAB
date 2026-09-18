@@ -62,8 +62,9 @@
 
         {{-- Send Mail --}}
         @can('Send Settlement Mail')
-            <a href="{{ route('settlement.send.mail', $settlement->id) }}" class="btn btn-sm btn-warning text-white"
-                data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Send to Employee') }}">
+            <a href="javascript:void(0)" class="btn btn-sm btn-warning text-white"
+                onclick="$('#emailShareModal').modal('show');"
+                data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Send Email to Employee') }}">
                 <i class="ti ti-mail"></i>
             </a>
         @endcan
@@ -425,6 +426,26 @@
                         </div>
                     </div>
 
+                    {{-- Policy & Rules Information --}}
+                    <div class="mb-3 p-2.5 rounded bg-light border">
+                        <div class="d-flex align-items-start justify-content-between gap-2">
+                            <div>
+                                <span class="text-muted small d-block mb-1">
+                                    <i class="ti ti-shield-check text-primary me-1"></i><strong>{{ __('Company Policy & Separation Rules:') }}</strong>
+                                    @if($settlement->policy_rules_accepted || $settlement->employee_declaration_accepted)
+                                        <span class="badge bg-success-subtle text-success ms-1"><i class="ti ti-check me-0.5"></i>{{ __('Accepted by Employee') }}</span>
+                                    @endif
+                                </span>
+                                <div class="small text-dark">{{ $settlement->getPolicyRulesText() }}</div>
+                            </div>
+                            @if(!empty($settlement->policy_rules_link))
+                                <a href="{{ $settlement->policy_rules_link }}" target="_blank" class="btn btn-xs btn-outline-primary flex-shrink-0 mt-1">
+                                    <i class="ti ti-external-link me-1"></i>{{ $settlement->policy_rules_title ?: __('View Policy') }}
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
                     {{-- Custom Employee Questions --}}
                     @if (!empty($fieldsBySection['employee']))
                         <div class="mb-3">
@@ -477,9 +498,9 @@
                                 <button type="button" class="btn btn-sm btn-success" onclick="$('#whatsappShareModal').modal('show');">
                                     <i class="ti ti-brand-whatsapp"></i> {{ __('Share on WhatsApp') }}
                                 </button>
-                                <a href="{{ route('settlement.send.mail', $settlement->id) }}" class="btn btn-sm btn-warning text-white">
+                                <button type="button" class="btn btn-sm btn-warning text-white" onclick="$('#emailShareModal').modal('show');">
                                     <i class="ti ti-mail"></i> {{ __('Send Email') }}
-                                </a>
+                                </button>
                             </div>
                         </div>
                     @endif
@@ -961,6 +982,91 @@
             </div>
         </div>
     </div>
+
+    {{-- Send Email Custom Message Modal --}}
+    <div class="modal fade" id="emailShareModal" tabindex="-1" aria-labelledby="emailShareModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <form action="{{ route('settlement.send.mail', $settlement->id) }}" method="POST" id="emailShareForm">
+                    @csrf
+                    <div class="modal-header bg-warning text-white py-3">
+                        <h5 class="modal-title text-white d-flex align-items-center gap-2" id="emailShareModalLabel">
+                            <i class="ti ti-mail fs-3"></i> {{ __('Send Clearance Form via Email') }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Recipient Employee') }}</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light"><i class="ti ti-user"></i></span>
+                                    <input type="text" class="form-control bg-light" value="{{ $settlement->employee_name }} ({{ $settlement->employee_code }})" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-dark small text-uppercase d-flex justify-content-between align-items-center">
+                                    <span>
+                                        {{ __('Recipient Email Address') }} <span class="text-danger">*</span>
+                                    </span>
+                                    @if(!empty($settlement->employee->email))
+                                        <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnResetEmailAddress">
+                                            <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Profile Email') }}
+                                        </button>
+                                    @endif
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light"><i class="ti ti-mail"></i></span>
+                                    <input type="email" id="emailRecipientAddress" name="recipient_email" class="form-control" 
+                                        placeholder="{{ __('e.g. employee.personal@gmail.com') }}" 
+                                        value="{{ $settlement->employee->email ?? '' }}" required>
+                                </div>
+                                <small class="text-muted fs-8 d-block mt-1">
+                                    <i class="ti ti-edit text-primary me-1"></i>
+                                    {{ __('Pre-filled from employee profile. You can edit this to any personal or alternate email address.') }}
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Email Subject') }}</label>
+                            <input type="text" id="emailSubject" name="email_subject" class="form-control"
+                                value="{{ __('Full & Final Settlement & Clearance — ') . $settlement->settlement_number }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-bold text-dark small text-uppercase mb-0">{{ __('Custom Email Message') }}</label>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnResetEmailMessage">
+                                    <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Default') }}
+                                </button>
+                            </div>
+                            <textarea id="emailCustomMessage" name="custom_message" class="form-control font-sans" rows="6" placeholder="{{ __('Type your message here...') }}"></textarea>
+                            <small class="text-muted fs-8 mt-1 d-block">
+                                <i class="ti ti-info-circle"></i> {{ __('You can freely customize this message, add instructions, or specify personal contact requests.') }}
+                            </small>
+                        </div>
+
+                        <div class="p-3 bg-light rounded border">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small text-dark"><i class="ti ti-link me-1"></i>{{ __('Clearance Form URL (Included in Email):') }}</span>
+                                <button type="button" class="btn btn-xs btn-outline-secondary copy-settlement-link" data-url="{{ $settlement->public_url }}">
+                                    <i class="ti ti-copy"></i> {{ __('Copy') }}
+                                </button>
+                            </div>
+                            <div class="small text-muted text-break font-monospace">{{ $settlement->public_url }}</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light py-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="submit" class="btn btn-warning text-white" id="btnSendEmailSubmit">
+                            <i class="ti ti-send me-1"></i> {{ __('Send Email Now') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script-page')
@@ -1010,6 +1116,31 @@
 
         window.open(url, '_blank');
         $('#whatsappShareModal').modal('hide');
+    });
+
+    // Email Message & Recipient Customizer
+    var originalEmpEmail = {!! json_encode($settlement->employee->email ?? '') !!};
+    var defaultEmailTemplate = "Dear " + {!! json_encode($settlement->employee_name) !!} + ",\n\n" +
+        "Your Full & Final Settlement and Departmental Clearance statement (Ref: " + {!! json_encode($settlement->settlement_number) !!} + ") has been prepared for review.\n\n" +
+        "Please review your financial breakdown, departmental clearance checkpoints, and submit your digital sign-off using the link below:\n\n" +
+        {!! json_encode($settlement->public_url) !!} + "\n\n" +
+        "Regards,\n" + {!! json_encode(\Auth::user()->name ?? 'HR Operations Team') !!};
+
+    $('#emailShareModal').on('show.bs.modal', function () {
+        if (!$('#emailCustomMessage').val()) {
+            $('#emailCustomMessage').val(defaultEmailTemplate);
+        }
+        if (!$('#emailRecipientAddress').val() && originalEmpEmail) {
+            $('#emailRecipientAddress').val(originalEmpEmail);
+        }
+    });
+
+    $('#btnResetEmailAddress').on('click', function () {
+        $('#emailRecipientAddress').val(originalEmpEmail);
+    });
+
+    $('#btnResetEmailMessage').on('click', function () {
+        $('#emailCustomMessage').val(defaultEmailTemplate);
     });
 
     // Setup signature canvas helper

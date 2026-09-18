@@ -492,6 +492,64 @@
                         <textarea name="declaration_text" id="declaration_text" class="form-control font-monospace" rows="6" required style="line-height: 1.6; font-size: 13px;">{{ old('declaration_text', $settlement->getDeclarationText()) }}</textarea>
                     </div>
     
+                    {{-- Policy & Exit Rules Link Attachment --}}
+                    <div class="card border mb-3 bg-light-subtle">
+                        <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark small text-uppercase">
+                                <i class="ti ti-link text-info me-1"></i> {{ __('Policy & Rules Attachment (Shown Above Sign-off Checkbox)') }}
+                            </span>
+                            <span class="badge bg-info-subtle text-info small">{{ __('Interactive Policy Link') }}</span>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-2">
+                                <div class="col-md-12 mb-2">
+                                    <label class="form-label small fw-bold text-dark">{{ __('Policy Agreement Statement Line') }}</label>
+                                    <input type="text" name="policy_rules_text" id="policy_rules_text" class="form-control form-control-sm"
+                                        value="{{ old('policy_rules_text', $settlement->getPolicyRulesText()) }}"
+                                        placeholder="{{ __('e.g. I confirm that I have reviewed the company policy and separation rules...') }}">
+                                    <small class="text-muted fs-8">{{ __('This line is highlighted directly above the declaration confirmation checkbox for the employee.') }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small fw-bold text-dark d-flex justify-content-between">
+                                        <span>{{ __('Attach Policy Document Link / URL') }}</span>
+                                        @if(isset($companyPolicies) && count($companyPolicies) > 0)
+                                            <span class="text-primary small fw-normal">{{ __('Or pick from policies below') }}</span>
+                                        @endif
+                                    </label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light"><i class="ti ti-link"></i></span>
+                                        <input type="url" name="policy_rules_link" id="policy_rules_link" class="form-control"
+                                            value="{{ old('policy_rules_link', $settlement->policy_rules_link) }}"
+                                            placeholder="{{ __('https://... or link to document') }}">
+                                    </div>
+                                    @if(isset($companyPolicies) && count($companyPolicies) > 0)
+                                        <div class="mt-1">
+                                            <select class="form-select form-select-xs select-policy-preset" style="font-size: 11px; padding: 2px 6px;">
+                                                <option value="">{{ __('-- Select an existing Company Policy --') }}</option>
+                                                @foreach($companyPolicies as $policy)
+                                                    @php
+                                                        $policyFile = !empty($policy->attachment) ? \App\Models\Utility::get_file('uploads/companyPolicy') . '/' . $policy->attachment : '';
+                                                    @endphp
+                                                    <option value="{{ $policyFile }}" data-title="{{ $policy->title }}">{{ $policy->title }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small fw-bold text-dark">{{ __('Policy Link Title / Button Label') }}</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light"><i class="ti ti-file-text"></i></span>
+                                        <input type="text" name="policy_rules_title" id="policy_rules_title" class="form-control"
+                                            value="{{ old('policy_rules_title', $settlement->policy_rules_title ?? 'Company Separation & Exit Policy') }}"
+                                            placeholder="{{ __('e.g. Employee Handbook / Exit Rules Policy') }}">
+                                    </div>
+                                    <small class="text-muted fs-8">{{ __('Label displayed on the clickable link pill on public clearance page & PDF.') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="p-3 bg-light rounded small text-muted border mb-3">
                         <i class="ti ti-info-circle text-primary me-1"></i>
                         {{ __('The digital signature canvas and confirmation checkbox will be presented to the employee automatically. You can also add specific custom questions for the employee to answer below.') }}
@@ -800,6 +858,17 @@
 
     $('#settlementEditForm').on('submit', function () {
         reindexCustomFields();
+    });
+
+    $(document).on('change', '.select-policy-preset', function () {
+        const url = $(this).val();
+        const title = $(this).find('option:selected').data('title');
+        if (url) {
+            $('#policy_rules_link').val(url);
+            if (title) {
+                $('#policy_rules_title').val(title);
+            }
+        }
     });
 
     recalculateTotals();
