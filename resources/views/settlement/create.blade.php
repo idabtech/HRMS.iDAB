@@ -491,6 +491,24 @@
         $(target).remove();
     });
 
+    // Reindex custom fields on submit to ensure array indexes match controller expectations
+    function reindexCustomFields() {
+        $('.gform-builder-card').each(function(idx) {
+            $(this).find('[name^="custom_field_label"]').attr('name', `custom_field_label[${idx}]`);
+            $(this).find('[name^="custom_field_section"]').attr('name', `custom_field_section[${idx}]`);
+            $(this).find('[name^="custom_field_key"]').attr('name', `custom_field_key[${idx}]`);
+            $(this).find('[name^="custom_field_type"]').attr('name', `custom_field_type[${idx}]`);
+            $(this).find('[name^="custom_field_target"]').attr('name', `custom_field_target[${idx}]`);
+            $(this).find('[name^="custom_field_options"]').attr('name', `custom_field_options[${idx}]`);
+            $(this).find('[name^="custom_field_value"]').attr('name', `custom_field_value[${idx}]`);
+            $(this).find('[name^="custom_field_required"]').attr('name', `custom_field_required[${idx}]`);
+        });
+    }
+
+    $('#settlementForm').on('submit', function () {
+        reindexCustomFields();
+    });
+
     recalculateTotals();
 </script>
 @endpush
