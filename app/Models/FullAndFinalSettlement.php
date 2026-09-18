@@ -30,6 +30,7 @@ class FullAndFinalSettlement extends Model
         'clearance_data',
         'custom_fields_schema',
         'custom_fields_data',
+        'declaration_text',
         'employee_declaration_accepted',
         'employee_signature',
         'employee_signed_at',
@@ -245,5 +246,21 @@ class FullAndFinalSettlement extends Model
             ['category' => 'Network & VPN', 'item' => 'VPN, SSH keys, remote desktop & staging environment credentials revoked', 'status' => 'Pending'],
             ['category' => 'Handover & Knowledge', 'item' => 'Pending sprint tasks, tickets & documentation handed over to lead', 'status' => 'Pending'],
         ];
+    }
+
+    /**
+     * Default legal declaration & undertaking text
+     */
+    public static function defaultDeclarationText(): string
+    {
+        return "I confirm that I have completed the required handover and returned all company property, documents, data, and information in my possession. I further confirm that, except for the amount stated as payable in this settlement, I have no further financial or employment-related claims against the Company, subject to applicable law and the terms of my employment agreement.\n\nI agree that, for a period of three (3) months after my last working day, I will remain reasonably available to provide necessary assistance to the Company, if required. I further undertake that I will not copy, reproduce, misuse, replicate, or develop any Company product, software, code, design, confidential information, or proprietary material for personal or third-party use, either directly or indirectly, after resignation from my employment.";
+    }
+
+    /**
+     * Get the active declaration text or fallback to default
+     */
+    public function getDeclarationText(): string
+    {
+        return !empty(trim($this->declaration_text ?? '')) ? $this->declaration_text : self::defaultDeclarationText();
     }
 }

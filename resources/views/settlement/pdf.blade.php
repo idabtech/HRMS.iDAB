@@ -398,6 +398,19 @@
 
 {{-- SECTION D: CUSTOM QUESTIONNAIRE & RECORDS (If configured) --}}
 @if (!empty($settlement->custom_fields_schema))
+@php
+    $sectionLabels = [
+        'separation' => __('Section 1: Separation Details'),
+        'financial' => __('Section 2: Financial Breakdown'),
+        'assets' => __('Section 3: Clearance & Handover Checklist'),
+        'employee' => __('Section 4: Undertaking & Employee Info'),
+    ];
+    $pdfFieldsBySection = [];
+    foreach ($settlement->custom_fields_schema as $field) {
+        $secKey = $field['section'] ?? 'employee';
+        $pdfFieldsBySection[$secKey][] = $field;
+    }
+@endphp
 <div class="sec-title">SECTION D: CUSTOM QUESTIONNAIRE & ADDITIONAL RECORDS</div>
 <table>
     <thead>
@@ -407,17 +420,24 @@
         </tr>
     </thead>
     <tbody>
-        @foreach ($settlement->custom_fields_schema as $field)
-            <tr>
-                <td><strong>{{ $field['label'] }}</strong></td>
-                <td>
-                    @if(($field['type'] ?? '') === 'date' && !empty($settlement->custom_fields_data[$field['key']]))
-                        {{ $settlement->formatDate($settlement->custom_fields_data[$field['key']]) }}
-                    @else
-                        {{ $settlement->custom_fields_data[$field['key']] ?? '-' }}
-                    @endif
+        @foreach ($pdfFieldsBySection as $secKey => $secFields)
+            <tr style="background-color: #f1f5f9;">
+                <td colspan="2" style="font-weight: bold; color: #1e293b; font-size: 11px; padding: 6px 8px; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1;">
+                    {{ $sectionLabels[$secKey] ?? ucfirst($secKey) }}
                 </td>
             </tr>
+            @foreach ($secFields as $field)
+                <tr>
+                    <td style="padding-left: 14px;"><strong>{{ $field['label'] }}</strong></td>
+                    <td>
+                        @if(($field['type'] ?? '') === 'date' && !empty($settlement->custom_fields_data[$field['key']]))
+                            {{ $settlement->formatDate($settlement->custom_fields_data[$field['key']]) }}
+                        @else
+                            {{ $settlement->custom_fields_data[$field['key']] ?? '-' }}
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
         @endforeach
     </tbody>
 </table>
@@ -426,60 +446,114 @@
 {{-- SECTION E: MULTI-STAGE SIGN-OFF & FINAL VERIFICATION --}}
 <div class="sec-title">SECTION E: MULTI-STAGE SIGN-OFF & FINAL VERIFICATION</div>
 <div class="declaration">
-    I confirm that I have completed the required handover and returned all company property, software code, credentials, documents, and data in my possession. Except for the amount stated as payable in this settlement, I have no further claims against the Company. For a period of three (3) months, I will remain reasonably available for handover assistance. I undertake not to copy, replicate, or misuse any company code, designs, or proprietary material.
+    @php
+        $pdfParagraphs = array_filter(array_map('trim', explode("\n", $settlement->getDeclarationText())));
+    @endphp
+    @foreach($pdfParagraphs as $p)
+        <p style="margin-bottom: 6px; margin-top: 0;">{{ $p }}</p>
+    @endforeach
 </div>
 
-<table class="sig-block" style="border: none; width: 100%; margin-top: 12px; border-collapse: collapse;">
+{{-- Disbursal & Payment Settlement Record Strip --}}
+@if($settlement->payment_date || $settlement->payment_mode || $settlement->payment_reference_no || $settlement->final_settlement_status === 'Cleared')
+    <div style="margin-top: 10px; margin-bottom: 10px; padding: 7px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #10b981; border-radius: 4px; font-size: 9.5px;">
+        <table style="width: 100%; border: none; border-collapse: collapse;">
+            <tr style="border: none;">
+                <td style="border: none; width: 25%; padding: 2px;">
+                    <span style="color: #64748b; font-size: 8.5px; text-transform: uppercase;">{{ __('Settlement Status') }}:</span><br>
+                    <strong style="color: {{ $settlement->final_settlement_status === 'Cleared' ? '#059669' : '#d97706' }};">
+                        {{ $settlement->final_settlement_status === 'Cleared' ? __('Cleared & Paid') : __('Disbursal Pending') }}
+                    </strong>
+                </td>
+                <td style="border: none; width: 25%; padding: 2px;">
+                    <span style="color: #64748b; font-size: 8.5px; text-transform: uppercase;">{{ __('Payment Mode') }}:</span><br>
+                    <strong style="color: #1e293b;">{{ $settlement->payment_mode ?: '—' }}</strong>
+                </td>
+                <td style="border: none; width: 25%; padding: 2px;">
+                    <span style="color: #64748b; font-size: 8.5px; text-transform: uppercase;">{{ __('Disbursal Date') }}:</span><br>
+                    <strong style="color: #1e293b;">{{ $settlement->payment_date ? $settlement->formatDate($settlement->payment_date) : '—' }}</strong>
+                </td>
+                <td style="border: none; width: 25%; padding: 2px;">
+                    <span style="color: #64748b; font-size: 8.5px; text-transform: uppercase;">{{ __('UTR / Ref No.') }}:</span><br>
+                    <strong style="color: #1e293b; font-family: monospace;">{{ $settlement->payment_reference_no ?: '—' }}</strong>
+                </td>
+            </tr>
+        </table>
+    </div>
+@endif
+
+<table class="sig-block" style="border: none; width: 100%; margin-top: 10px; border-collapse: collapse;">
     <tr style="border: none;">
-        {{-- Stage 1: Employee --}}
+        {{-- Stage 1: Employee Acceptance --}}
         <td style="border: 1px solid #cbd5e1; width: 33.33%; text-align: center; padding: 10px; vertical-align: bottom; background: #ffffff;">
+            <div style="font-size: 9px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px;">
+                {{ __('Separating Employee') }}
+            </div>
             @if ($settlement->employee_signature)
                 <img src="{{ $settlement->employee_signature }}" style="max-height: 50px; max-width: 90%; object-fit: contain;"><br>
             @else
-                <div style="height: 50px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px;">[ {{ __('Pending') }} ]</div>
+                <div style="height: 50px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px;">[ {{ __('Pending Acceptance') }} ]</div>
             @endif
-            <strong style="color: #1e293b;">{{ $settlement->employee_name }}</strong><br>
-            <span style="font-size: 9.5px; color: #64748b;">(Separating Employee)</span><br>
-            <span style="font-size: 9px; color: #64748b;">
-                {{ $settlement->employee_signed_at ? 'Signed: ' . $settlement->formatDate($settlement->employee_signed_at, true) : 'Signature Pending' }}
-            </span>
-            @if($settlement->employee_signed_ip)
-                <br><span style="font-size: 8px; color: #94a3b8;">IP: {{ $settlement->employee_signed_ip }}</span>
-            @endif
+            <div style="border-top: 1px dashed #cbd5e1; margin-top: 5px; padding-top: 5px;">
+                <strong style="color: #1e293b; font-size: 11px;">{{ $settlement->employee_name }}</strong><br>
+                <span style="font-size: 9px; color: #475569;">{{ $settlement->designation ?: __('Employee') }} ({{ $settlement->employee_code }})</span><br>
+                <span style="font-size: 8.5px; color: #64748b;">
+                    {{ $settlement->employee_signed_at ? __('Signed: ') . $settlement->formatDate($settlement->employee_signed_at, true) : __('Signature Pending') }}
+                </span>
+                @if($settlement->employee_signed_ip)
+                    <br><span style="font-size: 8px; color: #94a3b8;">IP: {{ $settlement->employee_signed_ip }}</span>
+                @endif
+            </div>
         </td>
 
-        {{-- Stage 2: Manager / HOD --}}
+        {{-- Stage 2: Manager / HOD Verification --}}
         <td style="border: 1px solid #cbd5e1; width: 33.33%; text-align: center; padding: 10px; vertical-align: bottom; background: #ffffff;">
+            <div style="font-size: 9px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px;">
+                {{ __('Department Verification') }}
+            </div>
             @if ($settlement->manager_signature)
                 <img src="{{ $settlement->manager_signature }}" style="max-height: 50px; max-width: 90%; object-fit: contain;"><br>
             @else
-                <div style="height: 50px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px;">[ {{ __('Pending') }} ]</div>
+                <div style="height: 50px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px;">[ {{ __('Pending Verification') }} ]</div>
             @endif
-            <strong style="color: #1e293b;">{{ $settlement->manager_name ?: 'Department Manager / HOD' }}</strong><br>
-            <span style="font-size: 9.5px; color: #64748b;">(Department Verification)</span><br>
-            <span style="font-size: 9px; color: #64748b;">
-                {{ $settlement->manager_signed_at ? 'Countersigned: ' . $settlement->formatDate($settlement->manager_signed_at, true) : 'Countersign Pending' }}
-            </span>
+            <div style="border-top: 1px dashed #cbd5e1; margin-top: 5px; padding-top: 5px;">
+                <strong style="color: #1e293b; font-size: 11px;">{{ $settlement->manager_name ?: ($settlement->hr_representative_name ?: __('HR / Department Manager')) }}</strong><br>
+                <span style="font-size: 9px; color: #475569;">{{ __('HR / Department Manager') }}</span><br>
+                <span style="font-size: 8.5px; color: #64748b;">
+                    {{ $settlement->manager_signed_at ? __('Verified: ') . $settlement->formatDate($settlement->manager_signed_at, true) : __('Verification Pending') }}
+                </span>
+                @if($settlement->manager_remarks)
+                    <br><span style="font-size: 8px; color: #64748b; font-style: italic;">"{{ Str::limit($settlement->manager_remarks, 38) }}"</span>
+                @endif
+            </div>
         </td>
 
-        {{-- Stage 3: Management Signatory --}}
+        {{-- Stage 3: Company Authorized Signatory --}}
         <td style="border: 1px solid #cbd5e1; width: 33.34%; text-align: center; padding: 10px; vertical-align: bottom; background: #ffffff;">
+            <div style="font-size: 9px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px;">
+                {{ __('For ') . strtoupper($companyName) }}
+            </div>
             @if ($settlement->authorized_signature)
                 <img src="{{ $settlement->authorized_signature }}" style="max-height: 50px; max-width: 90%; object-fit: contain;"><br>
             @else
-                <div style="height: 50px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px;">[ {{ __('Pending') }} ]</div>
+                <div style="height: 50px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px;">[ {{ __('Pending Sign-off') }} ]</div>
             @endif
-            <strong style="color: #1e293b;">{{ $settlement->authorized_signatory_name ?: 'Authorized Signatory' }}</strong><br>
-            <span style="font-size: 9.5px; color: #64748b;">(Management / Finance Sign-off)</span><br>
-            <span style="font-size: 9px; color: #64748b;">
-                {{ $settlement->final_settlement_status === 'Cleared' ? 'Cleared & Disbursed' : 'Disbursal Pending' }}
-                @if($settlement->payment_date)
-                    ({{ $settlement->formatDate($settlement->payment_date) }})
-                @endif
-            </span>
-            @if($settlement->payment_reference_no)
-                <br><span style="font-size: 8px; color: #64748b;">Ref: {{ $settlement->payment_reference_no }}</span>
-            @endif
+            <div style="border-top: 1px dashed #cbd5e1; margin-top: 5px; padding-top: 5px;">
+                <strong style="color: #1e293b; font-size: 11px;">{{ $settlement->authorized_signatory_name ?: __('Authorized Signatory') }}</strong><br>
+                <span style="font-size: 9px; color: #475569; font-weight: 600;">{{ __('Authorized Signatory') }}</span><br>
+                <span style="font-size: 8.5px; color: #64748b;">
+                    @if($settlement->authorized_date)
+                        {{ __('Authorized on: ') . $settlement->formatDate($settlement->authorized_date) }}
+                    @elseif($settlement->payment_date)
+                        {{ __('Authorized on: ') . $settlement->formatDate($settlement->payment_date) }}
+                    @else
+                        {{ __('Authorization Pending') }}
+                    @endif
+                </span>
+                <!-- <br><span style="display: inline-block; margin-top: 2px; font-size: 7.5px; font-weight: bold; letter-spacing: 0.5px; color: #0284c7; background: #e0f2fe; border: 1px solid #bae6fd; padding: 1px 5px; border-radius: 3px;">
+                    {{ __('OFFICIAL SEAL & SIGN-OFF') }}
+                </span> -->
+            </div>
         </td>
     </tr>
 </table>
