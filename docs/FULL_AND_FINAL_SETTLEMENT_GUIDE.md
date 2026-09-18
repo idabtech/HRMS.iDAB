@@ -192,19 +192,16 @@ To prevent confusion between company-internal actions and employee handovers, Se
 - `[✓ X Cleared by Company]`: Displays how many items have already been reviewed and certified by department managers (green badge).
 - `[⏱ Y Pending Handover]`: Highlights items awaiting physical handover or final department sign-off (amber badge).
 
-### Pending Handover Progress
-- **Pending Scope Counter**: Explicitly displays **`0 / Y Pending`** with title `Pending Handover Items: Y Item(s) Remaining`.
-- **Amber Progress Bar**: Starts at 0% and focuses purely on remaining handover actions, avoiding fractional confusion.
-- When all items are approved, automatically displays: **`All Handover Items Cleared (100% Completed)`**.
+### Dynamic Pending Handover Progress (Real-Time)
+- **Interactive Progress Bar**: As the employee types serial numbers, courier tracking, or handover notes into the pending items, the progress bar and documented counter update **in real time** (e.g. `1 / 8 Documented` → `8 / 8 Completed (100%)`).
+- **Dynamic Item Badges**: Each pending item card updates its badge from `[⏱ Pending Verification]` to `[✓ Handover Note Added]` the moment text is entered, providing instant visual validation.
+- When all items have handover remarks, the header bar turns green: **`All Handover Items Documented (100% Completed)`**.
 
-### Two Distinct Lists
-1. **Items Awaiting Handover & Department Verification**:
-   - Lists only pending checkpoints.
-   - Includes optional handover note inputs for the employee (e.g., courier tracking number, asset serial number).
-2. **Completed & Approved Clearances by Company**:
-   - Dedicated card below listing all company-certified completed checkpoints with green checkmarks and `Cleared / Returned` badges.
-3. **Not Applicable (N/A) Items**:
-   - Grouped neatly at the bottom in neutral pill badges.
+### Admin Verification & Status Updating ([show.blade.php](file:///e:/laragon/www/idab/hrms.idab/resources/views/settlement/show.blade.php))
+- **1-Click Mark Cleared**: HR or managers can verify any pending checkpoint with a single click `[✓ Mark Cleared]` button.
+- **Inline Status Selectors**: Dropdown per checkpoint item allowing quick switching between `Pending`, `Returned / Cleared`, and `Not Applicable` with instant AJAX persistence and toast notifications.
+- **Mark All Cleared**: A one-click header action to verify all pending checkpoints at once.
+- **Batch Clearance Editor Modal**: Comprehensive modal allowing HR to review employee notes, enter internal inspection remarks, adjust statuses across all checkpoints, and save with one click.
 
 ---
 

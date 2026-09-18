@@ -2365,6 +2365,7 @@ Route::group(['middleware' => ['verified']], function () {
     Route::get('settlement/{id}/recall-to-draft', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'recallToDraft'])->name('settlement.recall.draft')->middleware(['auth', 'XSS']);
     Route::post('settlement/{id}/manager-countersign', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'managerCountersign'])->name('settlement.manager.countersign')->middleware(['auth', 'XSS']);
     Route::post('settlement/{id}/management-signoff', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'managementSignoff'])->name('settlement.management.signoff')->middleware(['auth', 'XSS']);
+    Route::post('settlement/{id}/update-clearance', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'updateClearanceChecklist'])->name('settlement.clearance.update')->middleware(['auth', 'XSS']);
     Route::resource('settlement', \App\Http\Controllers\FullAndFinalSettlementController::class)->middleware(['auth', 'XSS']);
 
     // cache
