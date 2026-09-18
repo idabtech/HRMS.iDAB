@@ -332,42 +332,85 @@
 
         {{-- Section 3: Departmental Clearance Matrix --}}
         <div class="col-md-12 mb-4">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h5 class="mb-0 text-white"><i class="ti ti-checklist me-2"></i>{{ __('3. Departmental & Asset Clearances Checklist') }}</h5>
+                    @if (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
+                        <div class="d-flex align-items-center gap-2">
+                            <form action="{{ route('settlement.clearance.update', $settlement->id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ __('Mark all departmental clearance items as Returned / Cleared?') }}');">
+                                @csrf
+                                <input type="hidden" name="mark_all_cleared" value="1">
+                                <button type="submit" class="btn btn-xs btn-success text-white shadow-none">
+                                    <i class="ti ti-checks me-1"></i> {{ __('Mark All Cleared') }}
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-xs btn-light text-dark shadow-none" data-bs-toggle="modal" data-bs-target="#editClearanceModal">
+                                <i class="ti ti-edit me-1"></i> {{ __('Update Checklist') }}
+                            </button>
+                        </div>
+                    @endif
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-sm">
+                        <table class="table table-bordered table-sm align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="25%">{{ __('Category') }}</th>
-                                    <th width="50%">{{ __('Clearance Checkpoint / Asset') }}</th>
-                                    <th width="25%">{{ __('Status') }}</th>
+                                    <th width="18%">{{ __('Category') }}</th>
+                                    <th width="42%">{{ __('Clearance Checkpoint / Handover Note') }}</th>
+                                    <th width="18%">{{ __('Current Status') }}</th>
+                                    @if (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
+                                        <th width="22%">{{ __('Verify / Quick Action') }}</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($settlement->clearance_data ?? [] as $chk)
-                                    <tr>
-                                        <td><strong>{{ $chk['category'] }}</strong></td>
+                                    <tr id="clearance_row_{{ $loop->index }}">
+                                        <td><strong class="text-dark">{{ $chk['category'] }}</strong></td>
                                         <td>
-                                            <div class="fw-semibold">{{ $chk['item'] }}</div>
+                                            <div class="fw-semibold text-dark">{{ $chk['item'] }}</div>
                                             @if(!empty($chk['remarks']))
-                                                <div class="text-muted small mt-1"><i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Handover Note:') }}</strong> {{ $chk['remarks'] }}</div>
+                                                <div class="p-1.5 px-2 bg-light-primary rounded border border-primary border-opacity-25 small mt-1 text-dark">
+                                                    <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Handover Note:') }}</strong> {{ $chk['remarks'] }}
+                                                </div>
                                             @endif
                                         </td>
-                                        <td>
-                                            @if ($chk['status'] === 'Returned')
+                                        <td id="clearance_status_badge_{{ $loop->index }}">
+                                            @if (($chk['status'] ?? '') === 'Returned')
                                                 <span class="badge bg-success"><i class="ti ti-check me-1"></i>{{ __('Returned / Cleared') }}</span>
-                                            @elseif ($chk['status'] === 'Not Applicable')
+                                            @elseif (($chk['status'] ?? '') === 'Not Applicable')
                                                 <span class="badge bg-secondary">{{ __('Not Applicable') }}</span>
                                             @else
                                                 <span class="badge bg-warning text-dark"><i class="ti ti-clock me-1"></i>{{ __('Pending') }}</span>
                                             @endif
                                         </td>
+                                        @if (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
+                                            <td>
+                                                <div class="d-flex align-items-center gap-1.5">
+                                                    <select class="form-select form-select-xs quick-clearance-status-select"
+                                                            data-idx="{{ $loop->index }}"
+                                                            data-url="{{ route('settlement.clearance.update', $settlement->id) }}"
+                                                            style="font-size: 11px; padding: 2px 6px; width: auto; display: inline-block;">
+                                                        <option value="Pending" {{ ($chk['status'] ?? '') === 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                                                        <option value="Returned" {{ ($chk['status'] ?? '') === 'Returned' ? 'selected' : '' }}>{{ __('Returned / Cleared') }}</option>
+                                                        <option value="Not Applicable" {{ ($chk['status'] ?? '') === 'Not Applicable' ? 'selected' : '' }}>{{ __('Not Applicable') }}</option>
+                                                    </select>
+                                                    @if (($chk['status'] ?? '') !== 'Returned')
+                                                        <button type="button"
+                                                                class="btn btn-xs btn-outline-success quick-mark-cleared-btn"
+                                                                data-idx="{{ $loop->index }}"
+                                                                data-url="{{ route('settlement.clearance.update', $settlement->id) }}"
+                                                                data-bs-toggle="tooltip"
+                                                                title="{{ __('1-Click Mark Cleared') }}">
+                                                            <i class="ti ti-check"></i>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @empty
-                                    <tr><td colspan="3" class="text-center text-muted">{{ __('No clearance checkpoints recorded.') }}</td></tr>
+                                    <tr><td colspan="{{ (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement')) ? '4' : '3' }}" class="text-center text-muted">{{ __('No clearance checkpoints recorded.') }}</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -907,6 +950,71 @@
         </div>
     </div>
 
+    {{-- MODAL: Update Clearance Checklist (Batch) --}}
+    <div class="modal fade" id="editClearanceModal" tabindex="-1" aria-labelledby="editClearanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <form action="{{ route('settlement.clearance.update', $settlement->id) }}" method="POST" id="editClearanceChecklistForm">
+                    @csrf
+                    <div class="modal-header bg-secondary text-white py-3">
+                        <h5 class="modal-title text-white d-flex align-items-center gap-2" id="editClearanceModalLabel">
+                            <i class="ti ti-checklist fs-3"></i> {{ __('Update Departmental Clearances & Verification') }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="alert alert-info py-2 mb-3 small">
+                            <i class="ti ti-info-circle me-1"></i> {{ __('Review handover notes provided by the departing employee and update clearance statuses for each checkpoint.') }}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="20%">{{ __('Category') }}</th>
+                                        <th width="45%">{{ __('Item & Verification Note') }}</th>
+                                        <th width="35%">{{ __('Clearance Status') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($settlement->clearance_data ?? [] as $idx => $item)
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-light text-dark border font-monospace">{{ $item['category'] ?? 'General' }}</span>
+                                            </td>
+                                            <td>
+                                                <strong class="text-dark d-block mb-1">{{ $item['item'] }}</strong>
+                                                <input type="text"
+                                                       name="clearance_remarks[{{ $idx }}]"
+                                                       class="form-control form-control-sm"
+                                                       value="{{ $item['remarks'] ?? '' }}"
+                                                       placeholder="{{ __('Verification / Handover note...') }}">
+                                            </td>
+                                            <td>
+                                                <select name="clearance_statuses[{{ $idx }}]" class="form-select form-select-sm">
+                                                    <option value="Pending" {{ ($item['status'] ?? '') === 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                                                    <option value="Returned" {{ ($item['status'] ?? '') === 'Returned' ? 'selected' : '' }}>{{ __('Returned / Cleared') }}</option>
+                                                    <option value="Not Applicable" {{ ($item['status'] ?? '') === 'Not Applicable' ? 'selected' : '' }}>{{ __('Not Applicable') }}</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="3" class="text-center text-muted">{{ __('No clearance checkpoints recorded.') }}</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light py-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitClearanceUpdate">
+                            <i class="ti ti-device-floppy me-1"></i> {{ __('Save Clearance Updates') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{-- WhatsApp Custom Message Modal --}}
     <div class="modal fade" id="whatsappShareModal" tabindex="-1" aria-labelledby="whatsappShareModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1114,8 +1222,19 @@
         params.push("text=" + encodeURIComponent(msg));
         url += params.join('&');
 
+        var btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Opening WhatsApp...") }}');
+
         window.open(url, '_blank');
-        $('#whatsappShareModal').modal('hide');
+
+        setTimeout(function () {
+            $('#whatsappShareModal').modal('hide');
+            btn.prop('disabled', false).html('<i class="ti ti-brand-whatsapp me-1"></i> {{ __("Open in WhatsApp") }}');
+        }, 600);
+    });
+
+    $('#whatsappShareModal').on('hidden.bs.modal', function () {
+        $('#btnSendWaCustom').prop('disabled', false).html('<i class="ti ti-brand-whatsapp me-1"></i> {{ __("Open in WhatsApp") }}');
     });
 
     // Email Message & Recipient Customizer
@@ -1141,6 +1260,15 @@
 
     $('#btnResetEmailMessage').on('click', function () {
         $('#emailCustomMessage').val(defaultEmailTemplate);
+    });
+
+    $('#emailShareForm').on('submit', function () {
+        var submitBtn = $('#btnSendEmailSubmit');
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Sending Email...") }}');
+    });
+
+    $('#emailShareModal').on('hidden.bs.modal', function () {
+        $('#btnSendEmailSubmit').prop('disabled', false).html('<i class="ti ti-send me-1"></i> {{ __("Send Email Now") }}');
     });
 
     // Setup signature canvas helper
@@ -1313,14 +1441,97 @@
         if (!document.getElementById('manager_signature_input').value) {
             e.preventDefault();
             alert('{{ __("Please draw or upload your signature before submitting.") }}');
+            return false;
         }
+        $('#submitManagerSigBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Submitting...") }}');
     });
 
     $('#managementSignoffForm').on('submit', function (e) {
         if (!document.getElementById('authorized_signature_input').value) {
             e.preventDefault();
             alert('{{ __("Please draw or upload your authorized signature before confirming disbursal.") }}');
+            return false;
         }
+        $('#submitManagementSigBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Authorizing...") }}');
+    });
+
+    // Clearance Quick Status Selector AJAX
+    $(document).on('change', '.quick-clearance-status-select', function () {
+        var select = $(this);
+        var idx = select.data('idx');
+        var url = select.data('url');
+        var newStatus = select.val();
+
+        select.prop('disabled', true);
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                item_index: idx,
+                status: newStatus
+            },
+            success: function (res) {
+                select.prop('disabled', false);
+                var badgeEl = $('#clearance_status_badge_' + idx);
+                if (newStatus === 'Returned') {
+                    badgeEl.html('<span class="badge bg-success"><i class="ti ti-check me-1"></i>{{ __("Returned / Cleared") }}</span>');
+                    select.closest('td').find('.quick-mark-cleared-btn').remove();
+                } else if (newStatus === 'Not Applicable') {
+                    badgeEl.html('<span class="badge bg-secondary">{{ __("Not Applicable") }}</span>');
+                } else {
+                    badgeEl.html('<span class="badge bg-warning text-dark"><i class="ti ti-clock me-1"></i>{{ __("Pending") }}</span>');
+                }
+                show_toastr('Success', res.message || '{{ __("Status updated successfully") }}', 'success');
+            },
+            error: function () {
+                select.prop('disabled', false);
+                show_toastr('Error', '{{ __("Failed to update status") }}', 'error');
+            }
+        });
+    });
+
+    // Clearance 1-Click Quick Mark Cleared
+    $(document).on('click', '.quick-mark-cleared-btn', function () {
+        var btn = $(this);
+        var idx = btn.data('idx');
+        var url = btn.data('url');
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                item_index: idx,
+                status: 'Returned'
+            },
+            success: function (res) {
+                var badgeEl = $('#clearance_status_badge_' + idx);
+                badgeEl.html('<span class="badge bg-success"><i class="ti ti-check me-1"></i>{{ __("Returned / Cleared") }}</span>');
+                var select = btn.closest('td').find('.quick-clearance-status-select');
+                if (select.length) {
+                    select.val('Returned');
+                }
+                btn.remove();
+                show_toastr('Success', res.message || '{{ __("Marked as Returned / Cleared") }}', 'success');
+            },
+            error: function () {
+                btn.prop('disabled', false).html('<i class="ti ti-check"></i>');
+                show_toastr('Error', '{{ __("Failed to update status") }}', 'error');
+            }
+        });
+    });
+
+    // Batch Update Clearance Modal Form
+    $('#editClearanceChecklistForm').on('submit', function () {
+        $('#btnSubmitClearanceUpdate').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Saving...") }}');
+    });
+
+    $('#editClearanceModal').on('hidden.bs.modal', function () {
+        $('#btnSubmitClearanceUpdate').prop('disabled', false).html('<i class="ti ti-device-floppy me-1"></i> {{ __("Save Clearance Updates") }}');
     });
 </script>
 @endpush

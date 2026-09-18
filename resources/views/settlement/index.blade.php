@@ -515,8 +515,19 @@
         params.push("text=" + encodeURIComponent(msg));
         waUrl += params.join('&');
 
+        var btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Opening WhatsApp...") }}');
+
         window.open(waUrl, '_blank');
-        $('#indexWhatsappModal').modal('hide');
+
+        setTimeout(function () {
+            $('#indexWhatsappModal').modal('hide');
+            btn.prop('disabled', false).html('<i class="ti ti-brand-whatsapp me-1"></i> {{ __("Open in WhatsApp") }}');
+        }, 600);
+    });
+
+    $('#indexWhatsappModal').on('hidden.bs.modal', function () {
+        $('#btnIndexSendWa').prop('disabled', false).html('<i class="ti ti-brand-whatsapp me-1"></i> {{ __("Open in WhatsApp") }}');
     });
 
     // Index Email Modal Handler
@@ -574,6 +585,15 @@
             "Regards,\n" + {!! json_encode(\Auth::user()->name ?? 'HR Operations Team') !!};
 
         $('#modalEmailCustomMessage').val(defaultMsg);
+    });
+
+    $('#indexEmailForm').on('submit', function () {
+        var submitBtn = $('#btnIndexSendEmailSubmit');
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Sending Email...") }}');
+    });
+
+    $('#indexEmailModal').on('hidden.bs.modal', function () {
+        $('#btnIndexSendEmailSubmit').prop('disabled', false).html('<i class="ti ti-send me-1"></i> {{ __("Send Email Now") }}');
     });
 </script>
 @endpush

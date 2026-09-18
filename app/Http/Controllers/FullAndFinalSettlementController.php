@@ -826,4 +826,85 @@ class FullAndFinalSettlementController extends Controller
 
         return view('settlement.pdf', compact('settlement', 'company'));
     }
+
+    /**
+     * Update clearance checklist status and verification notes from admin show page.
+     */
+    public function updateClearanceChecklist(Request $request, $id)
+    {
+        if (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement')) {
+            $settlement = FullAndFinalSettlement::findOrFail($id);
+            $clearanceData = $settlement->clearance_data ?? [];
+
+            // Single item quick update (AJAX or form)
+            if ($request->has('item_index')) {
+                $idx = (int) $request->input('item_index');
+                if (isset($clearanceData[$idx])) {
+                    $newStatus = $request->input('status', 'Returned');
+                    $clearanceData[$idx]['status'] = $newStatus;
+                    if ($request->has('remarks') && $request->input('remarks') !== null) {
+                        $clearanceData[$idx]['remarks'] = trim($request->input('remarks'));
+                    }
+                    $settlement->update(['clearance_data' => $clearanceData]);
+                    $settlement->logActivity(
+                        'Clearance Checkpoint Updated',
+                        'Updated checkpoint "' . ($clearanceData[$idx]['item'] ?? 'Item') . '" status to ' . $newStatus,
+                        \Auth::user()->name
+                    );
+
+                    if ($request->ajax()) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => __('Clearance checkpoint updated successfully.'),
+                            'status' => $newStatus,
+                        ]);
+                    }
+
+                    return redirect()->back()->with('success', __('Clearance checkpoint updated successfully.'));
+                }
+            }
+
+            // Batch update all checkpoints
+            if ($request->has('clearance_statuses') && is_array($request->clearance_statuses)) {
+                foreach ($request->clearance_statuses as $idx => $status) {
+                    if (isset($clearanceData[$idx])) {
+                        $clearanceData[$idx]['status'] = $status;
+                        if (isset($request->clearance_remarks[$idx])) {
+                            $clearanceData[$idx]['remarks'] = trim($request->clearance_remarks[$idx]);
+                        }
+                    }
+                }
+                $settlement->update(['clearance_data' => $clearanceData]);
+                $settlement->logActivity(
+                    'Clearance Checklist Updated',
+                    'Departmental clearance checkpoints updated by ' . \Auth::user()->name,
+                    \Auth::user()->name
+                );
+
+                return redirect()->back()->with('success', __('Departmental clearance checklist updated successfully.'));
+            }
+
+            // Quick Mark All Cleared
+            if ($request->has('mark_all_cleared')) {
+                foreach ($clearanceData as &$item) {
+                    if (($item['status'] ?? '') !== 'Not Applicable') {
+                        $item['status'] = 'Returned';
+                    }
+                }
+                unset($item);
+                $settlement->update(['clearance_data' => $clearanceData]);
+                $settlement->logActivity(
+                    'All Clearances Marked Cleared',
+                    'All departmental checkpoints marked as Returned / Cleared by ' . \Auth::user()->name,
+                    \Auth::user()->name
+                );
+
+                return redirect()->back()->with('success', __('All clearance items have been verified and marked as Cleared!'));
+            }
+
+            return redirect()->back()->with('error', __('Invalid clearance update request.'));
+        }
+
+        return redirect()->back()->with('error', __('Permission denied.'));
+    }
 }

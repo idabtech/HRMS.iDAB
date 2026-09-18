@@ -600,23 +600,24 @@
 
                     {{-- Progress Bar for Pending / Unchecked Handover Items --}}
                     @if ($pendingCount > 0)
-                        <div class="p-3 mb-4 rounded-3 border border-warning bg-light-warning bg-opacity-25">
+                        <div class="p-3 mb-4 rounded-3 border border-warning bg-light-warning bg-opacity-25" id="handoverProgressContainer">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="fw-bold text-dark d-flex align-items-center gap-2">
                                     <span class="d-inline-flex align-items-center justify-content-center bg-warning text-dark rounded-circle" style="width: 24px; height: 24px; font-size: 12px;">
                                         <i class="ti ti-clock"></i>
                                     </span>
                                     {{ __('Pending Handover Items:') }}
-                                    <span class="text-danger fw-bold ms-1">{{ $pendingCount }} {{ __('Item(s) Remaining') }}</span>
+                                    <span class="text-danger fw-bold ms-1" id="handoverRemainingText">{{ $pendingCount }} {{ __('Item(s) Remaining') }}</span>
                                 </span>
-                                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
-                                    0 / {{ $pendingCount }} {{ __('Pending') }}
+                                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold" id="handoverProgressBadge">
+                                    0 / {{ $pendingCount }} {{ __('Documented') }}
                                 </span>
                             </div>
                             <div class="progress" style="height: 10px; border-radius: 6px; background: #e2e8f0;">
                                 <div class="progress-bar bg-warning"
+                                    id="handoverProgressBar"
                                     role="progressbar"
-                                    style="width: 0%"
+                                    style="width: 0%; transition: width 0.3s ease, background-color 0.3s ease;"
                                     aria-valuenow="0"
                                     aria-valuemin="0"
                                     aria-valuemax="{{ $pendingCount }}">
@@ -646,7 +647,7 @@
                                     <i class="ti ti-clock"></i>
                                 </span>
                                 {{ __('Items Awaiting Handover & Department Verification') }}
-                                <span class="badge bg-warning text-dark rounded-pill">{{ $pendingCount }}</span>
+                                <span class="badge bg-warning text-dark rounded-pill" id="pendingItemsBadgeCount">{{ $pendingCount }}</span>
                             </h6>
                             @if ($pendingCount > 0)
                                 <small class="text-muted">{{ __('Add asset serial numbers or handover notes below if applicable') }}</small>
@@ -662,22 +663,23 @@
                                 @foreach ($pendingItems as $chk)
                                     @php
                                         $origIdx = $chk['_orig_idx'];
+                                        $hasFilledNote = !empty(trim($chk['remarks'] ?? ''));
                                     @endphp
-                                    <div class="p-3 rounded-3 border border-warning-subtle bg-white shadow-xs">
+                                    <div class="p-3 rounded-3 border {{ $hasFilledNote ? 'border-info-subtle bg-light-subtle' : 'border-warning-subtle bg-white' }} shadow-xs pending-handover-card" id="pending_card_{{ $origIdx }}">
                                         <div class="d-flex align-items-start justify-content-between gap-3">
                                             <div class="d-flex align-items-start gap-3 flex-grow-1">
-                                                <span class="text-warning fs-4 mt-0.5"><i class="ti ti-clock"></i></span>
+                                                <span class="text-warning fs-4 mt-0.5 pending-icon" id="pending_icon_{{ $origIdx }}">
+                                                    @if($hasFilledNote)
+                                                        <i class="ti ti-circle-check text-info"></i>
+                                                    @else
+                                                        <i class="ti ti-clock text-warning"></i>
+                                                    @endif
+                                                </span>
                                                 <div class="flex-grow-1">
                                                     <div class="d-flex align-items-center gap-2 mb-1">
                                                         <span class="badge bg-light text-secondary border font-monospace fs-8">{{ $chk['category'] ?? __('General') }}</span>
                                                         <strong class="text-dark">{{ $chk['item'] }}</strong>
                                                     </div>
-
-                                                    @if(!empty($chk['remarks']))
-                                                        <small class="text-muted d-block mt-1">
-                                                            <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Department Note:') }}</strong> {{ $chk['remarks'] }}
-                                                        </small>
-                                                    @endif
 
                                                     @if (!$isReadOnly)
                                                         <div class="mt-2">
@@ -687,12 +689,22 @@
                                                                    placeholder="{{ __('Add handover note, courier tracking #, or asset serial no. (optional)...') }}"
                                                                    value="{{ $chk['remarks'] ?? '' }}">
                                                         </div>
+                                                    @else
+                                                        @if(!empty($chk['remarks']))
+                                                            <small class="text-dark d-block mt-1">
+                                                                <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Handover Note:') }}</strong> {{ $chk['remarks'] }}
+                                                            </small>
+                                                        @endif
                                                     @endif
                                                 </div>
                                             </div>
                                             <div class="flex-shrink-0 ms-2">
-                                                <span class="badge bg-warning text-dark p-2 px-3 rounded shadow-none">
-                                                    <i class="ti ti-clock me-1"></i>{{ __('Pending Verification') }}
+                                                <span class="badge {{ $hasFilledNote ? 'bg-info text-white' : 'bg-warning text-dark' }} p-2 px-3 rounded shadow-none pending-status-badge" id="pending_badge_{{ $origIdx }}">
+                                                    @if($hasFilledNote)
+                                                        <i class="ti ti-check me-1"></i>{{ __('Handover Note Added') }}
+                                                    @else
+                                                        <i class="ti ti-clock me-1"></i>{{ __('Pending Verification') }}
+                                                    @endif
                                                 </span>
                                             </div>
                                         </div>
@@ -1366,6 +1378,95 @@
             });
         });
     }
+
+    // Real-time Handover Checklist Progress Bar & Status Badge Updater
+    function updatePendingHandoverProgress() {
+        const inputs = document.querySelectorAll('.clearance-comment-input');
+        if (!inputs || inputs.length === 0) return;
+
+        const totalPending = inputs.length;
+        let filledCount = 0;
+
+        inputs.forEach(inp => {
+            const val = inp.value.trim();
+            const idx = inp.getAttribute('data-idx');
+            const card = document.getElementById('pending_card_' + idx);
+            const badge = document.getElementById('pending_badge_' + idx);
+            const icon = document.getElementById('pending_icon_' + idx);
+
+            if (val.length > 0) {
+                filledCount++;
+                if (badge) {
+                    badge.className = 'badge bg-info text-white p-2 px-3 rounded shadow-none pending-status-badge';
+                    badge.innerHTML = '<i class="ti ti-check me-1"></i>{{ __("Handover Note Added") }}';
+                }
+                if (card) {
+                    card.className = 'p-3 rounded-3 border border-info-subtle bg-light-subtle shadow-xs pending-handover-card';
+                }
+                if (icon) {
+                    icon.innerHTML = '<i class="ti ti-circle-check text-info"></i>';
+                }
+            } else {
+                if (badge) {
+                    badge.className = 'badge bg-warning text-dark p-2 px-3 rounded shadow-none pending-status-badge';
+                    badge.innerHTML = '<i class="ti ti-clock me-1"></i>{{ __("Pending Verification") }}';
+                }
+                if (card) {
+                    card.className = 'p-3 rounded-3 border border-warning-subtle bg-white shadow-xs pending-handover-card';
+                }
+                if (icon) {
+                    icon.innerHTML = '<i class="ti ti-clock text-warning"></i>';
+                }
+            }
+        });
+
+        const pct = Math.round((filledCount / totalPending) * 100);
+        const pBar = document.getElementById('handoverProgressBar');
+        const pBadge = document.getElementById('handoverProgressBadge');
+        const rCount = document.getElementById('handoverRemainingText');
+
+        if (pBar) {
+            pBar.style.width = pct + '%';
+            pBar.setAttribute('aria-valuenow', filledCount);
+            if (pct === 100) {
+                pBar.className = 'progress-bar bg-success';
+            } else if (pct > 0) {
+                pBar.className = 'progress-bar bg-info';
+            } else {
+                pBar.className = 'progress-bar bg-warning';
+            }
+        }
+
+        if (pBadge) {
+            if (pct === 100) {
+                pBadge.className = 'badge bg-success text-white px-3 py-1 rounded-pill fw-bold';
+                pBadge.innerHTML = '<i class="ti ti-check me-1"></i>' + filledCount + ' / ' + totalPending + ' {{ __("Completed") }}';
+            } else {
+                pBadge.className = 'badge ' + (filledCount > 0 ? 'bg-info text-white' : 'bg-warning text-dark') + ' px-3 py-1 rounded-pill fw-bold';
+                pBadge.textContent = filledCount + ' / ' + totalPending + ' {{ __("Documented") }}';
+            }
+        }
+
+        if (rCount) {
+            const remaining = totalPending - filledCount;
+            if (remaining === 0) {
+                rCount.className = 'text-success fw-bold ms-1';
+                rCount.textContent = '{{ __("All ") }}' + totalPending + ' {{ __("Items Documented (Ready for Sign-off)") }}';
+            } else {
+                rCount.className = 'text-danger fw-bold ms-1';
+                rCount.textContent = remaining + ' {{ __("Item(s) Remaining") }}';
+            }
+        }
+    }
+
+    // Attach real-time input listeners
+    document.querySelectorAll('.clearance-comment-input').forEach(inp => {
+        inp.addEventListener('input', updatePendingHandoverProgress);
+        inp.addEventListener('change', updatePendingHandoverProgress);
+    });
+
+    // Run immediately on page load
+    updatePendingHandoverProgress();
 </script>
 <script src="{{ asset('assets/js/plugins/flatpickr.min.js') }}"></script>
 <script>
