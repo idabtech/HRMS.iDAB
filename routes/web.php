@@ -2359,7 +2359,7 @@ Route::group(['middleware' => ['verified']], function () {
 
     // Full & Final Settlement Management Routes
     Route::get('settlement/export', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'export'])->name('settlement.export')->middleware(['auth', 'XSS']);
-    Route::get('settlement/{id}/send-mail', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'sendMail'])->name('settlement.send.mail')->middleware(['auth', 'XSS']);
+    Route::match(['get', 'post'], 'settlement/{id}/send-mail', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'sendMail'])->name('settlement.send.mail')->middleware(['auth', 'XSS']);
     Route::get('settlement/{id}/download-pdf', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'downloadPdf'])->name('settlement.download.pdf')->middleware(['auth', 'XSS']);
     Route::get('settlement/{id}/regenerate-link', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'regenerateLink'])->name('settlement.regenerate.link')->middleware(['auth', 'XSS']);
     Route::get('settlement/{id}/recall-to-draft', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'recallToDraft'])->name('settlement.recall.draft')->middleware(['auth', 'XSS']);

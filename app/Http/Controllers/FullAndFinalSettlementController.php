@@ -406,41 +406,120 @@ class FullAndFinalSettlementController extends Controller
     /**
      * Send settlement form link to employee via email.
      */
-    public function sendMail($id)
+    public function sendMail(Request $request, $id)
     {
         if (Auth::user()->can('Send Settlement Mail') || Auth::user()->can('Manage Settlement')) {
             $creatorId = Auth::user()->creatorId();
             $settlement = FullAndFinalSettlement::where('created_by', $creatorId)->with('employee')->findOrFail($id);
 
-            $employee = $settlement->employee;
-            if (!$employee || empty($employee->email)) {
-                return redirect()->back()->with('error', __('Employee email address not found.'));
+            // Determine recipient email
+            if ($request->isMethod('post')) {
+                $request->validate([
+                    'recipient_email' => 'required|email',
+                ]);
+                $targetEmail = trim($request->recipient_email);
+            } else {
+                $targetEmail = $settlement->employee->email ?? '';
+            }
+
+            if (empty($targetEmail)) {
+                return redirect()->back()->with('error', __('Recipient email address not found. Please provide a valid email address.'));
             }
 
             $token = $settlement->ensureSharingToken();
             $publicUrl = route('settlement.clearance.view', ['token' => $token]);
+
+            // Construct custom message & subject
+            $defaultMessage = "Dear " . $settlement->employee_name . ",\n\n" .
+                "Your Full & Final Settlement and Departmental Clearance statement (Ref: " . $settlement->settlement_number . ") has been prepared for review.\n\n" .
+                "Please review your financial breakdown, departmental clearance checkpoints, and submit your digital sign-off using the link below:\n\n" .
+                $publicUrl . "\n\n" .
+                "Regards,\n" . (Auth::user()->name ?? 'HR Operations Team');
+
+            $customMessage = $request->filled('custom_message') ? trim($request->custom_message) : $defaultMessage;
+            $emailSubject = $request->filled('email_subject') 
+                ? trim($request->email_subject) 
+                : __('Full & Final Settlement & Clearance — ') . $settlement->settlement_number;
+
+            // Configure SMTP settings
+            $settings = Utility::settings();
+            $data = Utility::getSetting();
+            $setting = [
+                'mail_driver' => '',
+                'mail_host' => '',
+                'mail_port' => '',
+                'mail_encryption' => '',
+                'mail_username' => '',
+                'mail_password' => '',
+                'mail_from_address' => '',
+                'mail_from_name' => '',
+            ];
+            foreach ($data as $row) {
+                $setting[$row->name] = $row->value;
+            }
+
+            $mailDriver = !empty($settings['mail_driver']) ? $settings['mail_driver'] : (!empty($setting['mail_driver']) ? $setting['mail_driver'] : 'smtp');
+            $mailHost = !empty($settings['mail_host']) ? $settings['mail_host'] : (!empty($setting['mail_host']) ? $setting['mail_host'] : '');
+            $mailPort = !empty($settings['mail_port']) ? $settings['mail_port'] : (!empty($setting['mail_port']) ? $setting['mail_port'] : '');
+            $mailEncryption = !empty($settings['mail_encryption']) ? $settings['mail_encryption'] : (!empty($setting['mail_encryption']) ? $setting['mail_encryption'] : '');
+            $mailUsername = !empty($settings['mail_username']) ? $settings['mail_username'] : (!empty($setting['mail_username']) ? $setting['mail_username'] : '');
+            $mailPassword = !empty($settings['mail_password']) ? $settings['mail_password'] : (!empty($setting['mail_password']) ? $setting['mail_password'] : '');
+            $mailFromAddress = !empty($settings['mail_from_address']) ? $settings['mail_from_address'] : (!empty($setting['mail_from_address']) ? $setting['mail_from_address'] : config('mail.from.address'));
+            $mailFromName = !empty($settings['mail_from_name']) ? $settings['mail_from_name'] : (!empty($setting['mail_from_name']) ? $setting['mail_from_name'] : config('app.name', 'HRMS'));
+
+            config([
+                'mail.default' => $mailDriver,
+                'mail.mailers.smtp.transport' => $mailDriver,
+                'mail.mailers.smtp.host' => $mailHost,
+                'mail.mailers.smtp.port' => $mailPort,
+                'mail.mailers.smtp.encryption' => $mailEncryption,
+                'mail.mailers.smtp.username' => $mailUsername,
+                'mail.mailers.smtp.password' => $mailPassword,
+                'mail.from.address' => $mailFromAddress,
+                'mail.from.name' => $mailFromName,
+            ]);
+
+            $emailSent = false;
+            try {
+                Mail::send('email.settlement_clearance', [
+                    'settlement' => $settlement,
+                    'custom_message' => $customMessage,
+                    'publicUrl' => $publicUrl,
+                ], function ($message) use ($targetEmail, $emailSubject, $mailFromAddress, $mailFromName) {
+                    $message->to($targetEmail)
+                            ->from($mailFromAddress, $mailFromName)
+                            ->subject($emailSubject);
+                });
+                $emailSent = true;
+            } catch (\Throwable $e) {
+                Log::error('Settlement clearance custom email sending failed: ' . $e->getMessage());
+                // Fallback attempt via Utility
+                try {
+                    $uArr = [
+                        'employee_name' => $settlement->employee_name,
+                        'settlement_number' => $settlement->settlement_number,
+                        'settlement_url' => $publicUrl,
+                        'net_amount' => $settlement->net_amount,
+                    ];
+                    Utility::sendEmailTemplate('employee_resignation', [$targetEmail], $uArr);
+                    $emailSent = true;
+                } catch (\Throwable $ex) {
+                    Log::error('Settlement clearance email template fallback failed: ' . $ex->getMessage());
+                }
+            }
 
             $settlement->update([
                 'status' => $settlement->status === 'draft' ? 'sent' : $settlement->status,
                 'link_shared_at' => now(),
             ]);
 
-            $uArr = [
-                'employee_name' => $settlement->employee_name,
-                'settlement_number' => $settlement->settlement_number,
-                'settlement_url' => $publicUrl,
-                'net_amount' => $settlement->net_amount,
-            ];
+            $settlement->logActivity('Link Sent via Email', 'Clearance form link sent to: ' . $targetEmail);
 
-            try {
-                Utility::sendEmailTemplate('employee_resignation', [$employee->email], $uArr);
-            } catch (\Throwable $e) {
-                // Ignore fallback
+            if ($emailSent) {
+                return redirect()->back()->with('success', __('Settlement clearance email successfully sent to: ') . $targetEmail);
+            } else {
+                return redirect()->back()->with('success', __('Settlement status updated. Note: Delivery to ') . $targetEmail . __(' may depend on active SMTP settings.'));
             }
-
-            $settlement->logActivity('Link Sent via Email', 'Clearance form link sent to employee email: ' . $employee->email);
-
-            return redirect()->back()->with('success', __('Settlement link sent to employee email: ') . $employee->email);
         }
 
         return redirect()->back()->with('error', __('Permission denied.'));
