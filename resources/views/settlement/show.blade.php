@@ -45,54 +45,60 @@
 @endpush
 
 @section('action-button')
-    <div class="d-flex align-items-center flex-wrap gap-2">
+    <div class="d-inline-flex align-items-center gap-1">
         {{-- Copy Public Link --}}
-        <button type="button" class="btn btn-sm btn-secondary copy-settlement-link"
-            data-url="{{ $settlement->public_url }}">
-            <i class="ti ti-link"></i> {{ __('Copy Secure Link') }}
-        </button>
+        <a href="javascript:void(0)" class="btn btn-sm btn-secondary copy-settlement-link"
+            data-url="{{ $settlement->public_url }}"
+            data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Copy Secure Link') }}">
+            <i class="ti ti-link"></i>
+        </a>
 
         {{-- WhatsApp Share --}}
         @php
             $waText = urlencode("Hello " . $settlement->employee_name . ", please review and complete your Full & Final Settlement & Departmental Clearance form: " . $settlement->public_url);
             $waUrl = "https://api.whatsapp.com/send?text=" . $waText;
         @endphp
-        <a href="{{ $waUrl }}" target="_blank" class="btn btn-sm btn-success">
-            <i class="ti ti-brand-whatsapp"></i> {{ __('Share on WhatsApp') }}
+        <a href="{{ $waUrl }}" target="_blank" class="btn btn-sm btn-success"
+            data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Share on WhatsApp') }}">
+            <i class="ti ti-brand-whatsapp"></i>
         </a>
 
         {{-- Send Mail --}}
         @can('Send Settlement Mail')
-            <a href="{{ route('settlement.send.mail', $settlement->id) }}" class="btn btn-sm btn-warning text-white">
-                <i class="ti ti-mail"></i> {{ __('Send to Employee') }}
+            <a href="{{ route('settlement.send.mail', $settlement->id) }}" class="btn btn-sm btn-warning text-white"
+                data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Send to Employee') }}">
+                <i class="ti ti-mail"></i>
             </a>
         @endcan
 
         {{-- Regenerate / Extend Link --}}
         @if(Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement'))
             <a href="{{ route('settlement.regenerate.link', $settlement->id) }}" class="btn btn-sm btn-dark"
-                data-bs-toggle="tooltip" title="{{ __('Renew link validity for next 30 days') }}">
-                <i class="ti ti-refresh"></i> {{ __('Regenerate Link') }}
+                data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Regenerate Link (Renew 30 Days)') }}">
+                <i class="ti ti-refresh"></i>
             </a>
         @endif
 
         {{-- Recall to Draft (if sent) --}}
         @if($settlement->status === 'sent' && (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement')))
-            <a href="{{ route('settlement.recall.draft', $settlement->id) }}" class="btn btn-sm btn-outline-danger"
+            <a href="{{ route('settlement.recall.draft', $settlement->id) }}" class="btn btn-sm btn-danger"
+                data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Recall to Draft') }}"
                 onclick="return confirm('{{ __('Are you sure you want to recall this settlement to Draft? The employee link will be paused until re-sent.') }}');">
-                <i class="ti ti-arrow-back-up"></i> {{ __('Recall to Draft') }}
+                <i class="ti ti-arrow-back-up"></i>
             </a>
         @endif
 
         {{-- Download PDF --}}
-        <a href="{{ route('settlement.download.pdf', $settlement->id) }}" target="_blank" class="btn btn-sm btn-info text-white">
-            <i class="ti ti-download"></i> {{ __('Download / Print') }}
+        <a href="{{ route('settlement.download.pdf', $settlement->id) }}" target="_blank" class="btn btn-sm btn-info text-white"
+            data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Download / Print PDF') }}">
+            <i class="ti ti-download"></i>
         </a>
 
         {{-- Edit --}}
         @can('Edit Settlement')
-            <a href="{{ route('settlement.edit', $settlement->id) }}" class="btn btn-sm btn-primary">
-                <i class="ti ti-pencil"></i> {{ __('Edit') }}
+            <a href="{{ route('settlement.edit', $settlement->id) }}" class="btn btn-sm btn-primary"
+                data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Edit') }}">
+                <i class="ti ti-pencil"></i>
             </a>
         @endcan
     </div>
