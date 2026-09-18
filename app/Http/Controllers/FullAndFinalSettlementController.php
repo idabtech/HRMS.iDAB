@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\FullAndFinalSettlement;
 use App\Models\Utility;
 use App\Models\User;
+use App\Models\Notification;
 use App\Exports\SettlementExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
@@ -518,6 +519,34 @@ class FullAndFinalSettlementController extends Controller
             'Employee digitally signed clearance declaration and verified checklist items from IP ' . $request->ip(),
             $settlement->employee_name
         );
+
+        // Notify HR Admin / Creator via In-App Dashboard Notification (matches Leave/Event system)
+        try {
+            if (!empty($settlement->created_by)) {
+                Notification::create([
+                    'user_id'     => $settlement->created_by,
+                    'type'        => 'settlement',
+                    'title'       => 'Settlement Signed: ' . $settlement->employee_name,
+                    'message'     => 'Full & Final Settlement (' . $settlement->settlement_number . ') has been digitally signed and submitted by ' . $settlement->employee_name . '.',
+                    'icon'        => 'ti ti-file-certificate',
+                    'badge_text'  => 'SETTLEMENT SIGNED',
+                    'badge_color' => 'success',
+                    'action_url'  => route('settlement.show', $settlement->id),
+                    'extra_data'  => [
+                        'description'       => 'Full & Final Settlement (' . $settlement->settlement_number . ') digitally signed and submitted.',
+                        'settlement_number' => $settlement->settlement_number,
+                        'employee_name'     => $settlement->employee_name,
+                        'department'        => $settlement->department,
+                        'net_amount'        => $settlement->net_amount,
+                        'signed_at'         => now()->format('d M Y, h:i A'),
+                        'ip'                => $request->ip(),
+                    ],
+                    'is_read'     => 0,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Settlement dashboard notification creation failed: ' . $e->getMessage());
+        }
 
         // Notify HR Admin / Creator via Email
         try {
