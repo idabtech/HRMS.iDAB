@@ -10,6 +10,40 @@
     <li class="breadcrumb-item">{{ $settlement->settlement_number }}</li>
 @endsection
 
+@push('css-page')
+<style>
+    .sig-tab-btn {
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .sig-tab-btn.active {
+        background: var(--bs-primary, #584ed2);
+        color: #ffffff;
+        border-color: var(--bs-primary, #584ed2);
+    }
+    .upload-sig-dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .upload-sig-dropzone:hover {
+        border-color: var(--bs-primary, #584ed2);
+        background: #f1f5f9;
+    }
+</style>
+@endpush
+
 @section('action-button')
     <div class="d-flex align-items-center flex-wrap gap-2">
         {{-- Copy Public Link --}}
@@ -504,11 +538,15 @@
             </div>
         </div>
 
-        {{-- Section 6: Stage 3 — Management Sign-off & Final Disbursal --}}
+        {{-- Section 6: Stage 3 — Company Authorized Signatory & Disbursal Approval --}}
+        @php
+            $companySettings = \App\Models\Utility::getCompanySettings($settlement->created_by);
+            $companyName = !empty($companySettings['company_name']) ? $companySettings['company_name'] : ($settlement->creator?->name ?? 'Company');
+        @endphp
         <div class="col-md-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-dark"><i class="ti ti-shield-check me-2 text-success"></i>{{ __('6. Stage 3: Management Clearance & Payment Disbursal') }}</h5>
+                    <h5 class="mb-0 text-dark"><i class="ti ti-shield-check me-2 text-success"></i>{{ __('6. Stage 3: Company Authorized Signatory & Disbursal Approval') }}</h5>
                     @if ($settlement->final_settlement_status === 'Cleared')
                         <span class="badge bg-success fs-6"><i class="ti ti-check me-1"></i>{{ __('Fully Cleared & Disbursed') }}</span>
                     @else
@@ -516,55 +554,93 @@
                     @endif
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <span class="text-muted small">{{ __('Settlement Disbursal Status') }}</span>
-                            <div class="mt-1">
-                                @if ($settlement->final_settlement_status === 'Cleared')
-                                    <span class="badge bg-success fs-6">{{ __('Cleared & Paid') }}</span>
-                                @else
-                                    <span class="badge bg-warning text-dark fs-6">{{ __('Pending Payment') }}</span>
-                                @endif
+                    <div class="row g-4">
+                        {{-- Left Column: Company Authorized Signatory Endorsement --}}
+                        <div class="col-md-6 border-end">
+                            <span class="badge bg-primary-subtle text-primary border mb-2 px-2.5 py-1">
+                                <i class="ti ti-certificate me-1"></i>{{ __('Company Authorized Sign-off') }}
+                            </span>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">{{ __('For & On Behalf of:') }}</small>
+                                <strong class="text-dark fs-6">{{ $companyName }}</strong>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">{{ __('Authorized Signatory Name:') }}</small>
+                                <strong class="text-dark">{{ $settlement->authorized_signatory_name ?: __('Pending Sign-off') }}</strong>
+                                <div class="text-muted small">{{ __('Company Authorized Signatory') }}</div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">{{ __('Authorization Date:') }}</small>
+                                <strong class="text-dark">
+                                    {{ $settlement->authorized_date ? $settlement->formatDate($settlement->authorized_date) : ($settlement->payment_date ? $settlement->formatDate($settlement->payment_date) : __('Pending')) }}
+                                </strong>
+                            </div>
+                            <div class="mt-3">
+                                <small class="text-muted d-block mb-1">{{ __('Authorized Digital Signature:') }}</small>
+                                <div class="p-2 border rounded bg-white text-center" style="max-width: 320px;">
+                                    @if($settlement->authorized_signature)
+                                        <img src="{{ $settlement->authorized_signature }}" alt="Company Authorized Signature" style="max-height: 70px; max-width: 100%;">
+                                        <div class="mt-1">
+                                            <span class="badge bg-light text-primary border font-monospace" style="font-size: 10px;">
+                                                <i class="ti ti-shield-check me-1"></i>{{ __('OFFICIAL SEAL & SIGN-OFF') }}
+                                            </span>
+                                        </div>
+                                    @else
+                                        <div class="py-3 text-muted small">
+                                            <i class="ti ti-pencil me-1"></i>{{ __('Authorized digital signature pending') }}
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <span class="text-muted small">{{ __('Payment Mode') }}</span>
-                            <div class="fw-bold fs-6">{{ $settlement->payment_mode ?: '—' }}</div>
-                        </div>
-                        <div class="col-md-3">
-                            <span class="text-muted small">{{ __('Payment Disbursed Date') }}</span>
-                            <div class="fw-bold fs-6">{{ $settlement->payment_date ? $settlement->formatDate($settlement->payment_date) : '—' }}</div>
-                        </div>
-                        <div class="col-md-3">
-                            <span class="text-muted small">{{ __('UTR / Transaction Reference No.') }}</span>
-                            <div class="fw-bold fs-6 text-primary">{{ $settlement->payment_reference_no ?: '—' }}</div>
-                        </div>
 
-                        <div class="col-md-6 border-top pt-3">
-                            <span class="text-muted small">{{ __('HR Representative') }}</span>
-                            <div class="fw-bold">{{ $settlement->hr_representative_name ?: '—' }}</div>
-                            @if($settlement->hr_cleared_at)
-                                <small class="text-muted">{{ __('Cleared on: ') . $settlement->formatDate($settlement->hr_cleared_at, true) }}</small>
-                            @endif
-                        </div>
-                        <div class="col-md-6 border-top pt-3">
-                            <span class="text-muted small">{{ __('Authorized Signatory') }}</span>
-                            <div class="fw-bold">{{ $settlement->authorized_signatory_name ?: '—' }}</div>
-                            @if($settlement->authorized_date)
-                                <small class="text-muted">{{ __('Signed on: ') . $settlement->formatDate($settlement->authorized_date) }}</small>
-                            @endif
-                            @if($settlement->authorized_signature)
-                                <div class="mt-2">
-                                    <img src="{{ $settlement->authorized_signature }}" alt="Authorized Signature" style="max-height: 60px; max-width: 200px;" class="border p-1 bg-white rounded">
+                        {{-- Right Column: Disbursal & Payment Settlement Record --}}
+                        <div class="col-md-6">
+                            <span class="badge bg-success-subtle text-success border mb-2 px-2.5 py-1">
+                                <i class="ti ti-wallet me-1"></i>{{ __('Disbursal & Payment Record') }}
+                            </span>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">{{ __('Settlement Status') }}</small>
+                                    <div class="mt-1">
+                                        @if ($settlement->final_settlement_status === 'Cleared')
+                                            <span class="badge bg-success fs-7">{{ __('Cleared & Paid') }}</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark fs-7">{{ __('Pending Payment') }}</span>
+                                        @endif
+                                    </div>
                                 </div>
-                            @endif
+                                <div class="col-6">
+                                    <small class="text-muted d-block">{{ __('Net Amount Disbursed') }}</small>
+                                    <div class="fw-bold fs-5 text-success">{{ \Auth::user()->priceFormat($settlement->net_amount) }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">{{ __('Payment Mode') }}</small>
+                                    <div class="fw-bold text-dark">{{ $settlement->payment_mode ?: '—' }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">{{ __('Disbursal Date') }}</small>
+                                    <div class="fw-bold text-dark">{{ $settlement->payment_date ? $settlement->formatDate($settlement->payment_date) : '—' }}</div>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted d-block">{{ __('UTR / Transaction Reference No.') }}</small>
+                                    <div class="fw-bold text-primary font-monospace fs-6">{{ $settlement->payment_reference_no ?: '—' }}</div>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted d-block">{{ __('HR Verification Desk') }}</small>
+                                    <div class="text-dark">{{ $settlement->hr_representative_name ?: '—' }}</div>
+                                    @if($settlement->hr_cleared_at)
+                                        <small class="text-muted">{{ __('Cleared on: ') . $settlement->formatDate($settlement->hr_cleared_at, true) }}</small>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     @if ($settlement->final_settlement_status !== 'Cleared' && (Gate::check('Edit Settlement') || \Auth::user()->can('Manage Settlement')))
                         <div class="mt-4 pt-3 border-top text-end">
                             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#managementSignoffModal">
-                                <i class="ti ti-check me-1"></i> {{ __('Record Payment & Complete Management Sign-off') }}
+                                <i class="ti ti-check me-1"></i> {{ __('Authorize Settlement & Confirm Disbursal') }}
                             </button>
                         </div>
                     @endif
@@ -598,7 +674,7 @@
                                         </div>
                                         <div class="text-muted small mt-1">{{ $log['description'] ?? '' }}</div>
                                         <small class="badge bg-light text-secondary border mt-1">
-                                            <i class="ti ti-user me-1"></i>{{ $log['user'] ?? __('System') }}
+                                            <i class="ti ti-user me-1"></i>{{ $log['performed_by'] ?? __('System') }}
                                         </small>
                                     </div>
                                 </div>
@@ -610,108 +686,194 @@
         </div>
     </div>
 
-    {{-- MODAL 1: Manager Countersign Modal --}}
+    {{-- MODAL 1: Manager Handover Countersign Modal --}}
     <div class="modal fade" id="managerCountersignModal" tabindex="-1" aria-labelledby="managerCountersignModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-md">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <form action="{{ route('settlement.manager.countersign', $settlement->id) }}" method="POST" id="managerCountersignForm">
                     @csrf
                     <div class="modal-header bg-light">
-                        <h5 class="modal-title" id="managerCountersignModalLabel"><i class="ti ti-user-check me-2 text-info"></i>{{ __('Manager / HOD Countersign') }}</h5>
+                        <h5 class="modal-title" id="managerCountersignModalLabel"><i class="ti ti-user-check me-2 text-info"></i>{{ __('Manager / HOD Handover Countersign') }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">{{ __('Manager / HOD Full Name') }} <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">{{ __('Manager / HOD Name') }} <span class="text-danger">*</span></label>
                             <input type="text" name="manager_name" class="form-control" value="{{ \Auth::user()->name }}" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">{{ __('Verification Remarks / Handover Notes') }}</label>
-                            <textarea name="manager_remarks" class="form-control" rows="2" placeholder="{{ __('e.g., Verified laptop, keys and code repository access revoked on last working day.') }}"></textarea>
+                            <textarea name="manager_remarks" class="form-control" rows="2" placeholder="{{ __('e.g., All physical assets, credentials, and documentation verified and accepted in good order.') }}"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold d-block">{{ __('Draw Your Digital Signature') }} <span class="text-danger">*</span></label>
-                            <div class="border rounded bg-light p-1">
-                                <canvas id="managerSigCanvas" width="450" height="130" style="width: 100%; height: 130px; background: #fff; cursor: crosshair; touch-action: none; border-radius: 4px;"></canvas>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mt-1">
-                                <button type="button" id="clearManagerSigBtn" class="btn btn-xs btn-outline-danger">
-                                    <i class="ti ti-eraser"></i> {{ __('Clear') }}
+                            <label class="form-label fw-bold d-block mb-2">{{ __('Manager Digital Signature') }} <span class="text-danger">*</span></label>
+                            
+                            {{-- Tab Switcher --}}
+                            <div class="d-flex gap-2 mb-2">
+                                <button type="button" class="sig-tab-btn active" id="managerTabDrawBtn" onclick="switchSigMode('manager', 'draw')">
+                                    <i class="ti ti-pencil me-1"></i> {{ __('Draw Signature') }}
                                 </button>
-                                <small class="text-muted">{{ __('Draw using mouse or touchscreen') }}</small>
+                                <button type="button" class="sig-tab-btn" id="managerTabUploadBtn" onclick="switchSigMode('manager', 'upload')">
+                                    <i class="ti ti-upload me-1"></i> {{ __('Upload Signature Image') }}
+                                </button>
                             </div>
+
+                            {{-- Draw Canvas Container --}}
+                            <div id="managerSigDrawContainer">
+                                <div class="border rounded bg-light p-1">
+                                    <canvas id="managerSigCanvas" width="450" height="120" style="width: 100%; height: 120px; background: #fff; cursor: crosshair; touch-action: none; border-radius: 4px;"></canvas>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <button type="button" id="clearManagerSigBtn" class="btn btn-xs btn-outline-danger">
+                                        <i class="ti ti-eraser me-1"></i> {{ __('Clear & Redraw') }}
+                                    </button>
+                                    <small class="text-muted">{{ __('Draw signature using mouse, trackpad, or touch') }}</small>
+                                </div>
+                            </div>
+
+                            {{-- Upload File Container --}}
+                            <div id="managerSigUploadContainer" style="display: none;">
+                                <div id="managerDropzoneArea" class="upload-sig-dropzone" onclick="document.getElementById('managerSigFileInput').click()">
+                                    <i class="ti ti-cloud-upload fs-1 text-primary mb-1 d-block"></i>
+                                    <span class="fw-bold text-dark d-block">{{ __('Click or Drag & Drop Signature Image') }}</span>
+                                    <small class="text-muted">{{ __('Accepted: PNG, JPG, JPEG (Max 5MB)') }}</small>
+                                    <input type="file" id="managerSigFileInput" accept="image/png,image/jpeg,image/jpg" style="display: none;">
+                                </div>
+                                <div id="managerUploadedPreviewWrapper" class="mt-2 text-center" style="display: none;">
+                                    <div class="p-2 border rounded bg-white d-inline-block shadow-xs mb-2">
+                                        <img id="managerSigImagePreview" src="" alt="Signature Preview" style="max-height: 80px; max-width: 260px; object-fit: contain;">
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-xs btn-outline-danger" onclick="removeUploadedSig('manager')">
+                                            <i class="ti ti-trash me-1"></i> {{ __('Remove & Choose Another') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <input type="hidden" name="manager_signature" id="manager_signature_input" required>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                        <button type="submit" class="btn btn-info text-white" id="submitManagerSigBtn">{{ __('Confirm & Sign') }}</button>
+                        <button type="submit" class="btn btn-info text-white" id="submitManagerSigBtn">{{ __('Confirm Countersign') }}</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    {{-- MODAL 2: Management Final Disbursal Sign-off Modal --}}
+    {{-- MODAL 2: Company Authorized Signatory & Disbursal Approval Modal --}}
     <div class="modal fade" id="managementSignoffModal" tabindex="-1" aria-labelledby="managementSignoffModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <form action="{{ route('settlement.management.signoff', $settlement->id) }}" method="POST" id="managementSignoffForm">
                     @csrf
                     <div class="modal-header bg-light">
-                        <h5 class="modal-title" id="managementSignoffModalLabel"><i class="ti ti-shield-check me-2 text-success"></i>{{ __('Record Final Payment & Management Sign-off') }}</h5>
+                        <h5 class="modal-title" id="managementSignoffModalLabel"><i class="ti ti-shield-check me-2 text-success"></i>{{ __('Company Authorized Sign-off & Disbursal Approval') }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="alert alert-info py-2">
+                        <div class="alert alert-info py-2 mb-3">
                             <i class="ti ti-info-circle me-1"></i> {{ __('Net settlement amount payable to employee: ') }}
                             <strong>{{ \Auth::user()->priceFormat($settlement->net_amount) }}</strong>
                         </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">{{ __('Payment Mode') }} <span class="text-danger">*</span></label>
-                                <select name="payment_mode" class="form-select" required>
-                                    <option value="Bank Transfer (NEFT/RTGS/IMPS)">Bank Transfer (NEFT/RTGS/IMPS)</option>
-                                    <option value="Cheque">Cheque</option>
-                                    <option value="UPI / Online">UPI / Online</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">{{ __('Payment Date') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="payment_date" class="form-control" value="{{ date('Y-m-d') }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">{{ __('Transaction Ref (UTR / Cheque No.)') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="payment_reference_no" class="form-control" placeholder="{{ __('e.g., UTR1234567890') }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">{{ __('HR Representative Name') }}</label>
-                                <input type="text" name="hr_representative_name" class="form-control" value="{{ \Auth::user()->name }}">
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label fw-bold">{{ __('Authorized Signatory Name') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="authorized_signatory_name" class="form-control" value="{{ \Auth::user()->name }}" required>
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label fw-bold d-block">{{ __('Authorized Signature') }} <span class="text-danger">*</span></label>
-                                <div class="border rounded bg-light p-1">
-                                    <canvas id="managementSigCanvas" width="600" height="130" style="width: 100%; height: 130px; background: #fff; cursor: crosshair; touch-action: none; border-radius: 4px;"></canvas>
+
+                        {{-- Section A: Payment Disbursal Records --}}
+                        <div class="p-3 bg-light rounded border mb-3">
+                            <h6 class="fw-bold text-dark mb-2"><i class="ti ti-wallet text-success me-1"></i>{{ __('1. Payment Disbursal Particulars') }}</h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">{{ __('Payment Mode') }} <span class="text-danger">*</span></label>
+                                    <select name="payment_mode" class="form-select form-select-sm" required>
+                                        <option value="Bank Transfer (NEFT/RTGS/IMPS)">Bank Transfer (NEFT/RTGS/IMPS)</option>
+                                        <option value="Cheque">Cheque</option>
+                                        <option value="UPI / Online">UPI / Online</option>
+                                        <option value="Cash">Cash</option>
+                                        <option value="Other">Other</option>
+                                    </select>
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <button type="button" id="clearManagementSigBtn" class="btn btn-xs btn-outline-danger">
-                                        <i class="ti ti-eraser"></i> {{ __('Clear') }}
-                                    </button>
-                                    <small class="text-muted">{{ __('Draw authorized signature using mouse or touchscreen') }}</small>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">{{ __('Payment Date') }} <span class="text-danger">*</span></label>
+                                    <input type="date" name="payment_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
                                 </div>
-                                <input type="hidden" name="authorized_signature" id="authorized_signature_input" required>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">{{ __('Transaction Ref (UTR / Cheque No.)') }} <span class="text-danger">*</span></label>
+                                    <input type="text" name="payment_reference_no" class="form-control form-control-sm" placeholder="{{ __('e.g., UTR1234567890') }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Section B: Company Authorized Signatory Endorsement --}}
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold text-dark mb-2"><i class="ti ti-certificate text-primary me-1"></i>{{ __('2. Company Authorized Signatory Endorsement') }}</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">{{ __('Authorized Signatory Name') }} <span class="text-danger">*</span></label>
+                                    <input type="text" name="authorized_signatory_name" class="form-control form-control-sm" value="{{ \Auth::user()->name }}" placeholder="{{ __('Director / Authorized Officer') }}" required>
+                                    <small class="text-muted">{{ __('Signing on behalf of: ') }}<strong>{{ $companyName }}</strong></small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">{{ __('HR Representative Name') }}</label>
+                                    <input type="text" name="hr_representative_name" class="form-control form-control-sm" value="{{ \Auth::user()->name }}">
+                                    <small class="text-muted">{{ __('HR Representative processing verification') }}</small>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold small d-block mb-2">{{ __('Authorized Digital Signature') }} <span class="text-danger">*</span></label>
+                                    
+                                    {{-- Tab Switcher --}}
+                                    <div class="d-flex gap-2 mb-2">
+                                        <button type="button" class="sig-tab-btn active" id="authTabDrawBtn" onclick="switchSigMode('auth', 'draw')">
+                                            <i class="ti ti-pencil me-1"></i> {{ __('Draw Signature') }}
+                                        </button>
+                                        <button type="button" class="sig-tab-btn" id="authTabUploadBtn" onclick="switchSigMode('auth', 'upload')">
+                                            <i class="ti ti-upload me-1"></i> {{ __('Upload Signature Image') }}
+                                        </button>
+                                    </div>
+
+                                    {{-- Draw Canvas Container --}}
+                                    <div id="authSigDrawContainer">
+                                        <div class="border rounded bg-white p-1">
+                                            <canvas id="managementSigCanvas" width="600" height="130" style="width: 100%; height: 130px; background: #fff; cursor: crosshair; touch-action: none; border-radius: 4px;"></canvas>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <button type="button" id="clearManagementSigBtn" class="btn btn-xs btn-outline-danger">
+                                                <i class="ti ti-eraser me-1"></i> {{ __('Clear & Redraw') }}
+                                            </button>
+                                            <small class="text-muted">{{ __('Draw authorized signature using mouse, trackpad, or touch') }}</small>
+                                        </div>
+                                    </div>
+
+                                    {{-- Upload File Container --}}
+                                    <div id="authSigUploadContainer" style="display: none;">
+                                        <div id="authDropzoneArea" class="upload-sig-dropzone" onclick="document.getElementById('authSigFileInput').click()">
+                                            <i class="ti ti-cloud-upload fs-1 text-primary mb-1 d-block"></i>
+                                            <span class="fw-bold text-dark d-block">{{ __('Click or Drag & Drop Authorized Signature Image') }}</span>
+                                            <small class="text-muted">{{ __('Accepted: PNG, JPG, JPEG (Max 5MB)') }}</small>
+                                            <input type="file" id="authSigFileInput" accept="image/png,image/jpeg,image/jpg" style="display: none;">
+                                        </div>
+                                        <div id="authUploadedPreviewWrapper" class="mt-2 text-center" style="display: none;">
+                                            <div class="p-2 border rounded bg-white d-inline-block shadow-xs mb-2">
+                                                <img id="authSigImagePreview" src="" alt="Authorized Signature Preview" style="max-height: 80px; max-width: 260px; object-fit: contain;">
+                                            </div>
+                                            <div>
+                                                <button type="button" class="btn btn-xs btn-outline-danger" onclick="removeUploadedSig('auth')">
+                                                    <i class="ti ti-trash me-1"></i> {{ __('Remove & Choose Another') }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" name="authorized_signature" id="authorized_signature_input" required>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                        <button type="submit" class="btn btn-success" id="submitManagementSigBtn">{{ __('Confirm Disbursal & Mark Cleared') }}</button>
+                        <button type="submit" class="btn btn-success" id="submitManagementSigBtn">
+                            <i class="ti ti-check me-1"></i> {{ __('Authorize Settlement & Record Disbursal') }}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -802,17 +964,109 @@
         initCanvasPad('managementSigCanvas', 'clearManagementSigBtn', 'authorized_signature_input');
     });
 
+    // Signature Mode Switcher ('draw' or 'upload')
+    function switchSigMode(prefix, mode) {
+        var drawBtn = document.getElementById(prefix + 'TabDrawBtn');
+        var uploadBtn = document.getElementById(prefix + 'TabUploadBtn');
+        var drawContainer = document.getElementById(prefix === 'manager' ? 'managerSigDrawContainer' : 'authSigDrawContainer');
+        var uploadContainer = document.getElementById(prefix === 'manager' ? 'managerSigUploadContainer' : 'authSigUploadContainer');
+
+        if (mode === 'draw') {
+            drawBtn.classList.add('active');
+            uploadBtn.classList.remove('active');
+            drawContainer.style.display = 'block';
+            uploadContainer.style.display = 'none';
+        } else {
+            uploadBtn.classList.add('active');
+            drawBtn.classList.remove('active');
+            drawContainer.style.display = 'none';
+            uploadContainer.style.display = 'block';
+        }
+    }
+
+    // Handle Uploaded Signature File
+    function setupSigUpload(fileInputId, dropzoneId, previewWrapperId, imagePreviewId, hiddenInputId) {
+        var fileInput = document.getElementById(fileInputId);
+        var dropzone = document.getElementById(dropzoneId);
+        var previewWrapper = document.getElementById(previewWrapperId);
+        var imagePreview = document.getElementById(imagePreviewId);
+        var hiddenInput = document.getElementById(hiddenInputId);
+
+        if (!fileInput) return;
+
+        fileInput.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Signature file must be under 5MB.');
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = function(evt) {
+                    hiddenInput.value = evt.target.result;
+                    imagePreview.src = evt.target.result;
+                    dropzone.style.display = 'none';
+                    previewWrapper.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        if (dropzone) {
+            ['dragenter', 'dragover'].forEach(function(ev) {
+                dropzone.addEventListener(ev, function(e) {
+                    e.preventDefault();
+                    dropzone.style.borderColor = '#584ed2';
+                    dropzone.style.backgroundColor = '#eef2ff';
+                });
+            });
+            ['dragleave', 'drop'].forEach(function(ev) {
+                dropzone.addEventListener(ev, function(e) {
+                    e.preventDefault();
+                    dropzone.style.borderColor = '#cbd5e1';
+                    dropzone.style.backgroundColor = '#f8fafc';
+                });
+            });
+            dropzone.addEventListener('drop', function(e) {
+                var dt = e.dataTransfer;
+                if (dt && dt.files && dt.files[0]) {
+                    fileInput.files = dt.files;
+                    var evt = new Event('change');
+                    fileInput.dispatchEvent(evt);
+                }
+            });
+        }
+    }
+
+    function removeUploadedSig(prefix) {
+        var hiddenInputId = prefix === 'manager' ? 'manager_signature_input' : 'authorized_signature_input';
+        var fileInputId = prefix === 'manager' ? 'managerSigFileInput' : 'authSigFileInput';
+        var dropzoneId = prefix === 'manager' ? 'managerDropzoneArea' : 'authDropzoneArea';
+        var previewWrapperId = prefix === 'manager' ? 'managerUploadedPreviewWrapper' : 'authUploadedPreviewWrapper';
+        var imagePreviewId = prefix === 'manager' ? 'managerSigImagePreview' : 'authSigImagePreview';
+
+        document.getElementById(hiddenInputId).value = '';
+        document.getElementById(fileInputId).value = '';
+        document.getElementById(imagePreviewId).src = '';
+        document.getElementById(previewWrapperId).style.display = 'none';
+        document.getElementById(dropzoneId).style.display = 'block';
+    }
+
+    // Initialize upload listeners
+    setupSigUpload('managerSigFileInput', 'managerDropzoneArea', 'managerUploadedPreviewWrapper', 'managerSigImagePreview', 'manager_signature_input');
+    setupSigUpload('authSigFileInput', 'authDropzoneArea', 'authUploadedPreviewWrapper', 'authSigImagePreview', 'authorized_signature_input');
+
     $('#managerCountersignForm').on('submit', function (e) {
         if (!document.getElementById('manager_signature_input').value) {
             e.preventDefault();
-            alert('{{ __("Please draw your signature before submitting.") }}');
+            alert('{{ __("Please draw or upload your signature before submitting.") }}');
         }
     });
 
     $('#managementSignoffForm').on('submit', function (e) {
         if (!document.getElementById('authorized_signature_input').value) {
             e.preventDefault();
-            alert('{{ __("Please draw your authorized signature before confirming disbursal.") }}');
+            alert('{{ __("Please draw or upload your authorized signature before confirming disbursal.") }}');
         }
     });
 </script>

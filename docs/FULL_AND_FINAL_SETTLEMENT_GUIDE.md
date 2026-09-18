@@ -1,8 +1,8 @@
 # 📋 Full & Final Settlement & Digital Clearance
-## Complete Operational Guide — v1.0
+## Complete Operational Guide — v2.0
 
-> **Audience:** HR Administrators, Operations Managers, Departing Employees / Customers  
-> **Purpose:** End-to-end explanation of the Full & Final Settlement (FnF) workflow — no technical jargon, no code.
+> **Audience:** HR Administrators, Department Managers, Operations Heads, Departing Employees  
+> **Purpose:** End-to-end operational guide explaining the enterprise Full & Final Settlement (FnF) workflow, 3-stage signature verification, and departmental clearance system.
 
 ---
 
@@ -11,57 +11,62 @@
 1. [System Overview](#1-system-overview)
 2. [How the Full Workflow Works](#2-how-the-full-workflow-works)
 3. [Workflow Flowchart — End to End](#3-workflow-flowchart--end-to-end)
-4. [HR Admin: Creating the Settlement Form](#4-hr-admin-creating-the-settlement-form)
-5. [HR Admin Flowchart — Form Creation Steps](#5-hr-admin-flowchart--form-creation-steps)
-6. [Sharing the Form with the Employee](#6-sharing-the-form-with-the-employee)
-7. [Employee: Filling & Signing the Clearance Form](#7-employee-filling--signing-the-clearance-form)
-8. [Employee Flowchart — Clearance Submission](#8-employee-flowchart--clearance-submission)
-9. [After Submission — What Happens Next](#9-after-submission--what-happens-next)
-10. [Suggestions & Improvements](#10-suggestions--improvements)
+4. [HR Admin: Creating & Editing the Settlement Form](#4-hr-admin-creating--editing-the-settlement-form)
+5. [Sharing the Form with the Employee](#5-sharing-the-form-with-the-employee)
+6. [Employee: Filling & Signing the Clearance Form](#6-employee-filling--signing-the-clearance-form)
+7. [Departmental Clearance & Handover Verification (Section 3)](#7-departmental-clearance--handover-verification-section-3)
+8. [Multi-Stage Countersign & Company Authorization (3 Signatures)](#8-multi-stage-countersign--company-authorization-3-signatures)
+9. [Official Print & PDF Export](#9-official-print--pdf-export)
+10. [Audit Trail & Activity Log](#10-audit-trail--activity-log)
+11. [Feature Roadmap & Implementation Status](#11-feature-roadmap--implementation-status)
 
 ---
 
 ## 1. System Overview
 
-The **Full & Final Settlement & Clearance** module is a modern, paperless, legally compliant offboarding system built into the HRMS. It replaces scattered emails, paper forms, and manual checklists with a single unified digital workflow.
+The **Full & Final Settlement & Clearance** module is a paperless, legally binding offboarding platform built directly into the HRMS. It eliminates scattered emails, physical paperwork, and manual checklists, replacing them with a unified digital workflow.
 
-It solves four key needs in one system:
+It delivers five core capabilities:
 
-| # | What It Does | Benefit |
+| # | What It Does | Key Benefit |
 |---|---|---|
-| 1 | **Financial Settlement Calculation** | Automatically computes gross payable, deductions, and net final amount |
-| 2 | **Departmental & Asset Handover Checklist** | Tracks every equipment return, credential revocation, and clearance per department |
-| 3 | **Interactive Employee Clearance** | Employee checks items off online, adds handover notes, and confirms from any device |
-| 4 | **Digital Sign-Off with Verification** | Captures legally valid digital signatures with timestamp and IP address |
+| 1 | **Financial Settlement Calculation** | Real-time calculation of gross payable, deductions, and net balance with zero manual math. |
+| 2 | **Departmental Asset Verification** | Pre-certified department clearance with clean segregation into *Pending Handover* and *Approved Clearances*. |
+| 3 | **Interactive Employee Clearance** | Departing employees review financials, add handover notes/serial numbers, answer questionnaires, and sign digitally. |
+| 4 | **Customizable Legal Undertaking** | Companies can customize NDA, intellectual property, and separation terms per employee, with a one-click reset to standard clauses. |
+| 5 | **3-Stage Executive Sign-off** | Tripartite verification: Employee Acceptance → Department Manager Countersign → Company Authorized Signatory & Payment Disbursal. |
 
 ---
 
 ## 2. How the Full Workflow Works
 
-The entire process has three main stages:
+The end-to-end settlement lifecycle operates across three structured phases:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  STAGE 1: HR CREATES THE SETTLEMENT FORM                                   │
-│  → Select Employee → Set Financials → Build Checklist → Add Custom Fields  │
+│  PHASE 1: HR CREATES & CONFIGURATES SETTLEMENT                              │
+│  → Employee Details → Financials (A & B) → Departmental Checklist          │
+│  → Section-Wise Custom Questions → Customizable Legal Undertaking           │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  STAGE 2: FORM IS SHARED WITH EMPLOYEE                                     │
-│  → Auto-Email with secure link  OR  Copy link & share via chat/email       │
+│  PHASE 2: SECURE SHARING & EMPLOYEE DIGITAL CLEARANCE (STAGE 1 SIGNATURE)   │
+│  → 64-char encrypted link via Email / WhatsApp (30-day auto-expiry)         │
+│  → Employee reviews financials & company-approved clearances                │
+│  → Adds handover notes / courier tracking # on pending items                │
+│  → Answers employee questions → Agrees to legal terms → Signs digitally     │
+│  → Automated Email & In-App Dashboard Alert sent to HR Admin                │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  STAGE 3: EMPLOYEE REVIEWS, CLEARS ITEMS & SIGNS DIGITALLY                 │
-│  → Reviews financials → Checks items → Writes notes → Signs → Submits      │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  OUTCOME: CONFIRMED, LOCKED & DOWNLOADABLE PDF                             │
-│  → Employee sees confirmation page → HR reviews → PDF ready for archives   │
+│  PHASE 3: MANAGEMENT VERIFICATION & PAYMENT (STAGE 2 & 3 SIGNATURES)        │
+│  → Stage 2: Department Manager / HOD reviews handover & countersigns        │
+│  → Stage 3: Company Authorized Signatory signs on behalf of the company     │
+│  → Payment Disbursal recorded (Mode, Date, UTR Reference No.)               │
+│  → Settlement marked "Cleared & Disbursed" → Audit Trail Logged             │
+│  → Executive 3-Signature Statement PDF generated for corporate archives     │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -72,350 +77,243 @@ The entire process has three main stages:
 ```mermaid
 flowchart TD
     A([🏁 Start: Employee Separation Initiated]) --> B[HR opens Full & Final Settlement module]
-    B --> C[HR selects Employee from dropdown]
-    C --> D[HR enters Last Working Day & Reason for Separation]
-    D --> E[HR sets Earnings & Deductions\nNet Amount auto-calculates]
-    E --> F[HR builds Departmental Clearance Checklist\nCategory + Item + Status per row]
-    F --> G{Optional:\nAny Custom Questions?}
-    G -- Yes --> H[HR adds Custom Fields\nShort Text / Dropdown / Date / Number\nTargeted to HR or Employee]
-    G -- No --> I
-    H --> I[HR saves the Settlement Record\nStatus: Draft → Auto-generates Reference No.]
+    B --> C[HR selects Employee — Profile auto-filled]
+    C --> D[HR sets LWD & Separation Reason]
+    D --> E[HR enters Earnings & Deductions\nNet Payable auto-calculates in real time]
+    E --> F[HR sets Departmental Clearance Checklist\nCategory, Item & initial status]
+    F --> G[HR reviews & customizes Legal Undertaking terms\nor keeps standard corporate clauses]
+    G --> H{Add Custom Questions\nto Sections 1–4?}
+    H -- Yes --> I[In-Section Form Builder:\nShort Text, Paragraph, Dropdown, Date, Number\nTargeted to HR or Employee]
+    H -- No --> J
+    I --> J[HR saves Settlement in Draft]
 
-    I --> J{How to Share\nwith Employee?}
-    J -- Email --> K[HR clicks Send to Employee\nSystem sends email with secure link]
-    J -- Manual --> L[HR copies secure link\nShares via WhatsApp / Slack / Email]
-    K --> M
-    L --> M
+    J --> K{Share with Employee}
+    K -- Auto Email --> L[Send to Employee email with secure link]
+    K -- WhatsApp / Direct --> M[Copy 64-char token link or 1-Click WhatsApp]
+    L --> N([📨 Employee receives secure link])
+    M --> N
 
-    M([📨 Employee receives secure link])
-    M --> N[Employee opens link in browser\nMobile / Tablet / Desktop — No login needed]
-    N --> O[Employee reviews company header,\nSettlement Ref No., and financial breakdown]
-    O --> P[Employee sees interactive checklist\nOne checkbox per clearance item]
-    P --> Q[Employee checks items as completed\nBadge turns green, row turns green]
-    Q --> R[Employee types handover notes / serial numbers\nUnder each checked item]
-    R --> S{Any Additional\nEmployee Questions?}
-    S -- Yes --> T[Employee fills custom fields\nforwarding email, contact, etc.]
-    S -- No --> U
-    T --> U
-    U --> V[Employee reads & accepts\nDeclaration & Legal Undertaking]
-    V --> W[Employee writes general comments\nOptional remarks field]
-    W --> X{Signature Method}
-    X -- Draw --> Y[Employee draws signature\non screen or touch device]
-    X -- Upload --> Z[Employee uploads signature image\nPNG / JPG preview shown]
-    Y --> AA[Employee clicks Sign & Submit Settlement]
-    Z --> AA
-    AA --> AB{All Required Fields\nFilled?}
-    AB -- No --> AC[⚠️ Validation alert shown\nEmployee corrects and resubmits]
-    AC --> AA
-    AB -- Yes --> AD[✅ Submission recorded with Date, Time & IP]
-    AD --> AE[Employee sees Confirmation Certificate page\nLocked — cannot be changed]
-    AD --> AF[HR Dashboard status updates\nDraft → Sent → Signed]
-    AF --> AG[HR reviews submitted checklist, notes & signature]
-    AG --> AH[HR / Management downloads PDF\nOfficial print-ready document]
-    AH --> AI([🎉 Settlement Complete])
+    N --> O[Employee opens link on any device\nNo login required]
+    O --> P[Reviews Financial Breakdown & Net Settlement]
+    P --> Q[Reviews Section 3: Clearance Checklist\nSees Cleared by Company vs Pending Handover]
+    Q --> R[Enters notes / serial numbers on pending handover items]
+    R --> S[Fills any employee-targeted questionnaire fields]
+    S --> T[Reads Legal Undertaking & checks mandatory confirmation box]
+    T --> U[Draws or Uploads Digital Signature]
+    U --> V[Employee clicks Sign & Submit]
+    V --> W[✅ Submission saved with Timestamp & IP Address]
+    W --> X[Automated Email & Dashboard Alert sent to HR Creator]
+
+    X --> Y[Stage 2: Department Manager / HOD reviews & countersigns]
+    Y --> Z[Stage 3: Company Authorized Signatory sign-off\nRecords Payment Mode, Date & UTR Ref]
+    Z --> AA[Status updated to Cleared & Disbursed]
+    AA --> AB[Audit Trail event logged]
+    AB --> AC([📄 Official 3-Signature PDF ready for archives])
 ```
 
 ---
 
-## 4. HR Admin: Creating the Settlement Form
+## 4. HR Admin: Creating & Editing the Settlement Form
 
-### Step 1 — Employee & Separation Details
-- Navigate to **Full & Final Settlement** from the left sidebar and click **Create Settlement**.
-- Select the employee from the searchable dropdown. Once selected, their Employee Code, Designation, Department, and Date of Joining are automatically filled.
-- Set the **Last Working Day (LWD)** — this is the date used for all salary proration calculations.
-- Enter the **Reason for Separation**, such as *Resignation Accepted*, *Contract Ended*, *Mutual Release*, or *Retirement*.
+The admin form ([create.blade.php](file:///e:/laragon/www/idab/hrms.idab/resources/views/settlement/create.blade.php) and [edit.blade.php](file:///e:/laragon/www/idab/hrms.idab/resources/views/settlement/edit.blade.php)) features a unified 5-section design matching the enterprise Tabler/HRMGo admin theme.
 
----
+### Section 1 — Employee & Separation Details
+- **Select Employee**: Searchable Select2 dropdown. Selecting an employee auto-populates their Employee ID, Department, Designation, and Date of Joining (DOJ).
+- **Last Working Day (LWD)**: The reference date for salary calculation and asset recovery.
+- **Reason for Separation**: e.g., *Resignation Accepted*, *Contract Ended*, *Mutual Release*.
+- **In-Section Custom Questions (`separation`)**: Configure fields such as notice shortfall waiver notes, relocation details, or exit interview notes.
 
-### Step 2 — Financial Clearance Breakdown
+### Section 2 — Financial Clearance Breakdown
+Real-time dual-table financial calculator:
+- **Earnings & Payables (A)**: Basic salary to LWD, earned leave encashment, performance bonus, gratuity, arrears.
+- **Deductions & Recoveries (B)**: Notice shortfall recovery, outstanding loan balance, asset damage, TDS.
+- **Net Final Settlement Amount = A − B**: Automatically computed and highlighted.
+- **In-Section Custom Questions (`financial`)**: Add bank account verification notes, loan clearance NOC status, gratuity eligibility notes.
 
-This section has two columns that auto-calculate in real time:
+### Section 3 — Departmental & Asset Clearances Checklist
+- Build checklist checkpoints row-by-row with **Category** (*IT & Hardware, Admin, HR, Finance*), **Item Description**, and **Status** (*Pending*, *Returned / Cleared*, *Not Applicable*).
+- HR departments can pre-approve and certify cleared items directly before sending the form.
+- **In-Section Custom Questions (`assets`)**: Add laptop serial numbers, BYOD remote wipe declarations, access badge returns.
 
-**Left Column — Earnings & Payables (A):**
-- Salary payable up to the last working day
-- Earned & unused leave encashment
-- Gratuity (if applicable)
-- Performance bonus or incentive payout
-- Any other custom earning row you add
+### Section 4 — Employee Handover & Legal Undertaking
+- **Custom Legal Declaration Terms**: A dedicated editor allows HR to customize exact legal terms, non-compete clauses, and IP undertakings.
+- **Reset to Default Terms**: One-click button reverts to company standard legal wording.
+- **In-Section Custom Questions (`employee`)**: Add questions departing employees must complete online before signing (e.g. personal email, forwarding address).
 
-**Right Column — Deductions & Recoveries (B):**
-- Notice period shortfall / recovery
-- Outstanding loan or advance balance
-- Asset / hardware damage recovery
-- Any other custom deduction row you add
-
-**Net Final Payable = A − B**
-The system calculates and displays this automatically. No manual math required.
-
----
-
-### Step 3 — Departmental & Asset Clearances Checklist
-
-This is the core of the clearance form. You build it row by row:
-
-| Field | What to Enter | Examples |
-|---|---|---|
-| **Category** | Department or functional group | *IT & Hardware*, *Admin & Facility*, *Cloud & Code*, *Finance & Accounts*, *Operations* |
-| **Checklist Item** | What exactly must be returned or completed | *Company laptop and charger returned*, *Official email account suspended*, *Locker keys and uniform returned* |
-| **Status** | Initial status set by HR | Usually left as *Pending* — the employee will update this online |
-
-- Click **Add Checkpoint** to insert new rows anytime.
-- Click the **🗑 trash icon** on any row to delete it.
-- There is no limit to how many checkpoints you can add.
-- **There is no fixed industry template** — you can freely create any category and item for any business type: manufacturing, healthcare, salon, logistics, legal, retail, hospitality, etc.
+### Section 5 — Management Sign-off & Payment Information (Edit Mode)
+- Record settlement clearance status (*Pending* or *Cleared*).
+- Payment Date, Payment Mode (*Bank Transfer, NEFT/RTGS, Cheque, UPI, Cash*), and Transaction Reference No. (UTR).
+- HR Representative Name and Authorized Signatory Name.
 
 ---
 
-### Step 4 — Custom Questions (Optional, Per Section)
+## 5. Sharing the Form with the Employee
 
-Each section (Separation Details, Financial Clearance, Asset Clearance, Employee Handover) has its own **"Add Question to this Section"** button.
+Every settlement receives a **64-character encrypted token URL** that does not expose internal database IDs:
 
-| Setting | Options | What It Means |
-|---|---|---|
-| **Question Title** | Any text | e.g., *Forwarding Email*, *Asset Serial Number*, *GitHub Username*, *Feedback Survey* |
-| **Input Type** | Short Text, Paragraph, Dropdown, Date, Number | Defines what the respondent sees |
-| **Who Fills This?** | HR Certified / Employee to Fill Online | HR questions are completed at creation; Employee questions appear on the public clearance form |
-| **Required?** | Yes / No | If required, the form cannot be submitted without an answer |
-
----
-
-### Step 5 — Save Settlement
-
-Click **Save Full & Final Settlement**. The system:
-- Assigns a unique reference number (e.g., `FNF-202609-0001`)
-- Sets the status to **Draft**
-- Generates a secure encrypted share link (valid for 30 days)
-
----
-
-## 5. HR Admin Flowchart — Form Creation Steps
-
-```mermaid
-flowchart LR
-    S([Start]) --> A
-    A["1️⃣ Select Employee\n(auto-fills profile details)"] --> B
-    B["2️⃣ Enter Last Working Day\n+ Reason for Separation"] --> C
-    C["3️⃣ Set Earnings\n(Salary, Leave, Gratuity, etc.)"] --> D
-    D["4️⃣ Set Deductions\n(Notice Recovery, Loans, Damages)"] --> E
-    E["5️⃣ Build Clearance Checklist\n(Category + Item per row)"] --> F
-    F{"6️⃣ Need Custom\nQuestions?"} -- Yes --> G
-    F -- No --> H
-    G["Add Custom Fields\n(Text / Dropdown / Date / Number)\nTarget: HR or Employee"] --> H
-    H["7️⃣ Save Settlement\nRef No. Auto-Generated"] --> I([✅ Form Ready to Share])
-```
-
----
-
-## 6. Sharing the Form with the Employee
-
-Every saved settlement has a **secure, encrypted link** — a long unique token that only works for that specific settlement. It does not expose any internal database IDs.
-
-### Option A — Auto Email
-1. Open the settlement record.
-2. Click **Send to Employee** (envelope icon).
-3. The system automatically sends an official email to the employee's registered email address containing:
-   - Their name and settlement reference number
-   - The calculated net payable amount
-   - A clear **"Open Clearance Form"** button linking to the secure URL
-4. The status updates to **Sent** and the share date is logged.
-
-### Option B — Direct Link Sharing
-1. Open the settlement record.
-2. Copy the clearance link shown on the page.
-3. Share it via WhatsApp, Slack, email, or any messaging platform.
-
-> **Note:** The link is valid for **30 days** from the date of creation. After expiry, the employee sees a polite expiry notice and HR must regenerate the token.
-
----
-
-## 7. Employee: Filling & Signing the Clearance Form
-
-When the employee opens the secure link, they see an executive-styled digital clearance document — no login required.
-
----
-
-### Section 1 — Document Header & Status
-The page clearly shows:
-- Company name and branding
-- Settlement Reference Number
-- Date the form was issued
-
----
-
-### Section 2 — Employee Information & Financial Statement
-- Name, Employee Code, Designation, Department, Date of Joining, Last Working Day
-- Reason for Separation
-- **Detailed financial breakdown** with earnings and deductions listed
-- **Net Final Payable Amount** prominently displayed
-
----
-
-### Section 3 — Interactive Clearance Checklist
-
-This is the most important section for the employee to complete:
-
-**How it works:**
-1. Each clearance checkpoint (e.g., *Company laptop and charger returned*) is shown with a checkbox, the item description, and a status badge on the right.
-2. The employee **checks the checkbox** next to each item they have completed.
-3. Instantly:
-   - The badge changes from **Pending Clearance** 🟠 to **Completed / Handed Over** 🟢
-   - The entire row turns a soft green colour
-   - The category counter updates (e.g., `0 / 3 Cleared` → `1 / 3 Cleared`)
-4. Below each checkbox is a **comment/notes field** where the employee can type specific handover details:
-   - Serial numbers (e.g., *Laptop S/N: C02G4312XQ8R*)
-   - Who it was handed to (e.g., *Handed to IT Desk — Rahul Sharma*)
-   - Dates or reference IDs
-5. **Live overall progress bar** at the top updates in real time showing percentage completion across all departments.
-6. Once all items in a department are checked, the department category icon turns into a ✅ green checkmark.
-
----
-
-### Section 4 — Employee Undertaking & Digital Sign-Off
-
-**4a. Additional Questions** *(only shown if HR set them)*
-- Any employee-targeted custom fields appear here in a neat card.
-- Each field has a proper label, input type, and helpful placeholder text.
-
-**4b. Legal Declaration & Undertaking**
-The employee reads the formal undertaking which states they have:
-- Returned all company property, equipment, and software access
-- Handed over all client data, source code, and credentials
-- No further financial or legal claims against the company
-- Agreed to maintain full confidentiality under NDA terms
-
-The employee then checks: **"I have read, understood, and agree to the declaration."**
-
-**4c. General Comments / Remarks** *(optional)*
-A free-form text area for the employee to write:
-- Future contact email or phone number
-- General handover observations
-- Notes for the HR team
-
-**4d. Digital Signature**
-Two options are available:
-
-| Method | How It Works |
+| Sharing Channel | Action |
 |---|---|
-| ✏️ **Draw Signature** | Draw directly on the canvas with mouse, trackpad, or finger on touchscreen. Clear and redraw as many times as needed. |
-| ⬆️ **Upload Signature Image** | Drag-and-drop or click to upload a PNG, JPG, or JPEG image. Instantly previewed before submission. |
-
-**4e. Final Submission**
-- Employee clicks **Sign & Submit Settlement**.
-- The system validates all required fields.
-- If anything is missing, a clear alert message identifies what needs to be completed.
-- On successful submission, the checklist states, comments, custom field answers, and digital signature are securely recorded.
+| **📧 Auto Email** | Click **Send to Employee**. Sends a formatted HTML email with net payable amount and a direct **"Open Clearance Form"** button. |
+| **💬 WhatsApp** | Click **Share on WhatsApp**. Pre-composes an official WhatsApp message with employee name and secure link. |
+| **🔗 Copy Link** | One-click button copies the URL to your clipboard for Slack, Teams, or manual email. |
+| **🔄 Link Expiry & Regeneration** | Links expire in 30 days. HR can click **Regenerate Link** at any time to generate a fresh token and extend validity by 30 days. |
+| **↩️ Recall to Draft** | If terms need revision after sending, HR can click **Recall to Draft** to temporarily pause the link while adjusting figures. |
 
 ---
 
-## 8. Employee Flowchart — Clearance Submission
+## 6. Employee: Filling & Signing the Clearance Form
 
-```mermaid
-flowchart TD
-    A([Employee opens secure link]) --> B[Reviews Document Header\nCompany, Reference No., Date Issued]
-    B --> C[Reviews Financial Statement\nEarnings, Deductions, Net Payable]
-    C --> D[Sees Interactive Checklist\nCheckboxes per department]
-    D --> E[Checks each completed item ✓\nBadge turns green instantly]
-    E --> F[Types handover notes below each item\nSerial numbers, who received it, dates]
-    F --> G{HR added\nEmployee Questions?}
-    G -- Yes --> H[Fills custom information fields\ne.g., Forwarding email, contact details]
-    G -- No --> I
-    H --> I[Reads Legal Declaration & Undertaking]
-    I --> J[Checks Declaration Confirmation Box ✓\nMandatory]
-    J --> K[Types optional general comments\nHandover notes, future contact info]
-    K --> L{Choose Signature Method}
-    L -- Draw --> M[Draws signature on canvas\nMouse / finger / trackpad]
-    L -- Upload --> N[Uploads signature image\nPNG / JPG — Preview shown]
-    M --> O[Clicks Sign & Submit Settlement]
-    N --> O
-    O --> P{Validation Check}
-    P -- ❌ Missing required fields --> Q[Alert shown — fix and resubmit]
-    Q --> O
-    P -- ✅ All valid --> R[Submission confirmed with\nDate, Time, IP Address]
-    R --> S([Settlement Signed & Locked\n✅ Confirmation Certificate shown])
+The employee opens the secure public view on any browser (mobile, tablet, or desktop) with zero login credentials required:
+
+1. **Header & Net Statement**: Clear corporate branding, settlement reference number, and financial summary.
+2. **Section 1 & 2**: Separation particulars and certified financial breakdown.
+3. **Section 3**: Departmental clearance status (see details below).
+4. **Section 4 — Formal Sign-Off**:
+   - Reads company-configured legal undertaking.
+   - Checks mandatory declaration confirmation.
+   - Completes any required employee questionnaire fields.
+   - Enters optional remarks or forwarding contact information.
+   - **Digital Signature**: Draws on canvas (with touch-action support for mobile) or uploads signature image.
+   - Clicks **Sign & Submit Settlement**.
+5. **Post-Submission**:
+   - The page transforms into an immutable **Signed & Confirmed Certificate** showing the digital signature, date/time, and verified IP address.
+   - Automated email and in-app dashboard notifications alert the HR Admin creator immediately.
+
+---
+
+## 7. Departmental Clearance & Handover Verification (Section 3)
+
+To prevent confusion between company-internal actions and employee handovers, Section 3 employs a **segregated layout**:
+
+### Clear Header Badges
+- `[✓ X Cleared by Company]`: Displays how many items have already been reviewed and certified by department managers (green badge).
+- `[⏱ Y Pending Handover]`: Highlights items awaiting physical handover or final department sign-off (amber badge).
+
+### Pending Handover Progress
+- **Pending Scope Counter**: Explicitly displays **`0 / Y Pending`** with title `Pending Handover Items: Y Item(s) Remaining`.
+- **Amber Progress Bar**: Starts at 0% and focuses purely on remaining handover actions, avoiding fractional confusion.
+- When all items are approved, automatically displays: **`All Handover Items Cleared (100% Completed)`**.
+
+### Two Distinct Lists
+1. **Items Awaiting Handover & Department Verification**:
+   - Lists only pending checkpoints.
+   - Includes optional handover note inputs for the employee (e.g., courier tracking number, asset serial number).
+2. **Completed & Approved Clearances by Company**:
+   - Dedicated card below listing all company-certified completed checkpoints with green checkmarks and `Cleared / Returned` badges.
+3. **Not Applicable (N/A) Items**:
+   - Grouped neatly at the bottom in neutral pill badges.
+
+---
+
+## 8. Multi-Stage Countersign & Company Authorization (3 Signatures)
+
+The settlement incorporates an authentic tripartite signature and approval architecture:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  STAGE 1: EMPLOYEE ACCEPTANCE                                               │
+│  → Digital Signature captured on public form                                │
+│  → Employee Name, Employee Code, Signed Timestamp, Verified IP              │
+│  → Formal undertaking confirmation                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  STAGE 2: HR / DEPARTMENT MANAGER VERIFICATION                              │
+│  → Manager / HOD opens settlement record on admin panel                     │
+│  → Reviews asset handover and inputs verification remarks                   │
+│  → Draws digital countersignature with timestamp                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  STAGE 3: COMPANY AUTHORIZED SIGNATORY & PAYMENT DISBURSAL                  │
+│  → Company Authorized Signatory signs on behalf of the company              │
+│  → Formatted as: "For & On Behalf of [Company Name]"                        │
+│  → Authorized Signatory Name, Title & Approval Date                         │
+│  → Payment Details recorded: Mode, Disbursal Date, UTR / Cheque Ref No.     │
+│  → Settlement transitions to "Cleared & Disbursed"                          │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+### Segregated Display on Admin Panel (`settlement.show`)
+- **Left Column — Company Authorized Signatory Endorsement**:
+  - `For & On Behalf of: [Company Name]`
+  - Signatory Name & Title (`Company Authorized Signatory`)
+  - Authorization Date
+  - Digital Signature preview with corporate seal/sign-off badge.
+- **Right Column — Disbursal & Payment Settlement Record**:
+  - Status: `Cleared & Paid`
+  - Net Amount Disbursed
+  - Payment Mode (Bank Transfer, NEFT/RTGS, Cheque, UPI, Cash)
+  - Disbursal Date & UTR / Transaction Reference Number
+  - HR Verification Desk signatory
 
-## 9. After Submission — What Happens Next
-
-### For the Employee
-Immediately after submitting, the page transforms into a **Signed & Confirmed Certificate** that shows:
-- A green success checkmark
-- "Settlement Signed & Confirmed" heading
-- Their submitted digital signature
-- Any general comments they wrote
-- Exact date and time of submission
-- Their verified IP address (proof of submission)
-- The page is fully **locked** — no further changes possible
-
-### For HR / Admin
-- The settlement status in the dashboard updates from **Sent → Signed**
-- HR can open the settlement record to review:
-  - Every checklist item and whether it was marked complete
-  - Employee's individual handover notes per item
-  - Custom field answers
-  - Employee's general remarks
-  - The digital signature with submission metadata
-- HR can click **Download PDF** to generate an official, print-ready document for:
-  - Payroll records
-  - Finance / Accounts processing
-  - Legal archives
-  - Audit trail documentation
-
-### PDF Report Contains:
-- Company header with branding
-- Complete employee profile details
-- Full financial breakdown (earnings, deductions, net payable)
-- Section-wise departmental clearance table with employee handover notes
-- Custom field records
-- Employee digital signature
-- Submission timestamp and verification details
+### Dual Signature Modes (Draw Canvas vs. Upload Image)
+For both **HR/Department Manager Countersign** and **Company Authorized Signatory Approval**, the modal gives administrators two flexible options:
+1. **✍️ Draw Signature**: An interactive HTML5 canvas allowing drawing with mouse, trackpad, or touch/stylus with a 1-click **Clear** button.
+2. **📁 Upload Signature Image**: Allows uploading an official scanned signature file (`.png`, `.jpg`, `.jpeg` up to 2MB).
+   - Live visual preview of the uploaded signature.
+   - 1-click **Remove / Change** option.
+   - Automatically converted to high-fidelity Base64 string for seamless PDF rendering and archival storage without external file dependency breakages.
 
 ---
 
-## 10. Suggestions & Improvements
+## 9. Official Print & PDF Export
 
-Based on a thorough review of the current module, the following enhancements are recommended to make the system more complete, professional, and production-ready:
+The PDF statement ([pdf.blade.php](file:///e:/laragon/www/idab/hrms.idab/resources/views/settlement/pdf.blade.php)) is an official, print-ready document formatted for legal archives and financial audits:
 
----
-
-### 🔴 High Priority
-
-| # | Suggestion | Why It Matters |
-|---|---|---|
-| 1 | **Manager / HOD Countersign Support** | Currently, only the employee signs. In most organizations, the departing employee's manager or HOD must also countersign the clearance. Adding a multi-stage signature (Employee → Manager → HR) would make the workflow legally complete. |
-| 2 | **Link Expiry & Regeneration** | Tokens expire in 30 days. HR currently has no visible button to extend or regenerate the link if an employee delays signing. A "Regenerate Link" button on the admin panel is needed. |
-| 3 | **Email to HR on Employee Submission** | When the employee submits, no notification is sent to HR. HR has to check the dashboard manually. An automatic email alert to the HR admin upon submission would ensure timely awareness. |
-| 4 | **Token Expiry Visible in Dashboard** | The expiry date of the share link should be visible on the settlement index and detail page so HR knows before it lapses. |
-
----
-
-### 🟡 Medium Priority
-
-| # | Suggestion | Why It Matters |
-|---|---|---|
-| 5 | **WhatsApp Share Button** | Add a one-click WhatsApp share button alongside the link on the settlement detail page. Many HR teams communicate via WhatsApp and this would save manual copy-paste. |
-| 6 | **Settlement Status History / Activity Log** | Track every status change (Draft → Sent → Signed → Cleared) with who performed the action and when. Provides a complete audit trail. |
-| 7 | **Bulk Settlement Export (Excel/CSV)** | Allow HR to export a filtered list of settlements (by date, status, department) to Excel for payroll batch processing and reporting. |
-| 8 | **Remarks Field in Checklist for HR** | Currently only the employee can add remarks per checklist item. HR should also be able to add internal remarks on each item (e.g., *Return verified by IT — 17th Sep*) which are visible on the admin panel but not on the employee-facing form. |
-| 9 | **Signature on Mobile — Better Canvas** | On mobile devices, the signature canvas can be small and difficult to use accurately. Adding a full-screen signature mode on small screens would improve mobile usability. |
-| 10 | **Settlement Revision (Edit after Sent)** | If HR sends the form and then realizes an earning or deduction was wrong, there is no way to revise it once shared. A "Recall & Edit" feature would allow HR to withdraw, correct, and re-send. |
+### Document Structure:
+- **Header**: Corporate logo, registered address, telephone, email, and settlement reference.
+- **Section A**: Employee profile, DOJ, LWD, and reason for separation.
+- **Section B**: Itemized Earnings (A), Deductions (B), and Net Final Settlement Amount.
+- **Section C**: Departmental Clearance Matrix with categories, items, certified status, and notes.
+- **Section D**: Section-wise custom questionnaire records.
+- **Payment Disbursal Record Bar**: A 1-row summary bar displaying Settlement Status, Payment Mode, Disbursal Date, and UTR Reference Number.
+- **Section E — 3-Column Executive Signature Matrix**:
+  - **Column 1 (Separating Employee)**: Signature image, Employee Name, Designation, Code, Timestamp, and IP.
+  - **Column 2 (Department Verification)**: Signature image, Manager / HOD Name, Designation, Timestamp, and remarks.
+  - **Column 3 (Company Authorized Signatory)**: Header `FOR [COMPANY NAME]`, Signature image, Signatory Name, Title `Company Authorized Signatory`, Approval Date, and `OFFICIAL SEAL & SIGN-OFF` badge.
 
 ---
 
-### 🟢 Nice to Have (Future Roadmap)
+## 10. Audit Trail & Activity Log
 
-| # | Suggestion | Why It Matters |
-|---|---|---|
-| 11 | **Employee Self-Declaration Checklist** | Allow the employee to self-declare items as returned before the form is officially created, giving HR a head-start visibility into what is pending. |
-| 12 | **OTP Verification on Submission** | Before the employee can submit the final form, send a one-time OTP to their registered mobile number to verify their identity. Makes the digital signature legally stronger. |
-| 13 | **Department-Wise Clearance Approval** | Allow each department head (IT, Admin, Finance) to independently mark their specific section as "Approved" from their own login. Builds multi-layer verification. |
-| 14 | **Auto-Calculated Gratuity & Leave Encashment** | If the HRMS already stores salary, leaves, and date of joining, auto-populate standard statutory amounts (Gratuity, Leave Encashment) directly into the earnings table. |
-| 15 | **Clearance Status Dashboard Widget** | Add a widget on the main HR dashboard showing at a glance: X settlements Pending Signature, Y Signed this Month, Z Overdue (link expired without signature). |
-| 16 | **Remind Employee Button** | Allow HR to click "Send Reminder" to resend the secure link email to the employee if they have not opened or completed the form within a set number of days. |
+Every action on the settlement is immutably recorded in the `activity_logs` audit trail and displayed in an executive timeline on the detail view:
+- Settlement created in Draft
+- Secure link shared via Auto Email or WhatsApp
+- Secure link extended / regenerated
+- Employee submitted digital signature & comments (with IP)
+- Department Manager countersigned
+- Settlement recalled to Draft for revisions
+- Company Authorized Signatory approved and payment disbursed (with UTR reference)
 
 ---
 
-> **Document Version:** 1.0  
+## 11. Feature Roadmap & Implementation Status
+
+| # | Feature / Enhancement | Priority | Status in v2.0 |
+|---|---|---|---|
+| 1 | **Manager / HOD Countersign Support** | 🔴 High | **Completed ✅** |
+| 2 | **Link Expiry & Instant Regeneration** | 🔴 High | **Completed ✅** |
+| 3 | **Automatic Email to HR on Submission** | 🔴 High | **Completed ✅** |
+| 4 | **Token Expiry Indicator on Dashboard** | 🔴 High | **Completed ✅** |
+| 5 | **One-Click WhatsApp Share Button** | 🟡 Medium | **Completed ✅** |
+| 6 | **Audit Trail & Activity Log Timeline** | 🟡 Medium | **Completed ✅** |
+| 7 | **Excel / CSV Bulk Export** | 🟡 Medium | **Completed ✅** |
+| 8 | **In-Section Form Builder (Sections 1–4)** | 🟡 Medium | **Completed ✅** |
+| 9 | **Customizable Legal Declaration Terms** | 🟡 Medium | **Completed ✅** |
+| 10 | **Department Clearance Segregation (`0/X Pending`)** | 🟡 Medium | **Completed ✅** |
+| 11 | **Company Authorized Signatory & Disbursal Bar** | 🟡 Medium | **Completed ✅** |
+| 12 | **Admin Panel Edit Form Alignment** | 🟡 Medium | **Completed ✅** |
+| 13 | **Mobile-Optimized Signature Canvas** | 🟡 Medium | **Completed ✅** |
+| 14 | **Settlement Revision (Recall to Draft)** | 🟡 Medium | **Completed ✅** |
+| 15 | **Real-Time In-App Dashboard Notifications** | 🟡 Medium | **Completed ✅** |
+| 16 | **Dual Signature Modes (Draw Canvas + Upload Image File)** | 🟡 Medium | **Completed ✅** |
+
+---
+
+> **Document Version:** 2.0  
 > **Last Updated:** September 2026  
-> **Module:** Full & Final Settlement & Digital Clearance — HRMS
+> **Module:** Full & Final Settlement & Digital Clearance — HRMS  
+> **Author:** Antigravity Engineering
