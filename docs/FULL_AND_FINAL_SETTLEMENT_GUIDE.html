@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full & Final Settlement — Operational Guide</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --primary-light: #eef2ff;
+        --success: #059669;
+        --success-light: #ecfdf5;
+        --warning: #d97706;
+        --warning-light: #fffbeb;
+        --danger: #dc2626;
+        --danger-light: #fef2f2;
+        --dark: #0f172a;
+        --text: #334155;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --surface: #f8fafc;
+        --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 10pt;
+        line-height: 1.65;
+        color: var(--text);
+        background: #fff;
+    }
+
+    /* ===== COVER PAGE ===== */
+    .cover-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4f46e5 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 60px 70px;
+        color: white;
+        page-break-after: always;
+        position: relative;
+        overflow: hidden;
+    }
+    .cover-page::before {
+        content: '';
+        position: absolute;
+        top: -100px; right: -100px;
+        width: 500px; height: 500px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 50%;
+    }
+    .cover-page::after {
+        content: '';
+        position: absolute;
+        bottom: -150px; left: -80px;
+        width: 600px; height: 600px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 50%;
+    }
+    .cover-badge {
+        display: inline-block;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 50px;
+        padding: 8px 20px;
+        font-size: 9pt;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 30px;
+    }
+    .cover-title {
+        font-size: 42pt;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 15px;
+        letter-spacing: -1px;
+    }
+    .cover-subtitle {
+        font-size: 14pt;
+        font-weight: 400;
+        opacity: 0.75;
+        max-width: 500px;
+        margin-bottom: 50px;
+    }
+    .cover-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 60px;
+    }
+    .cover-meta-item {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 12px;
+        padding: 20px;
+    }
+    .cover-meta-item .label {
+        font-size: 8pt;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.6;
+        margin-bottom: 6px;
+    }
+    .cover-meta-item .value {
+        font-size: 11pt;
+        font-weight: 600;
+    }
+    .cover-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid rgba(255,255,255,0.15);
+        padding-top: 25px;
+    }
+    .cover-footer .doc-title { font-size: 10pt; opacity: 0.6; }
+    .cover-footer .version { font-size: 9pt; opacity: 0.5; font-family: 'JetBrains Mono', monospace; }
+
+    /* ===== CONTENT PAGES ===== */
+    .page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 50px 60px;
+    }
+
+    /* Page header stripe */
+    .page-header-stripe {
+        background: linear-gradient(135deg, #1e1b4b, #4f46e5);
+        color: white;
+        padding: 12px 30px;
+        margin: -50px -60px 40px -60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 8pt;
+        letter-spacing: 0.5px;
+    }
+
+    /* Section headings */
+    h1 {
+        font-size: 22pt;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+    }
+    h2 {
+        font-size: 15pt;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 36px 0 14px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    h2 .section-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background: var(--primary);
+        color: white;
+        border-radius: 8px;
+        font-size: 11pt;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    h3 {
+        font-size: 11pt;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 22px 0 10px;
+    }
+    h4 {
+        font-size: 10pt;
+        font-weight: 600;
+        color: var(--primary);
+        margin: 16px 0 8px;
+    }
+
+    p { margin-bottom: 12px; }
+
+    /* Lead intro text */
+    .lead {
+        font-size: 11pt;
+        color: var(--muted);
+        margin-bottom: 24px;
+        line-height: 1.7;
+    }
+
+    /* ===== FLOWCHART STYLES ===== */
+    .flowchart {
+        width: 100%;
+        margin: 24px 0;
+        page-break-inside: avoid;
+    }
+    .flowchart-title {
+        font-size: 9pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    /* Flow nodes */
+    .flow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+    }
+    .flow-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        margin: 4px 0;
+    }
+    .flow-node {
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-size: 9pt;
+        font-weight: 600;
+        text-align: center;
+        min-width: 160px;
+        max-width: 220px;
+        line-height: 1.4;
+    }
+    .flow-node.start, .flow-node.end {
+        border-radius: 50px;
+        background: var(--primary);
+        color: white;
+        font-weight: 700;
+        font-size: 9pt;
+        padding: 10px 24px;
+    }
+    .flow-node.end { background: var(--success); }
+    .flow-node.hr { background: #ede9fe; color: #5b21b6; border: 1.5px solid #a78bfa; }
+    .flow-node.employee { background: #ecfdf5; color: #065f46; border: 1.5px solid #6ee7b7; }
+    .flow-node.system { background: #eff6ff; color: #1e40af; border: 1.5px solid #93c5fd; }
+    .flow-node.decision {
+        background: #fffbeb; color: #92400e;
+        border: 1.5px solid #fcd34d;
+        border-radius: 8px;
+        transform: none;
+    }
+    .flow-node.outcome { background: #f0fdf4; color: #166534; border: 2px solid #86efac; }
+    .flow-arrow {
+        font-size: 14pt;
+        color: var(--muted);
+        line-height: 1;
+        text-align: center;
+    }
+    .flow-arrow.right { font-size: 11pt; }
+    .flow-label {
+        font-size: 8pt;
+        color: var(--muted);
+        text-align: center;
+        font-style: italic;
+        margin: -4px 0 4px;
+    }
+
+    /* Stage boxes for high-level flow */
+    .stage-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        width: 100%;
+        margin: 16px 0;
+    }
+    .stage-item {
+        display: flex;
+        align-items: stretch;
+        gap: 16px;
+    }
+    .stage-line {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 32px;
+        flex-shrink: 0;
+    }
+    .stage-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 10pt;
+        flex-shrink: 0;
+    }
+    .stage-connector {
+        flex: 1;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--primary) 0%, var(--border) 100%);
+        margin: 4px auto;
+    }
+    .stage-body {
+        flex: 1;
+        padding: 12px 20px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+    }
+    .stage-body.hr-stage { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .stage-body.share-stage { background: #eff6ff; border-left: 4px solid #3b82f6; }
+    .stage-body.emp-stage { background: var(--success-light); border-left: 4px solid var(--success); }
+    .stage-body.outcome-stage { background: #f0fdf4; border-left: 4px solid var(--success); }
+    .stage-body .stage-title { font-weight: 700; font-size: 10pt; color: var(--dark); margin-bottom: 4px; }
+    .stage-body .stage-desc { font-size: 9pt; color: var(--muted); }
+
+    /* ===== INFO CARDS ===== */
+    .info-card {
+        border-radius: 10px;
+        padding: 18px 22px;
+        margin: 16px 0;
+        page-break-inside: avoid;
+    }
+    .info-card.primary { background: var(--primary-light); border-left: 4px solid var(--primary); }
+    .info-card.success { background: var(--success-light); border-left: 4px solid var(--success); }
+    .info-card.warning { background: var(--warning-light); border-left: 4px solid var(--warning); }
+    .info-card.danger { background: var(--danger-light); border-left: 4px solid var(--danger); }
+    .info-card.neutral { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--muted); }
+    .info-card .card-title { font-weight: 700; font-size: 9.5pt; margin-bottom: 8px; }
+    .info-card.primary .card-title { color: #3730a3; }
+    .info-card.success .card-title { color: #065f46; }
+    .info-card.warning .card-title { color: #92400e; }
+    .info-card.danger .card-title { color: #991b1b; }
+    .info-card .card-body { font-size: 9pt; color: var(--text); line-height: 1.6; }
+
+    /* ===== TABLES ===== */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        font-size: 9pt;
+        page-break-inside: avoid;
+    }
+    thead tr { background: var(--primary); color: white; }
+    thead th {
+        padding: 10px 14px;
+        font-weight: 600;
+        text-align: left;
+        font-size: 8.5pt;
+        letter-spacing: 0.3px;
+    }
+    tbody tr:nth-child(even) { background: var(--surface); }
+    tbody tr:hover { background: var(--primary-light); }
+    tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tbody td strong { color: var(--dark); }
+
+    /* ===== PRIORITY LABELS ===== */
+    .priority {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 50px;
+        font-size: 7.5pt;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+    .priority.high { background: var(--danger-light); color: var(--danger); }
+    .priority.medium { background: var(--warning-light); color: var(--warning); }
+    .priority.low { background: var(--success-light); color: var(--success); }
+
+    /* ===== STEP BOXES ===== */
+    .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 16px 0;
+    }
+    .step {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        page-break-inside: avoid;
+    }
+    .step-num {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 9.5pt;
+    }
+    .step-content .step-title { font-weight: 700; font-size: 10pt; color: var(--dark); margin-bottom: 4px; }
+    .step-content .step-desc { font-size: 9pt; color: var(--muted); line-height: 1.55; }
+
+    /* ===== TWO COLUMN GRID ===== */
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 16px 0;
+    }
+    .col-box {
+        border-radius: 10px;
+        padding: 16px 20px;
+        border: 1px solid var(--border);
+        page-break-inside: avoid;
+    }
+    .col-box.earnings { background: #ecfdf5; border-color: #6ee7b7; }
+    .col-box.deductions { background: #fff1f2; border-color: #fda4af; }
+    .col-box .col-title { font-weight: 700; font-size: 9.5pt; margin-bottom: 10px; }
+    .col-box.earnings .col-title { color: var(--success); }
+    .col-box.deductions .col-title { color: var(--danger); }
+    .col-box ul { list-style: none; padding: 0; }
+    .col-box ul li { font-size: 8.5pt; color: var(--text); padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .col-box ul li:last-child { border-bottom: none; }
+    .col-box ul li::before { content: '→ '; color: var(--muted); }
+
+    /* Net amount strip */
+    .net-strip {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        border-radius: 10px;
+        padding: 16px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 8px 0 20px;
+    }
+    .net-strip .label { font-size: 9pt; opacity: 0.85; font-weight: 600; }
+    .net-strip .formula { font-size: 16pt; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+    /* Checklist preview */
+    .checklist-preview { margin: 16px 0; }
+    .checklist-cat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        page-break-inside: avoid;
+    }
+    .checklist-cat-header {
+        background: #f1f5f9;
+        padding: 9px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+        font-size: 9pt;
+        border-bottom: 1px solid var(--border);
+    }
+    .checklist-item-row {
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 9pt;
+    }
+    .checklist-item-row:last-child { border-bottom: none; }
+    .checkbox-demo {
+        width: 16px; height: 16px;
+        border: 2px solid var(--border);
+        border-radius: 4px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .checkbox-demo.checked { background: var(--success); border-color: var(--success); }
+    .checkbox-demo.checked::after { content: '✓'; color: white; font-size: 9pt; font-weight: 700; line-height: 1; }
+    .badge-demo {
+        margin-left: auto;
+        padding: 3px 10px;
+        border-radius: 50px;
+        font-size: 7.5pt;
+        font-weight: 700;
+    }
+    .badge-demo.pending { background: #fef3c7; color: #92400e; }
+    .badge-demo.cleared { background: #d1fae5; color: #065f46; }
+    .checklist-item-row .comment-box {
+        flex: 1;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 8pt;
+        color: var(--muted);
+        font-style: italic;
+    }
+
+    /* Signature demo */
+    .sig-demo {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        margin: 16px 0;
+        background: var(--surface);
+        page-break-inside: avoid;
+    }
+    .sig-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .sig-tab {
+        padding: 7px 16px;
+        border-radius: 6px;
+        font-size: 9pt;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        color: var(--muted);
+    }
+    .sig-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .sig-canvas-demo {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 9pt;
+        background: white;
+    }
+
+    /* Page break */
+    .page-break { page-break-after: always; }
+    .no-break { page-break-inside: avoid; }
+
+    /* Section divider */
+    .divider { border: none; border-top: 2px solid var(--border); margin: 30px 0; }
+
+    /* Emoji section icon */
+    .section-icon { font-size: 18pt; margin-right: 8px; }
+
+    /* TOC */
+    .toc { background: var(--surface); border-radius: 12px; padding: 24px 30px; margin: 24px 0; }
+    .toc-title { font-weight: 700; font-size: 11pt; color: var(--dark); margin-bottom: 16px; }
+    .toc-item { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; font-size: 9.5pt; border-bottom: 1px dashed var(--border); }
+    .toc-item:last-child { border-bottom: none; }
+    .toc-num { color: var(--primary); font-weight: 700; min-width: 24px; }
+    .toc-dots { flex: 1; border-bottom: 1px dotted var(--border); }
+    .toc-pg { color: var(--muted); font-size: 8.5pt; font-family: 'JetBrains Mono', monospace; }
+
+    /* Footer */
+    .doc-footer {
+        text-align: center;
+        padding: 30px 0;
+        border-top: 1px solid var(--border);
+        margin-top: 40px;
+        color: var(--muted);
+        font-size: 8pt;
+    }
+
+    @media print {
+        body { font-size: 9pt; }
+        .cover-page { min-height: unset; height: 100vh; }
+        .page { padding: 40px 50px; }
+        .page-header-stripe { margin: -40px -50px 30px -50px; }
+    }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- COVER PAGE -->
+<!-- ============================================================ -->
+<div class="cover-page">
+    <div>
+        <div class="cover-badge">HRMS — Internal Operations Guide</div>
+        <div class="cover-title">Full &amp; Final<br>Settlement &amp;<br>Digital Clearance</div>
+        <div class="cover-subtitle">Complete operational guide for HR Administrators and Departing Employees — from form creation to digital sign-off, with visual workflow and process flowcharts.</div>
+    </div>
+
+    <div>
+        <div class="cover-meta">
+            <div class="cover-meta-item">
+                <div class="label">Document Version</div>
+                <div class="value">v1.0</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="label">Published</div>
+                <div class="value">September 2026</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="label">Audience</div>
+                <div class="value">HR Admin &amp; Employees</div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <span class="doc-title">Full &amp; Final Settlement &amp; Digital Clearance — HRMS</span>
+            <span class="version">FNF-GUIDE-v1.0</span>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ============================================================ -->
+<div class="page">
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement &amp; Digital Clearance — Operational Guide</span>
+        <span>Table of Contents</span>
+    </div>
+
+    <h1>Contents</h1>
+    <p class="lead">This guide covers the complete Full &amp; Final Settlement workflow — from the HR admin creating the form to the employee completing, signing, and submitting the clearance document digitally.</p>
+
+    <div class="toc">
+        <div class="toc-title">Document Sections</div>
+        <div class="toc-item"><span class="toc-num">01</span><span>System Overview &amp; Purpose</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">02</span><span>End-to-End Workflow — Visual Overview</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">03</span><span>Main Process Flowchart</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">04</span><span>HR Admin: Creating the Settlement Form</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">05</span><span>HR Form Creation Flowchart</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">06</span><span>Sharing the Form with the Employee</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">07</span><span>Employee: Filling &amp; Signing the Form</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">08</span><span>Employee Submission Flowchart</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">09</span><span>After Submission — What Happens Next</span><span class="toc-dots"></span></div>
+        <div class="toc-item"><span class="toc-num">10</span><span>Suggestions &amp; Recommended Improvements</span><span class="toc-dots"></span></div>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: OVERVIEW -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 1: Overview</span>
+    </div>
+
+    <h2><span class="section-num">1</span> System Overview &amp; Purpose</h2>
+
+    <p class="lead">The Full &amp; Final Settlement &amp; Clearance module provides a modern, paperless, and legally compliant way to manage employee offboarding. It eliminates scattered emails, paper forms, and disconnected spreadsheets.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>What It Delivers</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td><strong>Financial Settlement Calculation</strong></td>
+                <td>Automatically computes gross earnings, deductions, and net payable amount in real time</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td><strong>Departmental &amp; Asset Clearance</strong></td>
+                <td>Tracks equipment returns, credential revocations, and handover completions per department</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td><strong>Interactive Employee Clearance Form</strong></td>
+                <td>Employee checks items, writes handover notes, and updates progress from any device — no login required</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td><strong>Digital Sign-Off with Verification</strong></td>
+                <td>Captures legally valid digital signatures (drawn or uploaded) with date, time, and IP address</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td><strong>Custom Questions Per Section</strong></td>
+                <td>HR can attach custom fields (text, dropdowns, dates) to any section — filled by HR or by the employee online</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td><strong>Official PDF Export</strong></td>
+                <td>Generates a print-ready, executive PDF for payroll, legal archives, and audit records</td>
+            </tr>
+        </tbody>
+    </table>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: END-TO-END WORKFLOW -->
+<!-- ============================================================ -->
+    <h2><span class="section-num">2</span> End-to-End Workflow — Visual Overview</h2>
+
+    <p>The settlement process has <strong>three main stages</strong> and a final confirmed outcome. Each stage is owned by a different party:</p>
+
+    <div class="stage-flow">
+        <div class="stage-item">
+            <div class="stage-line">
+                <div class="stage-circle">1</div>
+                <div class="stage-connector"></div>
+            </div>
+            <div class="stage-body hr-stage">
+                <div class="stage-title">🧑‍💼 HR Admin Creates the Settlement Form</div>
+                <div class="stage-desc">Select employee → Enter separation details → Set earnings &amp; deductions → Build the departmental clearance checklist → Add optional custom questions → Save the record</div>
+            </div>
+        </div>
+        <div class="stage-item">
+            <div class="stage-line">
+                <div class="stage-circle" style="background:#3b82f6">2</div>
+                <div class="stage-connector"></div>
+            </div>
+            <div class="stage-body share-stage">
+                <div class="stage-title">📨 Secure Link is Shared with the Employee</div>
+                <div class="stage-desc">Auto-email sent with a clean, encrypted link  OR  HR copies and shares the link manually via WhatsApp, Slack, or email — no login required for the employee</div>
+            </div>
+        </div>
+        <div class="stage-item">
+            <div class="stage-line">
+                <div class="stage-circle" style="background:#059669">3</div>
+                <div class="stage-connector"></div>
+            </div>
+            <div class="stage-body emp-stage">
+                <div class="stage-title">👤 Employee Reviews, Fills &amp; Signs the Form</div>
+                <div class="stage-desc">Opens link → Reviews financials → Checks off clearance items → Adds handover notes → Accepts legal declaration → Provides digital signature → Submits</div>
+            </div>
+        </div>
+        <div class="stage-item">
+            <div class="stage-line">
+                <div class="stage-circle" style="background:#10b981">✓</div>
+            </div>
+            <div class="stage-body outcome-stage">
+                <div class="stage-title">✅ Settlement Confirmed, Locked &amp; PDF Ready</div>
+                <div class="stage-desc">Employee sees confirmation certificate → HR reviews checklist &amp; notes → PDF available for payroll, legal, and accounting archives</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: MAIN FLOWCHART -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 3: Process Flowchart</span>
+    </div>
+
+    <h2><span class="section-num">3</span> Main Process Flowchart</h2>
+
+    <div class="flowchart">
+        <div class="flowchart-title">Complete End-to-End Settlement &amp; Clearance Flow</div>
+
+        <div class="flow">
+            <div class="flow-row"><div class="flow-node start">🏁 Employee Separation Initiated</div></div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node hr">HR opens the Full &amp; Final Settlement module</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node hr">Selects Employee &amp; enters<br>Last Working Day + Reason</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node hr">Sets Earnings (A) &amp; Deductions (B)<br>Net Amount auto-calculates in real time</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node hr">Builds Departmental Clearance Checklist<br>Category + Item + Status per row</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node decision">Any Custom<br>Questions?</div>
+            </div>
+
+            <div style="display:flex; width:100%; justify-content:center; gap:40px; margin:4px 0;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--muted)">Yes ↓</div>
+                    <div class="flow-node hr" style="font-size:8.5pt; min-width:140px;">Add Custom Fields<br>(HR or Employee)</div>
+                    <div class="flow-arrow">↓</div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--muted)">No ↓</div>
+                    <div style="height:60px"></div>
+                </div>
+            </div>
+
+            <div class="flow-row">
+                <div class="flow-node hr">HR saves Settlement — Status: <strong>Draft</strong><br>Unique Reference Number generated</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node system">🔐 Encrypted Secure Token Link Generated<br>Valid for 30 days</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node decision">How to Share?</div>
+            </div>
+
+            <div style="display:flex; width:100%; justify-content:center; gap:20px; margin:4px 0;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--muted)">Email ↓</div>
+                    <div class="flow-node system" style="min-width:130px; font-size:8.5pt;">Auto-Email<br>sent to employee</div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--muted)">Manual ↓</div>
+                    <div class="flow-node system" style="min-width:130px; font-size:8.5pt;">HR copies link &amp;<br>shares via chat/email</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node employee">📱 Employee opens secure link<br>No login needed — works on any device</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node employee">Reviews financial statement &amp; company details</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node employee">✅ Checks off clearance items<br>Adds handover notes per item</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node employee">Reads &amp; accepts Legal Undertaking<br>Writes optional remarks</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node decision">Signature<br>Method?</div>
+            </div>
+
+            <div style="display:flex; width:100%; justify-content:center; gap:20px; margin:4px 0;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--muted);">Draw ↓</div>
+                    <div class="flow-node employee" style="min-width:120px; font-size:8.5pt;">Draws signature<br>on canvas</div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--muted);">Upload ↓</div>
+                    <div class="flow-node employee" style="min-width:120px; font-size:8.5pt;">Uploads signature<br>image file</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node employee">Clicks <strong>Sign &amp; Submit Settlement</strong></div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node decision">Validation<br>Passed?</div>
+            </div>
+            <div style="display:flex; width:100%; justify-content:center; gap:40px; margin:4px 0;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--danger);">❌ No ↓</div>
+                    <div class="flow-node" style="background:#fff1f2; color:#991b1b; border:1.5px solid #fecaca; font-size:8.5pt; min-width:130px;">Alert shown<br>Employee corrects</div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div class="flow-arrow" style="font-size:9pt; color:var(--success);">✅ Yes ↓</div>
+                    <div class="flow-node outcome" style="font-size:8.5pt; min-width:130px;">Recorded with<br>Date, Time &amp; IP</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node" style="background:#d1fae5; color:#065f46; border:2px solid #6ee7b7; min-width:200px;">Employee sees Confirmation Certificate<br>Form is Locked ✅</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node system">HR Dashboard → Status: <strong>Signed</strong><br>Reviews notes, checklist &amp; signature</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row">
+                <div class="flow-node system">HR downloads official PDF<br>Payroll • Legal • Audit Archive</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+
+            <div class="flow-row"><div class="flow-node end">🎉 Settlement Complete</div></div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: HR CREATES FORM -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 4: HR Admin Guide</span>
+    </div>
+
+    <h2><span class="section-num">4</span> HR Admin: Creating the Settlement Form</h2>
+
+    <div class="steps">
+
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <div class="step-title">Employee &amp; Separation Details</div>
+                <div class="step-desc">Navigate to <strong>Full &amp; Final Settlement</strong> in the sidebar and click <strong>Create Settlement</strong>. Select the employee — their Employee Code, Designation, Department, and Date of Joining are automatically filled. Enter the <strong>Last Working Day (LWD)</strong> and the <strong>Reason for Separation</strong> (e.g., Resignation Accepted, Contract Ended, Mutual Release, Retirement).</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <div class="step-title">Financial Clearance Breakdown</div>
+                <div class="step-desc">Set all earnings (Salary, Leave Encashment, Gratuity, Bonuses) and deductions (Notice Recovery, Loan Balance, Asset Damages). The Net Final Payable (A - B) calculates automatically in real time — no manual math needed. Click <strong>Add Earning</strong> or <strong>Add Deduction</strong> for custom rows.</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <div class="step-title">Departmental Clearance Checklist</div>
+                <div class="step-desc">Build checklist rows per department. Set the <strong>Category</strong> (any department name — IT, Admin, Finance, Operations, Facility, Legal, etc.) and the <strong>Checkpoint Item</strong> (specific thing to be returned or verified). Click <strong>Add Checkpoint</strong> for more rows. Click the trash icon to remove any row. There is no fixed template — build any checklist for any industry or organization type.</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <div class="step-title">Custom Questions (Optional)</div>
+                <div class="step-desc">Each section has an <strong>Add Question</strong> button to attach custom fields. Set the question title, input type (Short Text, Paragraph, Dropdown, Date, Number), and who fills it: <strong>HR Certified</strong> (filled at creation by HR) or <strong>Employee to Fill Online</strong> (shown to the employee on the clearance form). Mark as Required if mandatory.</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-content">
+                <div class="step-title">Save the Settlement</div>
+                <div class="step-desc">Click <strong>Save Full &amp; Final Settlement</strong>. The system assigns a unique Reference Number (e.g., FNF-202609-0001), sets the status to <strong>Draft</strong>, and generates a secure encrypted share link valid for 30 days.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <h3>Financial Breakdown at a Glance</h3>
+    <div class="two-col">
+        <div class="col-box earnings">
+            <div class="col-title">💰 Earnings &amp; Payables (A)</div>
+            <ul>
+                <li>Salary payable up to Last Working Day</li>
+                <li>Earned &amp; unused leave encashment</li>
+                <li>Gratuity (if applicable)</li>
+                <li>Performance bonus or incentive</li>
+                <li>+ Any custom earning row</li>
+            </ul>
+        </div>
+        <div class="col-box deductions">
+            <div class="col-title">💸 Deductions &amp; Recoveries (B)</div>
+            <ul>
+                <li>Notice period shortfall recovery</li>
+                <li>Outstanding loan or advance balance</li>
+                <li>Asset / hardware damage recovery</li>
+                <li>Training bond recovery</li>
+                <li>+ Any custom deduction row</li>
+            </ul>
+        </div>
+    </div>
+    <div class="net-strip">
+        <span class="label">NET FINAL PAYABLE AMOUNT = A − B</span>
+        <span class="formula">Auto-calculated ✓</span>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: HR FLOWCHART -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 5: HR Form Creation Flowchart</span>
+    </div>
+
+    <h2><span class="section-num">5</span> HR Form Creation Flowchart</h2>
+
+    <div class="flowchart">
+        <div class="flowchart-title">HR Admin — Step-by-Step Settlement Creation</div>
+        <div class="flow">
+            <div class="flow-row"><div class="flow-node start">🏁 Click Create Settlement</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node hr">Select Employee from Dropdown<br><small style="opacity:0.7">Auto-fills profile: Code, Dept, Designation, DOJ</small></div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node hr">Enter Last Working Day + Reason for Separation</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node hr">Set Earnings (Salary, Leave, Gratuity, Bonus)<br>Click Add Earning for custom rows</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node hr">Set Deductions (Notice Recovery, Loans, Damages)<br>Click Add Deduction for custom rows</div></div>
+            <div class="flow-row"><div style="background:#d1fae5; border:1px solid #6ee7b7; border-radius:8px; padding:6px 14px; font-size:8.5pt; color:#065f46; font-weight:600;">⚡ Net Amount auto-calculates instantly</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node hr">Build Clearance Checklist<br>Category + Item per row → Add / Remove freely</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node decision">Add Custom<br>Questions?</div></div>
+            <div style="display:flex;width:100%;justify-content:center;gap:40px;margin:4px 0;">
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--muted)">Yes ↓</div>
+                    <div class="flow-node hr" style="font-size:8.5pt;min-width:130px;">Set Field Type<br>+ Who Fills It</div>
+                    <div class="flow-arrow">↓</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--muted)">No ↓</div>
+                    <div style="height:55px"></div>
+                </div>
+            </div>
+            <div class="flow-row"><div class="flow-node hr">Click Save Settlement</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node system">Reference No. Generated (FNF-YYYYMM-XXXX)<br>Status: Draft → Secure Link Created</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node end">✅ Form Ready to Share</div></div>
+        </div>
+    </div>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: SHARING -->
+<!-- ============================================================ -->
+    <h2><span class="section-num">6</span> Sharing the Form with the Employee</h2>
+
+    <p>Every settlement has a <strong>secure, encrypted private token link</strong> — a long unique code that protects the form from unauthorized access without exposing internal database IDs.</p>
+
+    <div class="two-col">
+        <div class="info-card primary" style="margin:0;">
+            <div class="card-title">📧 Option A — Auto Email</div>
+            <div class="card-body">Open the settlement record and click <strong>Send to Employee</strong>. An official email is sent automatically with the employee's name, reference number, net payable amount, and a direct "Open Clearance Form" button. Status updates to <strong>Sent</strong> with share date logged.</div>
+        </div>
+        <div class="info-card success" style="margin:0;">
+            <div class="card-title">🔗 Option B — Direct Link Sharing</div>
+            <div class="card-body">Copy the secure link from the settlement page and share it via <strong>WhatsApp, Slack, email, or any messaging platform</strong>. The employee clicks the link and the clearance form opens immediately — no login required.</div>
+        </div>
+    </div>
+
+    <div class="info-card warning" style="margin-top:16px;">
+        <div class="card-title">⏳ Link Validity</div>
+        <div class="card-body">The secure link is valid for <strong>30 days</strong> from creation. If the employee does not open the form before it expires, they will see a polite expiry notice. HR will need to regenerate a new link from the settlement management page.</div>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 7: EMPLOYEE FORM -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 7: Employee Guide</span>
+    </div>
+
+    <h2><span class="section-num">7</span> Employee: Filling &amp; Signing the Clearance Form</h2>
+
+    <p class="lead">When the employee opens the secure link, they see an executive-styled digital clearance document. The form works on any device — desktop, tablet, or smartphone. No login is required.</p>
+
+    <h3>Section A — Document Header &amp; Financial Statement</h3>
+    <p>The top of the form displays the company name, official settlement reference number, and the date issued. Below this is the complete financial breakdown:</p>
+    <ul style="padding-left:20px; margin-bottom:16px; font-size:9.5pt; line-height:1.9;">
+        <li>Employee name, code, designation, department, date of joining</li>
+        <li>Last working day and reason for separation</li>
+        <li>Itemized earnings list and deductions list</li>
+        <li><strong>Net Final Payable Amount</strong> prominently displayed</li>
+    </ul>
+
+    <h3>Section B — Interactive Departmental Clearance Checklist</h3>
+    <p>This is the most interactive section. Here is exactly how it works:</p>
+
+    <div class="checklist-preview">
+        <div class="checklist-cat">
+            <div class="checklist-cat-header">
+                <span>🗂 IT &amp; Hardware</span>
+                <span style="font-size:8pt; color:var(--muted); font-weight:500;">1 / 2 Cleared</span>
+            </div>
+            <div class="checklist-item-row">
+                <div class="checkbox-demo checked"></div>
+                <span>Company laptop and charger returned</span>
+                <div class="comment-box">Serial #C02G4312, handed to IT Desk — Rahul S.</div>
+                <span class="badge-demo cleared">✓ Cleared</span>
+            </div>
+            <div class="checklist-item-row">
+                <div class="checkbox-demo"></div>
+                <span>Official email account suspended</span>
+                <div class="comment-box">Type handover notes here...</div>
+                <span class="badge-demo pending">⏳ Pending</span>
+            </div>
+        </div>
+        <div class="checklist-cat">
+            <div class="checklist-cat-header">
+                <span>🏢 Admin &amp; Facility</span>
+                <span style="font-size:8pt; color:var(--muted); font-weight:500;">0 / 1 Cleared</span>
+            </div>
+            <div class="checklist-item-row">
+                <div class="checkbox-demo"></div>
+                <span>Office keys, ID card, and parking pass returned</span>
+                <div class="comment-box">Type handover notes here...</div>
+                <span class="badge-demo pending">⏳ Pending</span>
+            </div>
+        </div>
+        <p style="font-size:8pt; color:var(--muted); margin-top:8px; font-style:italic;">↑ Demo: Showing how the interactive checklist looks. When an item is checked, it turns green, the category counter updates, and the progress bar animates.</p>
+    </div>
+
+    <div class="info-card success">
+        <div class="card-title">⚡ Live Progress Updates</div>
+        <div class="card-body">Every time the employee checks a box: the badge flips to green, the department counter (e.g., "1/2 Cleared") updates instantly, the top progress bar animates forward, and when all items in a category are done, the folder icon becomes a green checkmark.</div>
+    </div>
+
+    <h3>Section C — Legal Declaration &amp; Signature</h3>
+    <div class="steps" style="gap:8px;">
+        <div class="step">
+            <div class="step-num" style="background:#7c3aed">C1</div>
+            <div class="step-content">
+                <div class="step-title">Additional Custom Questions (if any)</div>
+                <div class="step-desc">If HR added employee-targeted custom fields, they appear here — the employee fills in forwarding email, phone, repository links, or any other requested information.</div>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num" style="background:#7c3aed">C2</div>
+            <div class="step-content">
+                <div class="step-title">Legal Declaration Checkbox</div>
+                <div class="step-desc">The employee reads the formal undertaking confirming they have returned all property, revoked all access, and maintain NDA confidentiality. They must check <em>"I have read, understood, and agree."</em> — this is mandatory.</div>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num" style="background:#7c3aed">C3</div>
+            <div class="step-content">
+                <div class="step-title">General Comments (Optional)</div>
+                <div class="step-desc">A free-form text area for the employee to write their future contact email, phone number, forwarding address, or general handover notes.</div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Section D — Digital Signature</h3>
+    <p>Two signature methods are available — the employee chooses whichever is more convenient:</p>
+
+    <div class="sig-demo">
+        <div class="sig-tabs">
+            <div class="sig-tab active">✏️ Draw Signature</div>
+            <div class="sig-tab">⬆️ Upload Image</div>
+        </div>
+        <div class="sig-canvas-demo">Draw here using mouse, trackpad, or finger on touchscreen → [ Clear &amp; Redraw anytime ]</div>
+        <p style="font-size:8pt; color:var(--muted); margin-top:8px;">Alternatively, switch to the Upload tab to drag-and-drop or select a PNG/JPG image of your signature. A preview is shown before submission.</p>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 8: EMPLOYEE FLOWCHART -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 8: Employee Submission Flowchart</span>
+    </div>
+
+    <h2><span class="section-num">8</span> Employee Submission Flowchart</h2>
+
+    <div class="flowchart">
+        <div class="flowchart-title">Employee Clearance Form — Submission Steps</div>
+        <div class="flow">
+            <div class="flow-row"><div class="flow-node start">📨 Employee receives &amp; opens secure link</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node employee">Reads company header &amp; Settlement Reference No.</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node employee">Reviews Financial Statement<br>Earnings, Deductions, Net Payable Amount</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node employee">Sees Interactive Departmental Checklist<br>Checkbox per clearance item</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node employee">✅ Checks completed items<br>Badge turns green · Progress bar updates</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node employee">Types handover notes below each checked item<br>Serial numbers, who received it, dates</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node decision">HR added custom<br>employee questions?</div></div>
+            <div style="display:flex;width:100%;justify-content:center;gap:40px;margin:4px 0;">
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--muted)">Yes ↓</div>
+                    <div class="flow-node employee" style="font-size:8.5pt;min-width:140px;">Fills custom fields<br>forwarding info, IDs, etc.</div>
+                    <div class="flow-arrow">↓</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--muted)">No ↓</div>
+                    <div style="height:55px"></div>
+                </div>
+            </div>
+            <div class="flow-row"><div class="flow-node employee">Reads Legal Undertaking<br>Checks mandatory declaration box ✓</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node employee">Types optional general comments &amp; contact info</div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node decision">Signature<br>Method?</div></div>
+            <div style="display:flex;width:100%;justify-content:center;gap:20px;margin:4px 0;">
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--muted)">Draw ↓</div>
+                    <div class="flow-node employee" style="min-width:120px;font-size:8.5pt;">Draws on canvas<br>Clear &amp; redraw anytime</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--muted)">Upload ↓</div>
+                    <div class="flow-node employee" style="min-width:120px;font-size:8.5pt;">Uploads PNG/JPG<br>Preview shown</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node employee">Clicks <strong>Sign &amp; Submit Settlement</strong></div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node decision">All required<br>fields filled?</div></div>
+            <div style="display:flex;width:100%;justify-content:center;gap:40px;margin:4px 0;">
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--danger)">❌ No ↓</div>
+                    <div class="flow-node" style="background:#fff1f2;color:#991b1b;border:1.5px solid #fecaca;font-size:8.5pt;min-width:130px;">Alert message shown<br>Employee corrects &amp; retries</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="font-size:9pt;color:var(--success)">✅ Yes ↓</div>
+                    <div class="flow-node outcome" style="font-size:8.5pt;min-width:130px;">Submitted — recorded with<br>Date, Time &amp; IP</div>
+                </div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-row"><div class="flow-node end">✅ Confirmation Certificate — Form Locked</div></div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 9: AFTER SUBMISSION -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 9: After Submission</span>
+    </div>
+
+    <h2><span class="section-num">9</span> After Submission — What Happens Next</h2>
+
+    <h3>For the Employee — Immediate Confirmation</h3>
+    <div class="info-card success">
+        <div class="card-title">✅ Confirmation Certificate Displayed</div>
+        <div class="card-body">
+            The page transforms into a signed &amp; confirmed certificate showing: Green success badge · "Settlement Signed &amp; Confirmed" heading · Digital signature preview · Submitted general comments · Exact date and time · Verified IP address. The form is permanently <strong>locked</strong> — no further changes are possible.
+        </div>
+    </div>
+
+    <h3>For HR Admin</h3>
+    <p>The settlement record in the dashboard automatically updates:</p>
+    <table>
+        <thead><tr><th>What Changes</th><th>Detail</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Status</strong></td><td>Updates from <em>Sent</em> to <strong>Signed</strong></td></tr>
+            <tr><td><strong>Checklist Review</strong></td><td>View every item checked / unchecked with employee's handover notes per item</td></tr>
+            <tr><td><strong>Custom Fields</strong></td><td>Review all employee responses to custom questions</td></tr>
+            <tr><td><strong>Signature &amp; Metadata</strong></td><td>View digital signature image, submission date, time, and IP address</td></tr>
+            <tr><td><strong>PDF Download</strong></td><td>Click <strong>Download PDF</strong> for an official, print-ready document anytime</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Official PDF Report Contains</h3>
+    <div class="two-col">
+        <div class="info-card neutral" style="margin:0;">
+            <div class="card-title" style="color:var(--dark)">📄 Financial Records</div>
+            <div class="card-body">
+                Company branding · Employee profile · Full earnings breakdown · Full deductions breakdown · Net final payable amount
+            </div>
+        </div>
+        <div class="info-card neutral" style="margin:0;">
+            <div class="card-title" style="color:var(--dark)">✅ Clearance Evidence</div>
+            <div class="card-body">
+                Department-wise checklist table · Employee handover notes per item · Custom field responses · Digital signature + timestamp + IP
+            </div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+<!-- ============================================================ -->
+<!-- SECTION 10: SUGGESTIONS & IMPROVEMENTS -->
+<!-- ============================================================ -->
+    <div class="page-header-stripe">
+        <span>Full &amp; Final Settlement — Operational Guide</span>
+        <span>Section 10: Suggestions &amp; Improvements</span>
+    </div>
+
+    <h2><span class="section-num">10</span> Suggestions &amp; Recommended Improvements</h2>
+
+    <p class="lead">The following enhancements are recommended to make the Full &amp; Final Settlement module more complete, legally robust, and user-friendly in a real production environment.</p>
+
+    <h3>🔴 High Priority</h3>
+    <table>
+        <thead>
+            <tr><th>#</th><th>Feature</th><th>Why It Matters</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="priority high">P1</span></td>
+                <td><strong>Multi-Stage Countersign (Manager → HR)</strong></td>
+                <td>Currently only the employee signs. Most organizations require the manager and HR head to also countersign. A three-stage approval (Employee → Manager → HR) would make the document legally complete and compliant with standard HR practices.</td>
+            </tr>
+            <tr>
+                <td><span class="priority high">P2</span></td>
+                <td><strong>Email Notification to HR on Submission</strong></td>
+                <td>When the employee submits the form, HR receives no automatic alert. They have to manually check the dashboard. An automatic email/notification to HR on employee submission ensures timely awareness and faster processing.</td>
+            </tr>
+            <tr>
+                <td><span class="priority high">P3</span></td>
+                <td><strong>Link Regeneration Button</strong></td>
+                <td>If the 30-day token expires before the employee signs, HR has no easy way to generate a new link. A clear "Regenerate &amp; Resend Link" button on the settlement detail page is essential for real-world usage.</td>
+            </tr>
+            <tr>
+                <td><span class="priority high">P4</span></td>
+                <td><strong>Token Expiry Visible on Dashboard</strong></td>
+                <td>HR should be able to see the link expiry date on the settlements list and detail page so they can proactively follow up before it lapses.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>🟡 Medium Priority</h3>
+    <table>
+        <thead>
+            <tr><th>#</th><th>Feature</th><th>Why It Matters</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="priority medium">P5</span></td>
+                <td><strong>One-Click WhatsApp Share</strong></td>
+                <td>Add a WhatsApp share button on the settlement page. Most HR teams communicate via WhatsApp and this eliminates manual copy-paste of links.</td>
+            </tr>
+            <tr>
+                <td><span class="priority medium">P6</span></td>
+                <td><strong>Settlement Activity Log</strong></td>
+                <td>Record every status change (Draft → Sent → Signed → Cleared) with the actor name and timestamp. Provides a full audit trail for compliance and legal purposes.</td>
+            </tr>
+            <tr>
+                <td><span class="priority medium">P7</span></td>
+                <td><strong>Bulk Excel/CSV Export</strong></td>
+                <td>Allow HR to export a filtered list of settlements to Excel for payroll batch processing, quarterly reporting, and analytics.</td>
+            </tr>
+            <tr>
+                <td><span class="priority medium">P8</span></td>
+                <td><strong>HR Remarks per Checklist Item</strong></td>
+                <td>Currently only the employee adds remarks per item. HR should also be able to note internal verification comments (e.g., "Return physically verified by IT — 17 Sep") visible only in the admin view, not the employee form.</td>
+            </tr>
+            <tr>
+                <td><span class="priority medium">P9</span></td>
+                <td><strong>Settlement Revision (Recall &amp; Edit)</strong></td>
+                <td>If HR sends the form and then realizes an error in the financials, there is no way to revise it. A "Recall &amp; Edit" feature would allow HR to withdraw, correct, and re-send without creating a duplicate record.</td>
+            </tr>
+            <tr>
+                <td><span class="priority medium">P10</span></td>
+                <td><strong>Mobile Full-Screen Signature Canvas</strong></td>
+                <td>On small mobile screens, the signature drawing canvas is limited in size. A "full-screen mode" that expands the canvas on mobile would significantly improve the drawing experience on smartphones.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>🟢 Future Roadmap</h3>
+    <table>
+        <thead>
+            <tr><th>#</th><th>Feature</th><th>Why It Matters</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="priority low">P11</span></td>
+                <td><strong>OTP Verification on Submission</strong></td>
+                <td>Before the employee can submit, send a one-time OTP to their registered mobile number to verify identity. Strengthens the legal standing of the digital signature.</td>
+            </tr>
+            <tr>
+                <td><span class="priority low">P12</span></td>
+                <td><strong>Auto-Calculated Statutory Amounts</strong></td>
+                <td>If employee salary and leave data already exists in HRMS, auto-populate Gratuity and Leave Encashment amounts into the earnings table, reducing manual entry and calculation errors.</td>
+            </tr>
+            <tr>
+                <td><span class="priority low">P13</span></td>
+                <td><strong>Department-Wise Clearance Approval</strong></td>
+                <td>Allow each department head (IT, Admin, Finance) to independently approve their specific checklist section from their own login, building multi-layer verification.</td>
+            </tr>
+            <tr>
+                <td><span class="priority low">P14</span></td>
+                <td><strong>HR Dashboard Widget</strong></td>
+                <td>A quick-glance widget on the main HRMS dashboard showing: X Settlements pending signature, Y signed this month, Z links expired without signing.</td>
+            </tr>
+            <tr>
+                <td><span class="priority low">P15</span></td>
+                <td><strong>Reminder Email Button</strong></td>
+                <td>Allow HR to click "Send Reminder" to resend the secure link email to an employee who has not completed the form within a configured number of days.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <div class="doc-footer">
+        <strong>Full &amp; Final Settlement &amp; Digital Clearance — HRMS Operational Guide</strong><br>
+        Document Version 1.0 · September 2026 · For internal use
+    </div>
+
+</div><!-- end .page -->
+
+<script>
+// Print button helper — uncomment to add a print button
+// window.print();
+</script>
+
+</body>
+</html>

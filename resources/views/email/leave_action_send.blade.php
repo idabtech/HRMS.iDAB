@@ -197,7 +197,7 @@ $logo=\App\Models\Utility::get_file('uploads/logo/');
                                                         <tr>
                                                             <td align="left" style="font-size:0px;padding:0px 25px 0px 25px;padding-top:0px;padding-right:50px;padding-bottom:0px;padding-left:50px;word-break:break-word;">
                                                                 <div style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;text-align:left;color:#797e82;">
-                                                                    <p style="margin: 10px 0;">{{__('We request you to complete all your pending work or any other important issue so that the company does not face any loss or problem during your absence. We appreciate your thoughtfulness to inform us well in advance')}}</p>
+                                                                    <p style="margin: 10px 0;">{{ __("We request you to complete all your pending work or any other important issue so that the company does not face any loss or problem during your absence. We appreciate your thoughtfulness to inform us well in advance") }}</p>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -206,17 +206,17 @@ $logo=\App\Models\Utility::get_file('uploads/logo/');
                                                     <tr>
                                                         <td align="left" style="font-size:0px;padding:0px 25px 0px 25px;padding-top:0px;padding-right:50px;padding-bottom:0px;padding-left:50px;word-break:break-word;">
                                                             <div style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;text-align:left;color:#797e82;">
-                                                                <p style="margin: 10px 0;"><i style="font-style:normal">{{__('Feel free to reach out if you have any questions.')}}</i></p>
-                                                                <p style="margin: 10px 0;"><i style="font-style:normal">{{__('Thank you')}}</i></p>
+                                                                <p style="margin: 10px 0;"><i style="font-style:normal">{{__("Feel free to reach out if you have any questions.")}}</i></p>
+                                                                <p style="margin: 10px 0;"><i style="font-style:normal">{{__("Thank you")}}</i></p>
                                                             </div>
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td align="left" style="font-size:0px;padding:0px 25px 0px 25px;padding-top:0px;padding-right:50px;padding-bottom:0px;padding-left:50px;word-break:break-word;">
                                                             <div style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;text-align:left;color:#797e82;">
-                                                                <p style="margin: 10px 0;"><i style="font-style:normal"><b style="font-weight:700">{{__('Regards,')}}</b></i></p>
-                                                                <p style="margin: 10px 0;"><i style="font-style:normal"><b style="font-weight:700">{{__('HR Department,')}}</b></i></p>
-                                                                <p style="margin: 10px 0;"><i style="font-style:normal"><b style="font-weight:700">{{env('APP_NAME')}}</b></i></p>
+                                                                <p style="margin: 10px 0;"><i style="font-style:normal"><b style="font-weight:700">{{__("Regards,")}}</b></i></p>
+                                                                <p style="margin: 10px 0;"><i style="font-style:normal"><b style="font-weight:700">{{__("HR Department,")}}</b></i></p>
+                                                                <p style="margin: 10px 0;"><i style="font-style:normal"><b style="font-weight:700">{{env("APP_NAME")}}</b></i></p>
                                                             </div>
                                                         </td>
                                                     </tr>

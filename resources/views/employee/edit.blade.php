@@ -79,28 +79,108 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 6px;
+        padding: 5px 6px;
         text-align: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        text-decoration: none !important;
+        position: relative;
+        transition: all 0.2s ease-in-out;
+    }
+    .doc-card-file-wrapper:hover {
         background: #f1f5f9;
+        text-decoration: none !important;
     }
     .doc-card-file-icon {
-        font-size: 1.6rem;
-        margin-bottom: 2px;
+        font-size: 1.65rem;
+        line-height: 1;
+        margin-bottom: 3px;
+        transition: transform 0.2s ease;
+    }
+    .doc-card-item:hover .doc-card-file-icon {
+        transform: scale(1.1);
+    }
+    .doc-card-file-badge {
+        font-size: 0.55rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 1px 5px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        line-height: 1.2;
     }
     .doc-card-file-name {
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         color: #334155;
-        font-weight: 500;
-        max-width: 100px;
+        font-weight: 600;
+        max-width: 105px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: block;
+        margin-top: 3px;
     }
+
+    /* Extension Specific Color Badges & Icons */
+    .doc-type-pdf .doc-card-file-icon { color: #dc2626; }
+    .doc-type-pdf .doc-card-file-badge { background: #fee2e2; color: #b91c1c; }
+
+    .doc-type-word .doc-card-file-icon { color: #2563eb; }
+    .doc-type-word .doc-card-file-badge { background: #dbeafe; color: #1d4ed8; }
+
+    .doc-type-excel .doc-card-file-icon { color: #16a34a; }
+    .doc-type-excel .doc-card-file-badge { background: #dcfce7; color: #15803d; }
+
+    .doc-type-csv .doc-card-file-icon { color: #0d9488; }
+    .doc-type-csv .doc-card-file-badge { background: #ccfbf1; color: #0f766e; }
+
+    .doc-type-ppt .doc-card-file-icon { color: #ea580c; }
+    .doc-type-ppt .doc-card-file-badge { background: #ffedd5; color: #c2410c; }
+
+    .doc-type-archive .doc-card-file-icon { color: #9333ea; }
+    .doc-type-archive .doc-card-file-badge { background: #f3e8ff; color: #7e22ce; }
+
+    .doc-type-text .doc-card-file-icon { color: #64748b; }
+    .doc-type-text .doc-card-file-badge { background: #f1f5f9; color: #475569; }
+
+    .doc-type-code .doc-card-file-icon { color: #0284c7; }
+    .doc-type-code .doc-card-file-badge { background: #e0f2fe; color: #0369a1; }
+
+    .doc-type-default .doc-card-file-icon { color: #64748b; }
+    .doc-type-default .doc-card-file-badge { background: #f1f5f9; color: #475569; }
 </style>
 @extends('layouts.admin')
 
 @php
     $company_settings = \App\Models\Utility::settings();
+
+    if (!function_exists('getDocFileInfoHelper')) {
+        function getDocFileInfoHelper($filename) {
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            $map = [
+                'pdf'  => ['class' => 'doc-type-pdf',     'icon' => 'fas fa-file-pdf',        'label' => 'PDF'],
+                'doc'  => ['class' => 'doc-type-word',    'icon' => 'fas fa-file-word',       'label' => 'DOC'],
+                'docx' => ['class' => 'doc-type-word',    'icon' => 'fas fa-file-word',       'label' => 'DOCX'],
+                'xls'  => ['class' => 'doc-type-excel',   'icon' => 'fas fa-file-excel',      'label' => 'XLS'],
+                'xlsx' => ['class' => 'doc-type-excel',   'icon' => 'fas fa-file-excel',      'label' => 'XLSX'],
+                'csv'  => ['class' => 'doc-type-csv',     'icon' => 'fas fa-file-csv',        'label' => 'CSV'],
+                'ppt'  => ['class' => 'doc-type-ppt',     'icon' => 'fas fa-file-powerpoint', 'label' => 'PPT'],
+                'pptx' => ['class' => 'doc-type-ppt',     'icon' => 'fas fa-file-powerpoint', 'label' => 'PPTX'],
+                'txt'  => ['class' => 'doc-type-text',    'icon' => 'fas fa-file-alt',        'label' => 'TXT'],
+                'rtf'  => ['class' => 'doc-type-text',    'icon' => 'fas fa-file-alt',        'label' => 'RTF'],
+                'zip'  => ['class' => 'doc-type-archive', 'icon' => 'fas fa-file-archive',    'label' => 'ZIP'],
+                'rar'  => ['class' => 'doc-type-archive', 'icon' => 'fas fa-file-archive',    'label' => 'RAR'],
+                '7z'   => ['class' => 'doc-type-archive', 'icon' => 'fas fa-file-archive',    'label' => '7Z'],
+                'tar'  => ['class' => 'doc-type-archive', 'icon' => 'fas fa-file-archive',    'label' => 'TAR'],
+                'gz'   => ['class' => 'doc-type-archive', 'icon' => 'fas fa-file-archive',    'label' => 'GZ'],
+            ];
+            return $map[$ext] ?? [
+                'class' => 'doc-type-default',
+                'icon'  => 'fas fa-file',
+                'label' => strtoupper(substr($ext, 0, 4)) ?: 'FILE'
+            ];
+        }
+    }
 @endphp
 @section('page-title')
 {{ __('Edit Employee') }}
@@ -608,6 +688,7 @@
                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
                                                         $fUrl = $logo . '/' . rawurlencode($fName);
+                                                        $fMeta = getDocFileInfoHelper($fName);
                                                     @endphp
                                                     <div class="doc-card-item">
                                                         <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
@@ -618,8 +699,9 @@
                                                                 <img src="{{ $fUrl }}" alt="{{ $document->name }}">
                                                             </a>
                                                         @else
-                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
-                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper {{ $fMeta['class'] }}" title="{{ $fName }}">
+                                                                <i class="{{ $fMeta['icon'] }} doc-card-file-icon"></i>
+                                                                <span class="doc-card-file-badge">{{ $fMeta['label'] }}</span>
                                                                 <span class="doc-card-file-name">{{ $fName }}</span>
                                                             </a>
                                                         @endif
@@ -752,6 +834,7 @@
                                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
                                                                         $fUrl = $logo . '/' . rawurlencode($fName);
+                                                                        $fMeta = getDocFileInfoHelper($fName);
                                                                     @endphp
                                                                     <div class="doc-card-item">
                                                                         <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
@@ -762,8 +845,9 @@
                                                                                 <img src="{{ $fUrl }}" alt="{{ $document->name }}">
                                                                             </a>
                                                                         @else
-                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
-                                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper {{ $fMeta['class'] }}" title="{{ $fName }}">
+                                                                                <i class="{{ $fMeta['icon'] }} doc-card-file-icon"></i>
+                                                                                <span class="doc-card-file-badge">{{ $fMeta['label'] }}</span>
                                                                                 <span class="doc-card-file-name">{{ $fName }}</span>
                                                                             </a>
                                                                         @endif
@@ -785,6 +869,7 @@
                                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
                                                                         $fUrl = $logo . '/' . rawurlencode($fName);
+                                                                        $fMeta = getDocFileInfoHelper($fName);
                                                                     @endphp
                                                                     <div class="doc-card-item">
                                                                         @if ($fIsImg)
@@ -792,8 +877,9 @@
                                                                                 <img src="{{ $fUrl }}" alt="{{ $document->name }}">
                                                                             </a>
                                                                         @else
-                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
-                                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper {{ $fMeta['class'] }}" title="{{ $fName }}">
+                                                                                <i class="{{ $fMeta['icon'] }} doc-card-file-icon"></i>
+                                                                                <span class="doc-card-file-badge">{{ $fMeta['label'] }}</span>
                                                                                 <span class="doc-card-file-name">{{ $fName }}</span>
                                                                             </a>
                                                                         @endif
@@ -809,6 +895,7 @@
                                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
                                                                         $fUrl = $logo . '/' . rawurlencode($fName);
+                                                                        $fMeta = getDocFileInfoHelper($fName);
                                                                     @endphp
                                                                     <div class="doc-card-item">
                                                                         @if ($fIsImg)
@@ -816,8 +903,9 @@
                                                                                 <img src="{{ $fUrl }}" alt="{{ $document->name }}">
                                                                             </a>
                                                                         @else
-                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
-                                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper {{ $fMeta['class'] }}" title="{{ $fName }}">
+                                                                                <i class="{{ $fMeta['icon'] }} doc-card-file-icon"></i>
+                                                                                <span class="doc-card-file-badge">{{ $fMeta['label'] }}</span>
                                                                                 <span class="doc-card-file-name">{{ $fName }}</span>
                                                                             </a>
                                                                         @endif
@@ -1492,11 +1580,40 @@
             toggleShiftBreakType();
         });
 
+        // Helper to resolve file type details (icon, badge, CSS class)
+        function getDocFileInfo(fileName) {
+            var ext = (fileName || '').split('.').pop().toLowerCase();
+            var map = {
+                'pdf':  { typeClass: 'doc-type-pdf',     icon: 'fas fa-file-pdf',        label: 'PDF' },
+                'doc':  { typeClass: 'doc-type-word',    icon: 'fas fa-file-word',       label: 'DOC' },
+                'docx': { typeClass: 'doc-type-word',    icon: 'fas fa-file-word',       label: 'DOCX' },
+                'xls':  { typeClass: 'doc-type-excel',   icon: 'fas fa-file-excel',      label: 'XLS' },
+                'xlsx': { typeClass: 'doc-type-excel',   icon: 'fas fa-file-excel',      label: 'XLSX' },
+                'csv':  { typeClass: 'doc-type-csv',     icon: 'fas fa-file-csv',        label: 'CSV' },
+                'ppt':  { typeClass: 'doc-type-ppt',     icon: 'fas fa-file-powerpoint', label: 'PPT' },
+                'pptx': { typeClass: 'doc-type-ppt',     icon: 'fas fa-file-powerpoint', label: 'PPTX' },
+                'txt':  { typeClass: 'doc-type-text',    icon: 'fas fa-file-alt',        label: 'TXT' },
+                'rtf':  { typeClass: 'doc-type-text',    icon: 'fas fa-file-alt',        label: 'RTF' },
+                'zip':  { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'ZIP' },
+                'rar':  { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'RAR' },
+                '7z':   { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: '7Z' },
+                'tar':  { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'TAR' },
+                'gz':   { typeClass: 'doc-type-archive', icon: 'fas fa-file-archive',    label: 'GZ' },
+            };
+            return map[ext] || { typeClass: 'doc-type-default', icon: 'fas fa-file', label: (ext ? ext.toUpperCase().substring(0, 4) : 'FILE') };
+        }
+
         // Document preview handler — shows uniform card previews for multiple selected files
         function handleDocPreview(input) {
             var previewId = input.getAttribute('data-preview-id');
             var previewArea = document.getElementById(previewId);
             if (!input.files || !input.files.length) return;
+
+            // Remove any previously selected temporary previews (keeps existing saved files)
+            var oldPreviews = previewArea.querySelectorAll('.new-preview-item');
+            for (var p = 0; p < oldPreviews.length; p++) {
+                oldPreviews[p].remove();
+            }
 
             var imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
 
@@ -1516,7 +1633,12 @@
                         };
                         reader.readAsDataURL(file);
                     } else {
-                        container.innerHTML = '<div class="doc-card-file-wrapper"><i class="ti ti-file-description doc-card-file-icon text-primary"></i><span class="doc-card-file-name">' + fileName + '</span></div>';
+                        var info = getDocFileInfo(fileName);
+                        container.innerHTML = '<div class="doc-card-file-wrapper ' + info.typeClass + '">' +
+                            '<i class="' + info.icon + ' doc-card-file-icon"></i>' +
+                            '<span class="doc-card-file-badge">' + info.label + '</span>' +
+                            '<span class="doc-card-file-name" title="' + fileName + '">' + fileName + '</span>' +
+                            '</div>';
                         previewArea.appendChild(container);
                     }
                 })(input.files[i]);

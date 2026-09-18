@@ -2357,6 +2357,17 @@ Route::group(['middleware' => ['verified']], function () {
     Route::post('superadmin-staff/{id}/reset-password', [App\Http\Controllers\SuperAdminStaffController::class, 'resetPassword'])->name('superadmin-staff.reset-password')->middleware(['auth', 'XSS']);
     Route::resource('superadmin-staff', App\Http\Controllers\SuperAdminStaffController::class)->middleware(['auth', 'XSS']);
 
+    // Full & Final Settlement Management Routes
+    Route::get('settlement/export', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'export'])->name('settlement.export')->middleware(['auth', 'XSS']);
+    Route::match(['get', 'post'], 'settlement/{id}/send-mail', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'sendMail'])->name('settlement.send.mail')->middleware(['auth', 'XSS']);
+    Route::get('settlement/{id}/download-pdf', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'downloadPdf'])->name('settlement.download.pdf')->middleware(['auth', 'XSS']);
+    Route::get('settlement/{id}/regenerate-link', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'regenerateLink'])->name('settlement.regenerate.link')->middleware(['auth', 'XSS']);
+    Route::get('settlement/{id}/recall-to-draft', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'recallToDraft'])->name('settlement.recall.draft')->middleware(['auth', 'XSS']);
+    Route::post('settlement/{id}/manager-countersign', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'managerCountersign'])->name('settlement.manager.countersign')->middleware(['auth', 'XSS']);
+    Route::post('settlement/{id}/management-signoff', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'managementSignoff'])->name('settlement.management.signoff')->middleware(['auth', 'XSS']);
+    Route::post('settlement/{id}/update-clearance', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'updateClearanceChecklist'])->name('settlement.clearance.update')->middleware(['auth', 'XSS']);
+    Route::resource('settlement', \App\Http\Controllers\FullAndFinalSettlementController::class)->middleware(['auth', 'XSS']);
+
     // cache
     Route::get('/config-cache', function () {
         Artisan::call('cache:clear');
@@ -2366,3 +2377,15 @@ Route::group(['middleware' => ['verified']], function () {
         return redirect()->back()->with('success', 'Cache Clear Successfully');
     })->name('config.cache');
 });
+
+// Full & Final Settlement Secure Employee Clearance Form Routes (External access for separating employee)
+Route::get('settlement/clearance/{token}', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'publicView'])->name('settlement.clearance.view');
+Route::get('settlement/clearance/{token}/download-pdf', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'publicDownloadPdf'])->name('settlement.clearance.download.pdf');
+Route::post('settlement/clearance/{token}/sign', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'publicSubmitSignature'])->name('settlement.clearance.sign');
+
+// Backward-compatible fallback for legacy links
+Route::get('settlement/public/{token}', function ($token) {
+    return redirect()->route('settlement.clearance.view', $token);
+})->name('settlement.public.view');
+Route::post('settlement/public/{token}/sign', [\App\Http\Controllers\FullAndFinalSettlementController::class, 'publicSubmitSignature'])->name('settlement.public.sign');
+
