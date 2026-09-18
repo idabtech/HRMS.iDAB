@@ -154,7 +154,7 @@ Every settlement receives a **64-character encrypted token URL** that does not e
 | Sharing Channel | Action |
 |---|---|
 | **📧 Auto Email** | Click **Send to Employee**. Sends a formatted HTML email with net payable amount and a direct **"Open Clearance Form"** button. |
-| **💬 WhatsApp** | Click **Share on WhatsApp**. Pre-composes an official WhatsApp message with employee name and secure link. |
+| **💬 WhatsApp** | Click **Share on WhatsApp**. Opens an interactive modal where HR can personalize/modify the message, specify an optional phone number, or reset to standard template before opening in WhatsApp. |
 | **🔗 Copy Link** | One-click button copies the URL to your clipboard for Slack, Teams, or manual email. |
 | **🔄 Link Expiry & Regeneration** | Links expire in 30 days. HR can click **Regenerate Link** at any time to generate a fresh token and extend validity by 30 days. |
 | **↩️ Recall to Draft** | If terms need revision after sending, HR can click **Recall to Draft** to temporarily pause the link while adjusting figures. |

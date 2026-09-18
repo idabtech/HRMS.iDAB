@@ -44,301 +44,305 @@
 @endpush
 
 @section('content')
-    <form action="{{ route('settlement.store') }}" method="POST" id="settlementForm">
-        @csrf
-
-        {{-- SECTION 1: EMPLOYEE & SEPARATION DETAILS --}}
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5><i class="ti ti-user me-2 text-primary"></i>{{ __('1. Employee & Separation Details') }}</h5>
-                <span class="badge bg-primary text-white">{{ __('SaaS Multi-Industry Ready') }}</span>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">{{ __('Select Employee') }} <span class="text-danger">*</span></label>
-                        <select name="employee_id" id="employee_select" class="form-control select2" required>
-                            <option value="">{{ __('-- Choose Employee --') }}</option>
-                            @foreach ($employees as $emp)
-                                <option value="{{ $emp->id }}"
-                                    data-code="{{ $emp->employee_id }}"
-                                    data-dept="{{ $emp->department?->name }}"
-                                    data-desig="{{ $emp->designation?->name }}"
-                                    data-doj="{{ $emp->company_doj }}"
-                                    {{ (isset($selectedEmployee) && $selectedEmployee->id == $emp->id) ? 'selected' : '' }}>
-                                    {{ $emp->name }} ({{ $emp->employee_id }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">{{ __('Last Working Day (LWD)') }} <span class="text-danger">*</span></label>
-                        <input type="date" name="last_working_day" class="form-control" value="{{ date('Y-m-d') }}" required>
-                    </div>
-
-                    <div class="col-md-12">
-                        <label class="form-label fw-bold">{{ __('Reason for Separation') }} <span class="text-danger">*</span></label>
-                        <input type="text" name="reason_for_separation" class="form-control" placeholder="{{ __('e.g., Resignation accepted, Contract ended, Mutual release') }}" required>
-                    </div>
+<div class="row">
+    <div class="col-12">
+        <form action="{{ route('settlement.store') }}" method="POST" id="settlementForm">
+            @csrf
+    
+            {{-- SECTION 1: EMPLOYEE & SEPARATION DETAILS --}}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="ti ti-user me-2 text-primary"></i>{{ __('1. Employee & Separation Details') }}</h5>
+                    <span class="badge bg-primary text-white">{{ __('SaaS Multi-Industry Ready') }}</span>
                 </div>
-
-                {{-- In-Section Google Form Builder: Section 1 Custom Questions --}}
-                <div class="gform-section-builder">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for Separation Details') }}</span>
-                            <small class="text-muted d-block">{{ __('Add fields like Notice shortfall waiver, Relocation details, Separation interview notes, etc.') }}</small>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ __('Select Employee') }} <span class="text-danger">*</span></label>
+                            <select name="employee_id" id="employee_select" class="form-control select2" required>
+                                <option value="">{{ __('-- Choose Employee --') }}</option>
+                                @foreach ($employees as $emp)
+                                    <option value="{{ $emp->id }}"
+                                        data-code="{{ $emp->employee_id }}"
+                                        data-dept="{{ $emp->department?->name }}"
+                                        data-desig="{{ $emp->designation?->name }}"
+                                        data-doj="{{ $emp->company_doj }}"
+                                        {{ (isset($selectedEmployee) && $selectedEmployee->id == $emp->id) ? 'selected' : '' }}>
+                                        {{ $emp->name }} ({{ $emp->employee_id }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="separation">
-                            <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
-                        </button>
+    
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{{ __('Last Working Day (LWD)') }} <span class="text-danger">*</span></label>
+                            <input type="date" name="last_working_day" class="form-control" value="{{ date('Y-m-d') }}" required>
+                        </div>
+    
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">{{ __('Reason for Separation') }} <span class="text-danger">*</span></label>
+                            <input type="text" name="reason_for_separation" class="form-control" placeholder="{{ __('e.g., Resignation accepted, Contract ended, Mutual release') }}" required>
+                        </div>
                     </div>
-                    <div class="gform-fields-container" id="gform_fields_separation">
-                        {{-- Injected dynamically --}}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- SECTION 2: FINANCIAL CLEARANCE & BREAKDOWN --}}
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5><i class="ti ti-receipt-2 me-2 text-primary"></i>{{ __('2. Financial Clearance Breakdown') }}</h5>
-                <span class="badge bg-warning text-dark"><i class="ti ti-lock me-1"></i>{{ __('Certified by HR / Locked for Employee') }}</span>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    {{-- Earnings Table --}}
-                    <div class="col-md-6 border-end">
+    
+                    {{-- In-Section Google Form Builder: Section 1 Custom Questions --}}
+                    <div class="gform-section-builder">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold text-success mb-0"><i class="ti ti-plus-circle me-1"></i>{{ __('Earnings & Payables (A)') }}</h6>
-                            <button type="button" class="btn btn-xs btn-outline-success" id="add_earning_btn">
-                                <i class="ti ti-plus"></i> {{ __('Add Earning') }}
+                            <div>
+                                <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for Separation Details') }}</span>
+                                <small class="text-muted d-block">{{ __('Add fields like Notice shortfall waiver, Relocation details, Separation interview notes, etc.') }}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="separation">
+                                <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
                             </button>
                         </div>
-                        <table class="table table-sm" id="earnings_table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>{{ __('Particulars') }}</th>
-                                    <th width="140px">{{ __('Amount (₹)') }}</th>
-                                    <th width="40px"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><input type="text" name="earnings_name[]" class="form-control form-control-sm" value="Salary Payable up to Last Working Day"></td>
-                                    <td><input type="number" step="0.01" name="earnings_amount[]" class="form-control form-control-sm calc-earning" value="0.00"></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td><input type="text" name="earnings_name[]" class="form-control form-control-sm" value="Leave Encashment (Privilege/Earned)"></td>
-                                    <td><input type="number" step="0.01" name="earnings_amount[]" class="form-control form-control-sm calc-earning" value="0.00"></td>
-                                    <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
-                                </tr>
-                                <tr>
-                                    <td><input type="text" name="earnings_name[]" class="form-control form-control-sm" value="Incentive / Commission / Bonus"></td>
-                                    <td><input type="number" step="0.01" name="earnings_amount[]" class="form-control form-control-sm calc-earning" value="0.00"></td>
-                                    <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr class="table-success fw-bold">
-                                    <td>{{ __('Total Gross Payable (A)') }}</td>
-                                    <td colspan="2" id="display_gross">₹ 0.00</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <div class="gform-fields-container" id="gform_fields_separation">
+                            {{-- Injected dynamically --}}
+                        </div>
                     </div>
-
-                    {{-- Deductions Table --}}
-                    <div class="col-md-6">
+                </div>
+            </div>
+    
+            {{-- SECTION 2: FINANCIAL CLEARANCE & BREAKDOWN --}}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="ti ti-receipt-2 me-2 text-primary"></i>{{ __('2. Financial Clearance Breakdown') }}</h5>
+                    <span class="badge bg-warning text-dark"><i class="ti ti-lock me-1"></i>{{ __('Certified by HR / Locked for Employee') }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {{-- Earnings Table --}}
+                        <div class="col-md-6 border-end">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-success mb-0"><i class="ti ti-plus-circle me-1"></i>{{ __('Earnings & Payables (A)') }}</h6>
+                                <button type="button" class="btn btn-xs btn-outline-success" id="add_earning_btn">
+                                    <i class="ti ti-plus"></i> {{ __('Add Earning') }}
+                                </button>
+                            </div>
+                            <table class="table table-sm" id="earnings_table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{{ __('Particulars') }}</th>
+                                        <th width="140px">{{ __('Amount (₹)') }}</th>
+                                        <th width="40px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="text" name="earnings_name[]" class="form-control form-control-sm" value="Salary Payable up to Last Working Day"></td>
+                                        <td><input type="number" step="0.01" name="earnings_amount[]" class="form-control form-control-sm calc-earning" value="0.00"></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" name="earnings_name[]" class="form-control form-control-sm" value="Leave Encashment (Privilege/Earned)"></td>
+                                        <td><input type="number" step="0.01" name="earnings_amount[]" class="form-control form-control-sm calc-earning" value="0.00"></td>
+                                        <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" name="earnings_name[]" class="form-control form-control-sm" value="Incentive / Commission / Bonus"></td>
+                                        <td><input type="number" step="0.01" name="earnings_amount[]" class="form-control form-control-sm calc-earning" value="0.00"></td>
+                                        <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-success fw-bold">
+                                        <td>{{ __('Total Gross Payable (A)') }}</td>
+                                        <td colspan="2" id="display_gross">₹ 0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+    
+                        {{-- Deductions Table --}}
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-danger mb-0"><i class="ti ti-minus-circle me-1"></i>{{ __('Deductions & Recoveries (B)') }}</h6>
+                                <button type="button" class="btn btn-xs btn-outline-danger" id="add_deduction_btn">
+                                    <i class="ti ti-plus"></i> {{ __('Add Deduction') }}
+                                </button>
+                            </div>
+                            <table class="table table-sm" id="deductions_table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{{ __('Particulars') }}</th>
+                                        <th width="140px">{{ __('Amount (₹)') }}</th>
+                                        <th width="40px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="text" name="deductions_name[]" class="form-control form-control-sm" value="Notice Period Recovery / Shortfall"></td>
+                                        <td><input type="number" step="0.01" name="deductions_amount[]" class="form-control form-control-sm calc-deduction" value="0.00"></td>
+                                        <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" name="deductions_name[]" class="form-control form-control-sm" value="Loan / Advance Balance Recovery"></td>
+                                        <td><input type="number" step="0.01" name="deductions_amount[]" class="form-control form-control-sm calc-deduction" value="0.00"></td>
+                                        <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" name="deductions_name[]" class="form-control form-control-sm" value="Asset / Hardware Damage Recovery"></td>
+                                        <td><input type="number" step="0.01" name="deductions_amount[]" class="form-control form-control-sm calc-deduction" value="0.00"></td>
+                                        <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-danger fw-bold">
+                                        <td>{{ __('Total Deductions (B)') }}</td>
+                                        <td colspan="2" id="display_deductions">₹ 0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+    
+                    {{-- Net Final Settlement Box --}}
+                    <div class="alert alert-primary mt-3 d-flex justify-content-between align-items-center mb-0">
+                        <div>
+                            <h5 class="mb-0 fw-bold">{{ __('NET FINAL SETTLEMENT AMOUNT (A - B):') }}</h5>
+                            <small class="text-muted">{{ __('Calculated net balance to disburse to employee.') }}</small>
+                        </div>
+                        <div class="fs-3 fw-bold text-primary" id="display_net">₹ 0.00</div>
+                    </div>
+    
+                    {{-- In-Section Google Form Builder: Section 2 Custom Questions --}}
+                    <div class="gform-section-builder">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold text-danger mb-0"><i class="ti ti-minus-circle me-1"></i>{{ __('Deductions & Recoveries (B)') }}</h6>
-                            <button type="button" class="btn btn-xs btn-outline-danger" id="add_deduction_btn">
-                                <i class="ti ti-plus"></i> {{ __('Add Deduction') }}
+                            <div>
+                                <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for Financial Clearance') }}</span>
+                                <small class="text-muted d-block">{{ __('Add fields like Bank verification note, Loan clearance NOC status, Gratuity eligibility notes, etc.') }}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="financial">
+                                <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
                             </button>
                         </div>
-                        <table class="table table-sm" id="deductions_table">
+                        <div class="gform-fields-container" id="gform_fields_financial">
+                            {{-- Injected dynamically --}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            {{-- SECTION 3: DEPARTMENTAL & IT ASSET CLEARANCES --}}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="ti ti-checklist me-2 text-primary"></i>{{ __('3. Departmental & Asset Clearances Checklist') }}</h5>
+                    <button type="button" class="btn btn-xs btn-light text-primary border" id="add_clearance_btn">
+                        <i class="ti ti-plus"></i> {{ __('Add Checkpoint') }}
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle" id="clearance_table">
                             <thead class="table-light">
                                 <tr>
-                                    <th>{{ __('Particulars') }}</th>
-                                    <th width="140px">{{ __('Amount (₹)') }}</th>
-                                    <th width="40px"></th>
+                                    <th width="20%">{{ __('Category') }}</th>
+                                    <th width="45%">{{ __('Checklist Item / Asset') }}</th>
+                                    <th width="25%">{{ __('Status') }}</th>
+                                    <th width="10%">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><input type="text" name="deductions_name[]" class="form-control form-control-sm" value="Notice Period Recovery / Shortfall"></td>
-                                    <td><input type="number" step="0.01" name="deductions_amount[]" class="form-control form-control-sm calc-deduction" value="0.00"></td>
-                                    <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
-                                </tr>
-                                <tr>
-                                    <td><input type="text" name="deductions_name[]" class="form-control form-control-sm" value="Loan / Advance Balance Recovery"></td>
-                                    <td><input type="number" step="0.01" name="deductions_amount[]" class="form-control form-control-sm calc-deduction" value="0.00"></td>
-                                    <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
-                                </tr>
-                                <tr>
-                                    <td><input type="text" name="deductions_name[]" class="form-control form-control-sm" value="Asset / Hardware Damage Recovery"></td>
-                                    <td><input type="number" step="0.01" name="deductions_amount[]" class="form-control form-control-sm calc-deduction" value="0.00"></td>
-                                    <td><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
-                                </tr>
+                            <tbody id="clearance_tbody">
+                                @foreach ($defaultClearance as $item)
+                                    <tr>
+                                        <td>
+                                            <input type="text" name="clearance_category[]" class="form-control form-control-sm" value="{{ $item['category'] }}" placeholder="{{ __('e.g., IT & Hardware, Admin, HR') }}">
+                                        </td>
+                                        <td>
+                                            <input type="text" name="clearance_item[]" class="form-control form-control-sm" value="{{ $item['item'] }}" placeholder="{{ __('e.g., Company laptop / access card returned') }}">
+                                        </td>
+                                        <td>
+                                            <select name="clearance_status[]" class="form-control form-control-sm">
+                                                <option value="Pending" selected>{{ __('Pending') }}</option>
+                                                <option value="Returned">{{ __('Returned / Cleared') }}</option>
+                                                <option value="Not Applicable">{{ __('Not Applicable (N/A)') }}</option>
+                                            </select>
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
-                            <tfoot>
-                                <tr class="table-danger fw-bold">
-                                    <td>{{ __('Total Deductions (B)') }}</td>
-                                    <td colspan="2" id="display_deductions">₹ 0.00</td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
-                </div>
-
-                {{-- Net Final Settlement Box --}}
-                <div class="alert alert-primary mt-3 d-flex justify-content-between align-items-center mb-0">
-                    <div>
-                        <h5 class="mb-0 fw-bold">{{ __('NET FINAL SETTLEMENT AMOUNT (A - B):') }}</h5>
-                        <small class="text-muted">{{ __('Calculated net balance to disburse to employee.') }}</small>
-                    </div>
-                    <div class="fs-3 fw-bold text-primary" id="display_net">₹ 0.00</div>
-                </div>
-
-                {{-- In-Section Google Form Builder: Section 2 Custom Questions --}}
-                <div class="gform-section-builder">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for Financial Clearance') }}</span>
-                            <small class="text-muted d-block">{{ __('Add fields like Bank verification note, Loan clearance NOC status, Gratuity eligibility notes, etc.') }}</small>
+    
+                    {{-- In-Section Google Form Builder: Section 3 Custom Questions --}}
+                    <div class="gform-section-builder">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for IT & Asset Clearance') }}</span>
+                                <small class="text-muted d-block">{{ __('Add fields like Laptop Serial No., GitHub username wiped, BYOD Remote Wipe declaration, etc.') }}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="assets">
+                                <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
+                            </button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="financial">
-                            <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
-                        </button>
-                    </div>
-                    <div class="gform-fields-container" id="gform_fields_financial">
-                        {{-- Injected dynamically --}}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- SECTION 3: DEPARTMENTAL & IT ASSET CLEARANCES --}}
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5><i class="ti ti-checklist me-2 text-primary"></i>{{ __('3. Departmental & Asset Clearances Checklist') }}</h5>
-                <button type="button" class="btn btn-xs btn-light text-primary border" id="add_clearance_btn">
-                    <i class="ti ti-plus"></i> {{ __('Add Checkpoint') }}
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-sm align-middle" id="clearance_table">
-                        <thead class="table-light">
-                            <tr>
-                                <th width="20%">{{ __('Category') }}</th>
-                                <th width="45%">{{ __('Checklist Item / Asset') }}</th>
-                                <th width="25%">{{ __('Status') }}</th>
-                                <th width="10%">{{ __('Action') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clearance_tbody">
-                            @foreach ($defaultClearance as $item)
-                                <tr>
-                                    <td>
-                                        <input type="text" name="clearance_category[]" class="form-control form-control-sm" value="{{ $item['category'] }}" placeholder="{{ __('e.g., IT & Hardware, Admin, HR') }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="clearance_item[]" class="form-control form-control-sm" value="{{ $item['item'] }}" placeholder="{{ __('e.g., Company laptop / access card returned') }}">
-                                    </td>
-                                    <td>
-                                        <select name="clearance_status[]" class="form-control form-control-sm">
-                                            <option value="Pending" selected>{{ __('Pending') }}</option>
-                                            <option value="Returned">{{ __('Returned / Cleared') }}</option>
-                                            <option value="Not Applicable">{{ __('Not Applicable (N/A)') }}</option>
-                                        </select>
-                                    </td>
-                                    <td class="text-center">
-                                        <button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                {{-- In-Section Google Form Builder: Section 3 Custom Questions --}}
-                <div class="gform-section-builder">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for IT & Asset Clearance') }}</span>
-                            <small class="text-muted d-block">{{ __('Add fields like Laptop Serial No., GitHub username wiped, BYOD Remote Wipe declaration, etc.') }}</small>
+                        <div class="gform-fields-container" id="gform_fields_assets">
+                            {{-- Injected dynamically --}}
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="assets">
-                            <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
-                        </button>
-                    </div>
-                    <div class="gform-fields-container" id="gform_fields_assets">
-                        {{-- Injected dynamically --}}
                     </div>
                 </div>
             </div>
-        </div>
-
-        {{-- SECTION 4: EMPLOYEE HANDOVER & UNDERTAKING --}}
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5><i class="ti ti-writing me-2 text-primary"></i>{{ __('4. Employee Handover & Legal Undertaking') }}</h5>
-                <span class="badge bg-info text-white">{{ __('Interactive for Employee Online') }}</span>
-            </div>
-            <div class="card-body">
-                {{-- Custom Editable Declaration & Undertaking Terms --}}
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="form-label fw-bold text-dark mb-0">
-                            <i class="ti ti-file-certificate text-primary me-1"></i> {{ __('Employee Legal Declaration & Undertaking Terms') }} <span class="text-danger">*</span>
-                        </label>
-                        <button type="button" class="btn btn-xs btn-outline-secondary" id="reset_declaration_btn">
-                            <i class="ti ti-rotate-clockwise me-1"></i> {{ __('Reset to Default Terms') }}
-                        </button>
-                    </div>
-                    <small class="text-muted d-block mb-2">
-                        {{ __('This declaration and undertaking will appear directly above the employee digital signature on the public form. You can add more paragraphs, modify clauses, or customize it to your company requirements.') }}
-                    </small>
-                    <textarea name="declaration_text" id="declaration_text" class="form-control font-monospace" rows="6" required style="line-height: 1.6; font-size: 13px;">{{ old('declaration_text', $defaultDeclaration ?? App\Models\FullAndFinalSettlement::defaultDeclarationText()) }}</textarea>
+    
+            {{-- SECTION 4: EMPLOYEE HANDOVER & UNDERTAKING --}}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="ti ti-writing me-2 text-primary"></i>{{ __('4. Employee Handover & Legal Undertaking') }}</h5>
+                    <span class="badge bg-info text-white">{{ __('Interactive for Employee Online') }}</span>
                 </div>
-
-                <div class="p-3 bg-light rounded small text-muted border mb-3">
-                    <i class="ti ti-info-circle text-primary me-1"></i>
-                    {{ __('The digital signature canvas and confirmation checkbox will be presented to the employee automatically. You can also add specific custom questions for the employee to answer below.') }}
-                </div>
-
-                {{-- In-Section Google Form Builder: Section 4 Custom Questions --}}
-                <div class="gform-section-builder">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for Departing Employee') }}</span>
-                            <small class="text-muted d-block">{{ __('Add questions that the employee must answer online before signing (e.g. Forwarding email, Feedback, Handover links).') }}</small>
+                <div class="card-body">
+                    {{-- Custom Editable Declaration & Undertaking Terms --}}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bold text-dark mb-0">
+                                <i class="ti ti-file-certificate text-primary me-1"></i> {{ __('Employee Legal Declaration & Undertaking Terms') }} <span class="text-danger">*</span>
+                            </label>
+                            <button type="button" class="btn btn-xs btn-outline-secondary" id="reset_declaration_btn">
+                                <i class="ti ti-rotate-clockwise me-1"></i> {{ __('Reset to Default Terms') }}
+                            </button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="employee" data-default-target="employee">
-                            <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
-                        </button>
+                        <small class="text-muted d-block mb-2">
+                            {{ __('This declaration and undertaking will appear directly above the employee digital signature on the public form. You can add more paragraphs, modify clauses, or customize it to your company requirements.') }}
+                        </small>
+                        <textarea name="declaration_text" id="declaration_text" class="form-control font-monospace" rows="6" required style="line-height: 1.6; font-size: 13px;">{{ old('declaration_text', $defaultDeclaration ?? App\Models\FullAndFinalSettlement::defaultDeclarationText()) }}</textarea>
                     </div>
-                    <div class="gform-fields-container" id="gform_fields_employee">
-                        {{-- Injected dynamically --}}
+    
+                    <div class="p-3 bg-light rounded small text-muted border mb-3">
+                        <i class="ti ti-info-circle text-primary me-1"></i>
+                        {{ __('The digital signature canvas and confirmation checkbox will be presented to the employee automatically. You can also add specific custom questions for the employee to answer below.') }}
+                    </div>
+    
+                    {{-- In-Section Google Form Builder: Section 4 Custom Questions --}}
+                    <div class="gform-section-builder">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-bold text-dark"><i class="ti ti-forms text-primary me-1"></i>{{ __('Custom Questions for Departing Employee') }}</span>
+                                <small class="text-muted d-block">{{ __('Add questions that the employee must answer online before signing (e.g. Forwarding email, Feedback, Handover links).') }}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary add-gform-field-btn" data-section="employee" data-default-target="employee">
+                                <i class="ti ti-plus"></i> {{ __('Add Question to this Section') }}
+                            </button>
+                        </div>
+                        <div class="gform-fields-container" id="gform_fields_employee">
+                            {{-- Injected dynamically --}}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        {{-- Submit Card --}}
-        <div class="card">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <a href="{{ route('settlement.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
-                <button type="submit" class="btn btn-primary px-4">
-                    <i class="ti ti-device-floppy me-1"></i> {{ __('Save Full & Final Settlement') }}
-                </button>
+    
+            {{-- Submit Card --}}
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <a href="{{ route('settlement.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="ti ti-device-floppy me-1"></i> {{ __('Save Full & Final Settlement') }}
+                    </button>
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
+</div>
 @endsection
 
 @push('script-page')

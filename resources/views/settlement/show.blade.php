@@ -54,11 +54,8 @@
         </a>
 
         {{-- WhatsApp Share --}}
-        @php
-            $waText = urlencode("Hello " . $settlement->employee_name . ", please review and complete your Full & Final Settlement & Departmental Clearance form: " . $settlement->public_url);
-            $waUrl = "https://api.whatsapp.com/send?text=" . $waText;
-        @endphp
-        <a href="{{ $waUrl }}" target="_blank" class="btn btn-sm btn-success"
+        <a href="javascript:void(0)" class="btn btn-sm btn-success"
+            onclick="$('#whatsappShareModal').modal('show');"
             data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Share on WhatsApp') }}">
             <i class="ti ti-brand-whatsapp"></i>
         </a>
@@ -473,9 +470,12 @@
                             <i class="ti ti-clock fs-1 d-block mb-2 text-warning"></i>
                             <h6>{{ __('Awaiting Employee Digital Signature') }}</h6>
                             <p class="small text-muted mb-3">{{ __('The employee has not submitted their clearance sign-off yet. Share the link via WhatsApp or email.') }}</p>
-                            <div class="d-flex justify-content-center gap-2">
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
                                 <button type="button" class="btn btn-sm btn-primary copy-settlement-link" data-url="{{ $settlement->public_url }}">
                                     <i class="ti ti-link"></i> {{ __('Copy Link') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-success" onclick="$('#whatsappShareModal').modal('show');">
+                                    <i class="ti ti-brand-whatsapp"></i> {{ __('Share on WhatsApp') }}
                                 </button>
                                 <a href="{{ route('settlement.send.mail', $settlement->id) }}" class="btn btn-sm btn-warning text-white">
                                     <i class="ti ti-mail"></i> {{ __('Send Email') }}
@@ -885,6 +885,82 @@
             </div>
         </div>
     </div>
+
+    {{-- WhatsApp Custom Message Modal --}}
+    <div class="modal fade" id="whatsappShareModal" tabindex="-1" aria-labelledby="whatsappShareModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white py-3">
+                    <h5 class="modal-title text-white d-flex align-items-center gap-2" id="whatsappShareModalLabel">
+                        <i class="ti ti-brand-whatsapp fs-3"></i> {{ __('Share Settlement via WhatsApp') }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Recipient Employee') }}</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="ti ti-user"></i></span>
+                            <input type="text" class="form-control bg-light" value="{{ $settlement->employee_name }} ({{ $settlement->employee_code }})" readonly>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase d-flex justify-content-between align-items-center">
+                            <span>
+                                {{ __('Phone Number') }} 
+                                <small class="text-muted fw-normal">({{ __('Optional with Country Code') }})</small>
+                            </span>
+                            @if(!empty($settlement->employee->phone))
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnResetWaPhone">
+                                    <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Profile Number') }}
+                                </button>
+                            @endif
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="ti ti-phone"></i></span>
+                            <input type="text" id="waRecipientPhone" class="form-control" 
+                                placeholder="{{ __('e.g. 919876543210 (Country code + Number)') }}" 
+                                value="{{ preg_replace('/[^0-9]/', '', $settlement->employee->phone ?? '') }}">
+                        </div>
+                        <small class="text-muted fs-8 d-block mt-1">
+                            <i class="ti ti-edit text-primary me-1"></i>
+                            {{ __('Pre-filled from employee profile. You can edit this to any different number, or leave blank to select inside WhatsApp.') }}
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bold text-dark small text-uppercase mb-0">{{ __('WhatsApp Message') }}</label>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary small" id="btnResetWaMessage">
+                                <i class="ti ti-rotate-clockwise"></i> {{ __('Reset to Default') }}
+                            </button>
+                        </div>
+                        <textarea id="waCustomMessage" class="form-control font-sans" rows="5" placeholder="{{ __('Type your message here...') }}"></textarea>
+                        <small class="text-muted fs-8 mt-1 d-block">
+                            <i class="ti ti-info-circle"></i> {{ __('You can freely modify this message, add greetings, or customize instructions before sending.') }}
+                        </small>
+                    </div>
+
+                    <div class="p-3 bg-light rounded border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold small text-dark"><i class="ti ti-link me-1"></i>{{ __('Clearance Form URL:') }}</span>
+                            <button type="button" class="btn btn-xs btn-outline-secondary copy-settlement-link" data-url="{{ $settlement->public_url }}">
+                                <i class="ti ti-copy"></i> {{ __('Copy') }}
+                            </button>
+                        </div>
+                        <div class="small text-muted text-break font-monospace">{{ $settlement->public_url }}</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-success" id="btnSendWaCustom">
+                        <i class="ti ti-brand-whatsapp me-1"></i> {{ __('Open in WhatsApp') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script-page')
@@ -894,6 +970,46 @@
         navigator.clipboard.writeText(url).then(function () {
             show_toastr('Success', '{{ __("Secure settlement form link copied to clipboard!") }}', 'success');
         });
+    });
+
+    // WhatsApp Message & Phone Customizer
+    var defaultWaTemplate = "Hello " + {!! json_encode($settlement->employee_name) !!} + ", please review and complete your Full & Final Settlement & Departmental Clearance form: " + {!! json_encode($settlement->public_url) !!};
+    var originalEmpPhone = {!! json_encode(preg_replace('/[^0-9]/', '', $settlement->employee->phone ?? '')) !!};
+
+    $('#whatsappShareModal').on('show.bs.modal', function () {
+        if (!$('#waCustomMessage').val()) {
+            $('#waCustomMessage').val(defaultWaTemplate);
+        }
+        if (!$('#waRecipientPhone').val() && originalEmpPhone) {
+            $('#waRecipientPhone').val(originalEmpPhone);
+        }
+    });
+
+    $('#btnResetWaPhone').on('click', function () {
+        $('#waRecipientPhone').val(originalEmpPhone);
+    });
+
+    $('#btnResetWaMessage').on('click', function () {
+        $('#waCustomMessage').val(defaultWaTemplate);
+    });
+
+    $('#btnSendWaCustom').on('click', function () {
+        var msg = $('#waCustomMessage').val().trim();
+        if (!msg) {
+            alert('{{ __("Please enter a message to send.") }}');
+            return;
+        }
+        var phone = $('#waRecipientPhone').val().trim().replace(/[^0-9]/g, '');
+        var url = "https://api.whatsapp.com/send?";
+        var params = [];
+        if (phone) {
+            params.push("phone=" + encodeURIComponent(phone));
+        }
+        params.push("text=" + encodeURIComponent(msg));
+        url += params.join('&');
+
+        window.open(url, '_blank');
+        $('#whatsappShareModal').modal('hide');
     });
 
     // Setup signature canvas helper
