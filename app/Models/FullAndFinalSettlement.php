@@ -208,6 +208,23 @@ class FullAndFinalSettlement extends Model
     }
 
     /**
+     * Dynamically format an employee ID based on company employee prefix settings
+     */
+    public function formatEmployeeId($number = null): string
+    {
+        $id = $number ?? ($this->employee->employee_id ?? $this->employee_id);
+        if (empty($id)) {
+            return $this->employee_code ?: '—';
+        }
+
+        $creatorId = $this->created_by ?: (\Auth::check() ? \Auth::user()->creatorId() : 1);
+        $settings = Utility::getCompanySettings($creatorId);
+        $prefix = !empty($settings['employee_prefix']) ? $settings['employee_prefix'] : '#EMP';
+
+        return $prefix . sprintf("%05d", $id);
+    }
+
+    /**
      * Pre-defined industry clearance templates
      */
     public static function getDefaultClearanceChecklist(string $industry = 'software'): array

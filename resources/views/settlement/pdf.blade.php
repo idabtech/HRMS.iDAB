@@ -299,7 +299,7 @@
         <th width="20%">Employee Name:</th>
         <td width="30%"><strong>{{ $settlement->employee_name }}</strong></td>
         <th width="20%">Employee ID:</th>
-        <td width="30%">{{ \App\Models\Utility::employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }}</td>
+        <td width="30%">{{ $settlement->formatEmployeeId() }}</td>
     </tr>
     <tr>
         <th>Designation:</th>
@@ -508,7 +508,7 @@
             @endif
             <div style="border-top: 1px dashed #cbd5e1; margin-top: 5px; padding-top: 5px;">
                 <strong style="color: #1e293b; font-size: 11px;">{{ $settlement->employee_name }}</strong><br>
-                <span style="font-size: 9px; color: #475569;">{{ $settlement->designation ?: __('Employee') }} ({{ \App\Models\Utility::employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }})</span><br>
+                <span style="font-size: 9px; color: #475569;">{{ $settlement->designation ?: __('Employee') }} ({{ $settlement->formatEmployeeId() }})</span><br>
                 <span style="font-size: 8.5px; color: #64748b;">
                     {{ $settlement->employee_signed_at ? __('Signed: ') . $settlement->formatDate($settlement->employee_signed_at, true) : __('Signature Pending') }}
                 </span>
