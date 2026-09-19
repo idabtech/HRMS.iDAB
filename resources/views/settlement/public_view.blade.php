@@ -355,7 +355,7 @@
                         </div>
                         <div class="col-sm-6 col-md-4">
                             <div class="info-label">{{ __('Employee ID / Code') }}</div>
-                            <div class="info-value font-monospace">{{ $settlement->employee_code ?: '—' }}</div>
+                            <div class="info-value font-monospace">{{ \App\Models\Utility::employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }}</div>
                         </div>
                         <div class="col-sm-6 col-md-4">
                             <div class="info-label">{{ __('Designation') }}</div>
