@@ -381,6 +381,9 @@
                     @if(!empty($chk['remarks']))
                         <br><span style="font-size: 9.5px; color: #64748b;"><em>Handover Note: {{ $chk['remarks'] }}</em></span>
                     @endif
+                    @if(!empty($chk['attachment']))
+                        <br><span style="font-size: 9.5px; color: #4338ca;"><em>&#128206; Attachment: {{ $chk['attachment_name'] ?? $chk['attachment'] }}</em></span>
+                    @endif
                 </td>
                 <td>
                     @if($chk['status'] === 'Returned')
@@ -432,6 +435,8 @@
                     <td>
                         @if(($field['type'] ?? '') === 'date' && !empty($settlement->custom_fields_data[$field['key']]))
                             {{ $settlement->formatDate($settlement->custom_fields_data[$field['key']]) }}
+                        @elseif(($field['type'] ?? '') === 'file' && !empty($settlement->custom_fields_data[$field['key']]))
+                            &#128206; {{ $settlement->custom_fields_data[$field['key'] . '_name'] ?? $settlement->custom_fields_data[$field['key']] }} (Attached)
                         @else
                             {{ $settlement->custom_fields_data[$field['key']] ?? '-' }}
                         @endif
