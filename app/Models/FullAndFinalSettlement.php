@@ -284,4 +284,15 @@ class FullAndFinalSettlement extends Model
     {
         return !empty(trim($this->policy_rules_text ?? '')) ? $this->policy_rules_text : self::defaultPolicyRulesText();
     }
+
+    /**
+     * Get public URL for uploaded settlement attachment
+     */
+    public static function getAttachmentUrl(?string $fileName): string
+    {
+        if (empty($fileName)) {
+            return '';
+        }
+        return Utility::get_file('settlement_attachments/' . $fileName);
+    }
 }

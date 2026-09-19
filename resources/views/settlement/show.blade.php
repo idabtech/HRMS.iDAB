@@ -213,6 +213,10 @@
                                                 <strong class="text-dark">
                                                     @if(($f['type'] ?? '') === 'date' && !empty($customValues[$f['key']]))
                                                         {{ $settlement->formatDate($customValues[$f['key']]) }}
+                                                    @elseif(($f['type'] ?? '') === 'file' && !empty($customValues[$f['key']]))
+                                                        <a href="{{ $settlement->getAttachmentUrl($customValues[$f['key']]) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                        </a>
                                                     @else
                                                         {{ $customValues[$f['key']] ?? '—' }}
                                                     @endif
@@ -316,6 +320,10 @@
                                             <strong class="text-dark">
                                                 @if(($f['type'] ?? '') === 'date' && !empty($customValues[$f['key']]))
                                                     {{ $settlement->formatDate($customValues[$f['key']]) }}
+                                                @elseif(($f['type'] ?? '') === 'file' && !empty($customValues[$f['key']]))
+                                                    <a href="{{ $settlement->getAttachmentUrl($customValues[$f['key']]) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                        <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                    </a>
                                                 @else
                                                     {{ $customValues[$f['key']] ?? '—' }}
                                                 @endif
@@ -388,6 +396,13 @@
                                                     <i class="ti ti-notes me-1 text-primary"></i><strong class="text-secondary">{{ __('Handover Note:') }}</strong> {{ $chk['remarks'] }}
                                                 </div>
                                             @endif
+                                            @if(!empty($chk['attachment']))
+                                                <div class="mt-1">
+                                                    <a href="{{ $settlement->getAttachmentUrl($chk['attachment']) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                        <i class="ti ti-file-check"></i> {{ __('Attachment: ') . \Illuminate\Support\Str::limit($chk['attachment_name'] ?? $chk['attachment'], 24) }}
+                                                    </a>
+                                                </div>
+                                            @endif
                                         </td>
                                         <td id="clearance_status_badge_{{ $loop->index }}">
                                             @if (($chk['status'] ?? '') === 'Returned')
@@ -442,6 +457,10 @@
                                             <strong class="text-dark">
                                                 @if(($f['type'] ?? '') === 'date' && !empty($customValues[$f['key']]))
                                                     {{ $settlement->formatDate($customValues[$f['key']]) }}
+                                                @elseif(($f['type'] ?? '') === 'file' && !empty($customValues[$f['key']]))
+                                                    <a href="{{ $settlement->getAttachmentUrl($customValues[$f['key']]) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                        <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                    </a>
                                                 @else
                                                     {{ $customValues[$f['key']] ?? '—' }}
                                                 @endif
@@ -528,6 +547,10 @@
                                                     <strong class="text-dark">
                                                         @if(($f['type'] ?? '') === 'date' && !empty($customValues[$f['key']]))
                                                             {{ $settlement->formatDate($customValues[$f['key']]) }}
+                                                        @elseif(($f['type'] ?? '') === 'file' && !empty($customValues[$f['key']]))
+                                                            <a href="{{ $settlement->getAttachmentUrl($customValues[$f['key']]) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                                <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                            </a>
                                                         @else
                                                             {{ $customValues[$f['key']] ?? '— (Not answered yet)' }}
                                                         @endif
@@ -1040,6 +1063,13 @@
                                                        class="form-control form-control-sm"
                                                        value="{{ $item['remarks'] ?? '' }}"
                                                        placeholder="{{ __('Verification / Handover note...') }}">
+                                                @if(!empty($item['attachment']))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($item['attachment']) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-file-check"></i> {{ \Illuminate\Support\Str::limit($item['attachment_name'] ?? $item['attachment'], 24) }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td>
                                                 <select name="clearance_statuses[{{ $idx }}]" class="form-select form-select-sm">

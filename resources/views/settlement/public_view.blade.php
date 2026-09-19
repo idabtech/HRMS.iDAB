@@ -402,6 +402,15 @@
                                             </label>
                                             @if(($field['type'] ?? '') === 'textarea')
                                                 <textarea name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" rows="2" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                            @elseif(($field['type'] ?? '') === 'file')
+                                                <input type="file" name="custom_files[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" {{ !empty($field['required']) && empty($val) ? 'required' : '' }}>
+                                                @if(!empty($val))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             @elseif(($field['type'] ?? '') === 'select')
                                                 <select name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
                                                     <option value="">{{ __('Please select an option') }}</option>
@@ -422,6 +431,10 @@
                                                 <strong class="text-dark small">
                                                     @if(($field['type'] ?? '') === 'date' && !empty($val))
                                                         {{ $settlement->formatDate($val) }}
+                                                    @elseif(($field['type'] ?? '') === 'file' && !empty($val))
+                                                        <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                        </a>
                                                     @else
                                                         {{ !empty($val) ? $val : '—' }}
                                                     @endif
@@ -530,6 +543,15 @@
                                             </label>
                                             @if(($field['type'] ?? '') === 'textarea')
                                                 <textarea name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" rows="2" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                            @elseif(($field['type'] ?? '') === 'file')
+                                                <input type="file" name="custom_files[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" {{ !empty($field['required']) && empty($val) ? 'required' : '' }}>
+                                                @if(!empty($val))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             @elseif(($field['type'] ?? '') === 'select')
                                                 <select name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
                                                     <option value="">{{ __('Please select an option') }}</option>
@@ -550,6 +572,10 @@
                                                 <strong class="text-dark small">
                                                     @if(($field['type'] ?? '') === 'date' && !empty($val))
                                                         {{ $settlement->formatDate($val) }}
+                                                    @elseif(($field['type'] ?? '') === 'file' && !empty($val))
+                                                        <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                        </a>
                                                     @else
                                                         {{ !empty($val) ? $val : '—' }}
                                                     @endif
@@ -664,30 +690,49 @@
                                     @php
                                         $origIdx = $chk['_orig_idx'];
                                         $hasFilledNote = !empty(trim($chk['remarks'] ?? ''));
+                                        $isRequired = !empty($chk['required']);
+                                        $hasAttachment = !empty($chk['attachment']);
                                     @endphp
-                                    <div class="p-3 rounded-3 border {{ $hasFilledNote ? 'border-info-subtle bg-light-subtle' : 'border-warning-subtle bg-white' }} shadow-xs pending-handover-card" id="pending_card_{{ $origIdx }}">
+                                    <div class="p-3 rounded-3 border {{ ($hasFilledNote || $hasAttachment) ? 'border-info-subtle bg-light-subtle' : ($isRequired ? 'border-danger-subtle bg-white' : 'border-warning-subtle bg-white') }} shadow-xs pending-handover-card"
+                                         id="pending_card_{{ $origIdx }}"
+                                         data-idx="{{ $origIdx }}"
+                                         data-required="{{ $isRequired ? '1' : '0' }}"
+                                         data-item-name="{{ $chk['item'] }}"
+                                         data-has-attachment="{{ $hasAttachment ? '1' : '0' }}">
                                         <div class="d-flex align-items-start justify-content-between gap-3">
                                             <div class="d-flex align-items-start gap-3 flex-grow-1">
-                                                <span class="text-warning fs-4 mt-0.5 pending-icon" id="pending_icon_{{ $origIdx }}">
-                                                    @if($hasFilledNote)
+                                                <span class="fs-4 mt-0.5 pending-icon" id="pending_icon_{{ $origIdx }}">
+                                                    @if($hasFilledNote || $hasAttachment)
                                                         <i class="ti ti-circle-check text-info"></i>
+                                                    @elseif($isRequired)
+                                                        <i class="ti ti-alert-triangle text-danger"></i>
                                                     @else
                                                         <i class="ti ti-clock text-warning"></i>
                                                     @endif
                                                 </span>
                                                 <div class="flex-grow-1">
-                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                                         <span class="badge bg-light text-secondary border font-monospace fs-8">{{ $chk['category'] ?? __('General') }}</span>
                                                         <strong class="text-dark">{{ $chk['item'] }}</strong>
+                                                        @if($isRequired)
+                                                            <span class="badge bg-danger text-white fs-8"><i class="ti ti-asterisk me-0.5"></i>{{ __('Mandatory Checkpoint') }}</span>
+                                                        @endif
                                                     </div>
 
                                                     @if (!$isReadOnly)
                                                         <div class="mt-2">
                                                             <input type="text"
-                                                                   class="form-control form-control-sm clearance-comment-input bg-light"
+                                                                   class="form-control form-control-sm clearance-comment-input bg-light mb-1"
                                                                    data-idx="{{ $origIdx }}"
-                                                                   placeholder="{{ __('Add handover note, courier tracking #, or asset serial no. (optional)...') }}"
+                                                                   placeholder="{{ $isRequired ? __('Required: Provide handover note, tracking #, or asset serial no...') : __('Add handover note, courier tracking #, or asset serial no. (optional)...') }}"
                                                                    value="{{ $chk['remarks'] ?? '' }}">
+                                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                                <small class="text-muted"><i class="ti ti-paperclip me-1"></i>{{ $isRequired ? __('Attach Proof / Handover Receipt (or Note required):') : __('Attach Proof / Receipt (Optional):') }}</small>
+                                                                <input type="file"
+                                                                       class="form-control form-control-xs clearance-file-input"
+                                                                       data-idx="{{ $origIdx }}"
+                                                                       style="max-width: 250px; font-size: 11px;">
+                                                            </div>
                                                         </div>
                                                     @else
                                                         @if(!empty($chk['remarks']))
@@ -696,12 +741,21 @@
                                                             </small>
                                                         @endif
                                                     @endif
+                                                    @if(!empty($chk['attachment']))
+                                                        <div class="mt-1">
+                                                            <a href="{{ $settlement->getAttachmentUrl($chk['attachment']) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                                <i class="ti ti-file-check"></i> {{ \Illuminate\Support\Str::limit($chk['attachment_name'] ?? $chk['attachment'], 24) }}
+                                                            </a>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="flex-shrink-0 ms-2">
-                                                <span class="badge {{ $hasFilledNote ? 'bg-info text-white' : 'bg-warning text-dark' }} p-2 px-3 rounded shadow-none pending-status-badge" id="pending_badge_{{ $origIdx }}">
-                                                    @if($hasFilledNote)
-                                                        <i class="ti ti-check me-1"></i>{{ __('Handover Note Added') }}
+                                                <span class="badge {{ ($hasFilledNote || $hasAttachment) ? 'bg-info text-white' : ($isRequired ? 'bg-danger text-white' : 'bg-warning text-dark') }} p-2 px-3 rounded shadow-none pending-status-badge" id="pending_badge_{{ $origIdx }}">
+                                                    @if($hasFilledNote || $hasAttachment)
+                                                        <i class="ti ti-check me-1"></i>{{ __('Documented') }}
+                                                    @elseif($isRequired)
+                                                        <i class="ti ti-alert-circle me-1"></i>{{ __('Mandatory - Fill Note / Proof') }}
                                                     @else
                                                         <i class="ti ti-clock me-1"></i>{{ __('Pending Verification') }}
                                                     @endif
@@ -744,6 +798,13 @@
                                                     <small class="text-muted d-block mt-0.5">
                                                         <i class="ti ti-notes me-1 text-primary"></i><strong>{{ __('Department Note:') }}</strong> {{ $chk['remarks'] }}
                                                     </small>
+                                                @endif
+                                                @if(!empty($chk['attachment']))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($chk['attachment']) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-file-check"></i> {{ \Illuminate\Support\Str::limit($chk['attachment_name'] ?? $chk['attachment'], 24) }}
+                                                        </a>
+                                                    </div>
                                                 @endif
                                             </div>
                                         </div>
@@ -790,6 +851,15 @@
                                             </label>
                                             @if(($field['type'] ?? '') === 'textarea')
                                                 <textarea name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" rows="2" placeholder="{{ __('Enter ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                            @elseif(($field['type'] ?? '') === 'file')
+                                                <input type="file" name="custom_files[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-control form-control-sm" {{ !empty($field['required']) && empty($val) ? 'required' : '' }}>
+                                                @if(!empty($val))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             @elseif(($field['type'] ?? '') === 'select')
                                                 <select name="custom_fields[{{ $field['key'] }}]" form="settlementClearanceForm" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
                                                     <option value="">{{ __('Please select an option') }}</option>
@@ -810,6 +880,10 @@
                                                 <strong class="text-dark small">
                                                     @if(($field['type'] ?? '') === 'date' && !empty($val))
                                                         {{ $settlement->formatDate($val) }}
+                                                    @elseif(($field['type'] ?? '') === 'file' && !empty($val))
+                                                        <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                        </a>
                                                     @else
                                                         {{ !empty($val) ? $val : '—' }}
                                                     @endif
@@ -854,6 +928,10 @@
                                         <strong class="text-dark small">
                                             @if(($eq['type'] ?? '') === 'date' && !empty($settlement->custom_fields_data[$eq['key']]))
                                                 {{ $settlement->formatDate($settlement->custom_fields_data[$eq['key']]) }}
+                                            @elseif(($eq['type'] ?? '') === 'file' && !empty($settlement->custom_fields_data[$eq['key']]))
+                                                <a href="{{ $settlement->getAttachmentUrl($settlement->custom_fields_data[$eq['key']]) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                    <i class="ti ti-paperclip"></i> {{ __('View Uploaded Document') }}
+                                                </a>
                                             @else
                                                 {{ $settlement->custom_fields_data[$eq['key']] ?? '—' }}
                                             @endif
@@ -973,6 +1051,15 @@
                                                     </label>
                                                     @if(($field['type'] ?? '') === 'textarea')
                                                         <textarea name="custom_fields[{{ $field['key'] }}]" class="form-control form-control-sm" rows="2" placeholder="{{ __('e.g., Enter your details or remarks for ') . strtolower($field['label']) }}" {{ !empty($field['required']) ? 'required' : '' }}>{{ $val }}</textarea>
+                                                    @elseif(($field['type'] ?? '') === 'file')
+                                                        <input type="file" name="custom_files[{{ $field['key'] }}]" class="form-control form-control-sm" {{ !empty($field['required']) && empty($val) ? 'required' : '' }}>
+                                                        @if(!empty($val))
+                                                            <div class="mt-1">
+                                                                <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                                    <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                                </a>
+                                                            </div>
+                                                        @endif
                                                     @elseif(($field['type'] ?? '') === 'select')
                                                         <select name="custom_fields[{{ $field['key'] }}]" class="form-select form-select-sm" {{ !empty($field['required']) ? 'required' : '' }}>
                                                             <option value="">{{ __('Please select an option') }}</option>
@@ -993,6 +1080,10 @@
                                                         <strong class="text-dark small">
                                                             @if(($field['type'] ?? '') === 'date' && !empty($val))
                                                                 {{ $settlement->formatDate($val) }}
+                                                            @elseif(($field['type'] ?? '') === 'file' && !empty($val))
+                                                                <a href="{{ $settlement->getAttachmentUrl($val) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                                    <i class="ti ti-paperclip"></i> {{ __('View Attachment') }}
+                                                                </a>
                                                             @else
                                                                 {{ !empty($val) ? $val : '—' }}
                                                             @endif
@@ -1305,6 +1396,51 @@
                 return;
             }
 
+            // Check required file uploads for custom fields
+            let missingRequiredFile = null;
+            let missingFileLabel = '';
+            document.querySelectorAll('input[type="file"][name^="custom_files["][required]').forEach(finp => {
+                if (!missingRequiredFile && (!finp.files || finp.files.length === 0)) {
+                    missingRequiredFile = finp;
+                    const container = finp.closest('.col-md-6, .col-md-12');
+                    const labelEl = container ? container.querySelector('label') : null;
+                    missingFileLabel = labelEl ? labelEl.innerText.replace('*', '').trim() : 'required file';
+                }
+            });
+
+            if (missingRequiredFile) {
+                alert(`Please upload the required document for "${missingFileLabel}" before submitting.`);
+                missingRequiredFile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                missingRequiredFile.focus();
+                return;
+            }
+
+            // Validate mandatory clearance checklist checkpoints
+            let missingMandatoryCheckpoint = null;
+            document.querySelectorAll('.pending-handover-card[data-required="1"]').forEach(card => {
+                if (missingMandatoryCheckpoint) return;
+                const itemName = card.getAttribute('data-item-name') || 'Checklist Item';
+                const noteInput = card.querySelector('.clearance-comment-input');
+                const fileInput = card.querySelector('.clearance-file-input');
+                const hasExistingAttachment = card.getAttribute('data-has-attachment') === '1';
+
+                const noteVal = noteInput ? noteInput.value.trim() : '';
+                const hasSelectedFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+                if (!noteVal && !hasSelectedFile && !hasExistingAttachment) {
+                    missingMandatoryCheckpoint = { card, itemName, noteInput };
+                }
+            });
+
+            if (missingMandatoryCheckpoint) {
+                alert('{{ __("Please complete mandatory checklist item: \"") }}' + missingMandatoryCheckpoint.itemName + '{{ __("\" (enter handover notes or upload proof document) before submitting.") }}');
+                missingMandatoryCheckpoint.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (missingMandatoryCheckpoint.noteInput) {
+                    missingMandatoryCheckpoint.noteInput.focus();
+                }
+                return;
+            }
+
             let finalSignature = null;
             if (currentSignatureTab === 'draw') {
                 if (!signaturePadInstance || signaturePadInstance.isEmpty()) {
@@ -1345,20 +1481,38 @@
                 customFields[key] = inp.value.trim();
             });
 
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('employee_declaration', 1);
+            formData.append('employee_policy_rules', policyRulesCheckbox && policyRulesCheckbox.checked ? 1 : 0);
+            formData.append('employee_signature', finalSignature);
+            formData.append('employee_remarks', remarks);
+            formData.append('clearance_items', JSON.stringify(clearanceItems));
+            formData.append('custom_fields', JSON.stringify(customFields));
+
+            // Attach clearance proof files
+            document.querySelectorAll('.clearance-file-input').forEach(fileInput => {
+                const idx = fileInput.getAttribute('data-idx');
+                if (fileInput.files && fileInput.files[0] && idx !== null) {
+                    formData.append(`clearance_files[${idx}]`, fileInput.files[0]);
+                }
+            });
+
+            // Attach custom field files
+            document.querySelectorAll('input[type="file"][name^="custom_files["]').forEach(fileInput => {
+                const key = fileInput.getAttribute('name').replace('custom_files[', '').replace(']', '');
+                if (fileInput.files && fileInput.files[0]) {
+                    formData.append(`custom_files[${key}]`, fileInput.files[0]);
+                }
+            });
+
             fetch('{{ route("settlement.clearance.sign", $settlement->sharing_token) }}', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    employee_declaration: 1,
-                    employee_policy_rules: policyRulesCheckbox && policyRulesCheckbox.checked ? 1 : 0,
-                    employee_signature: finalSignature,
-                    employee_remarks: remarks,
-                    clearance_items: clearanceItems,
-                    custom_fields: customFields
-                })
+                body: formData
             })
             .then(res => res.json())
             .then(data => {
@@ -1381,41 +1535,54 @@
 
     // Real-time Handover Checklist Progress Bar & Status Badge Updater
     function updatePendingHandoverProgress() {
-        const inputs = document.querySelectorAll('.clearance-comment-input');
-        if (!inputs || inputs.length === 0) return;
+        const cards = document.querySelectorAll('.pending-handover-card');
+        if (!cards || cards.length === 0) return;
 
-        const totalPending = inputs.length;
+        const totalPending = cards.length;
         let filledCount = 0;
 
-        inputs.forEach(inp => {
-            const val = inp.value.trim();
-            const idx = inp.getAttribute('data-idx');
-            const card = document.getElementById('pending_card_' + idx);
+        cards.forEach(card => {
+            const idx = card.getAttribute('data-idx');
+            const isReq = card.getAttribute('data-required') === '1';
+            const hasExistingProof = card.getAttribute('data-has-attachment') === '1';
+            const noteInput = card.querySelector('.clearance-comment-input');
+            const fileInput = card.querySelector('.clearance-file-input');
             const badge = document.getElementById('pending_badge_' + idx);
             const icon = document.getElementById('pending_icon_' + idx);
 
-            if (val.length > 0) {
+            const noteVal = noteInput ? noteInput.value.trim() : '';
+            const hasNewFile = fileInput && fileInput.files && fileInput.files.length > 0;
+            const isFilled = (noteVal.length > 0) || hasNewFile || hasExistingProof;
+
+            if (isFilled) {
                 filledCount++;
                 if (badge) {
                     badge.className = 'badge bg-info text-white p-2 px-3 rounded shadow-none pending-status-badge';
-                    badge.innerHTML = '<i class="ti ti-check me-1"></i>{{ __("Handover Note Added") }}';
+                    badge.innerHTML = '<i class="ti ti-check me-1"></i>{{ __("Documented") }}';
                 }
-                if (card) {
-                    card.className = 'p-3 rounded-3 border border-info-subtle bg-light-subtle shadow-xs pending-handover-card';
-                }
+                card.className = 'p-3 rounded-3 border border-info-subtle bg-light-subtle shadow-xs pending-handover-card';
                 if (icon) {
                     icon.innerHTML = '<i class="ti ti-circle-check text-info"></i>';
                 }
             } else {
-                if (badge) {
-                    badge.className = 'badge bg-warning text-dark p-2 px-3 rounded shadow-none pending-status-badge';
-                    badge.innerHTML = '<i class="ti ti-clock me-1"></i>{{ __("Pending Verification") }}';
-                }
-                if (card) {
+                if (isReq) {
+                    if (badge) {
+                        badge.className = 'badge bg-danger text-white p-2 px-3 rounded shadow-none pending-status-badge';
+                        badge.innerHTML = '<i class="ti ti-alert-circle me-1"></i>{{ __("Mandatory - Action Required") }}';
+                    }
+                    card.className = 'p-3 rounded-3 border border-danger-subtle bg-white shadow-xs pending-handover-card';
+                    if (icon) {
+                        icon.innerHTML = '<i class="ti ti-alert-triangle text-danger"></i>';
+                    }
+                } else {
+                    if (badge) {
+                        badge.className = 'badge bg-warning text-dark p-2 px-3 rounded shadow-none pending-status-badge';
+                        badge.innerHTML = '<i class="ti ti-clock me-1"></i>{{ __("Pending Verification") }}';
+                    }
                     card.className = 'p-3 rounded-3 border border-warning-subtle bg-white shadow-xs pending-handover-card';
-                }
-                if (icon) {
-                    icon.innerHTML = '<i class="ti ti-clock text-warning"></i>';
+                    if (icon) {
+                        icon.innerHTML = '<i class="ti ti-clock text-warning"></i>';
+                    }
                 }
             }
         });
@@ -1462,6 +1629,9 @@
     // Attach real-time input listeners
     document.querySelectorAll('.clearance-comment-input').forEach(inp => {
         inp.addEventListener('input', updatePendingHandoverProgress);
+        inp.addEventListener('change', updatePendingHandoverProgress);
+    });
+    document.querySelectorAll('.clearance-file-input').forEach(inp => {
         inp.addEventListener('change', updatePendingHandoverProgress);
     });
 

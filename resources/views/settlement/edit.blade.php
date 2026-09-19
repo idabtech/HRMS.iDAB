@@ -45,13 +45,26 @@
 
 @section('content')
     @php
+        $creatorId = \Auth::user()->creatorId();
+        $companySettings = \App\Models\Utility::getCompanySettings($creatorId);
+        $currencySymbol = !empty($companySettings['site_currency_symbol']) ? $companySettings['site_currency_symbol'] : '₹';
         $fieldsSchema = $settlement->custom_fields_schema ?? [];
         $customValues = $settlement->custom_fields_data ?? [];
         $globalCounter = 0;
     @endphp
 <div class="row">
     <div class="col-12">
-        <form action="{{ route('settlement.update', $settlement->id) }}" method="POST" id="settlementEditForm">
+        @if($settlement->status === 'signed' || $settlement->status === 'cleared')
+            <div class="alert alert-warning d-flex align-items-center mb-4 shadow-sm" role="alert">
+                <i class="ti ti-alert-triangle fs-2 me-3 text-warning"></i>
+                <div>
+                    <h6 class="alert-heading fw-bold mb-1">{{ __('Important Notice:') }} {{ __('This settlement is already :status.', ['status' => $settlement->status === 'signed' ? __('Signed by Employee') : __('Cleared & Disbursed')]) }}</h6>
+                    <p class="small mb-0">{{ __('Modifying financial payables, recoveries, clearance checklists, or legal clauses now will alter the certified record already approved or signed by the employee.') }}</p>
+                </div>
+            </div>
+        @endif
+
+        <form action="{{ route('settlement.update', $settlement->id) }}" method="POST" id="settlementEditForm" enctype="multipart/form-data">
             @csrf
             @method('PUT')
     
@@ -137,14 +150,15 @@
                                                 <label class="form-label small fw-bold mb-1">{{ __('Input Type') }}</label>
                                                 <select name="custom_field_type[]" class="form-control form-control-sm gform-type-select">
                                                     <option value="text" {{ $fType === 'text' ? 'selected' : '' }}>{{ __('Short Text') }}</option>
-                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph') }}</option>
+                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph (Textarea)') }}</option>
+                                                    <option value="file" {{ $fType === 'file' ? 'selected' : '' }}>{{ __('File / Attachment Upload') }}</option>
                                                     <option value="select" {{ $fType === 'select' ? 'selected' : '' }}>{{ __('Dropdown (Options)') }}</option>
                                                     <option value="date" {{ $fType === 'date' ? 'selected' : '' }}>{{ __('Date') }}</option>
                                                     <option value="number" {{ $fType === 'number' ? 'selected' : '' }}>{{ __('Number') }}</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills This?') }}</label>
+                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills / Uploads This?') }}</label>
                                                 <select name="custom_field_target[]" class="form-control form-control-sm gform-target-select">
                                                     <option value="employee" {{ $fTarget === 'employee' ? 'selected' : '' }}>{{ __('Employee (Online Form)') }}</option>
                                                     <option value="hr" {{ $fTarget === 'hr' ? 'selected' : '' }}>{{ __('HR / Company (Locked for Employee)') }}</option>
@@ -155,8 +169,16 @@
                                                 <input type="text" name="custom_field_options[]" class="form-control form-control-sm" value="{{ $fOptions }}" placeholder="Choice 1, Choice 2, Choice 3">
                                             </div>
                                             <div class="col-md-4 gform-hr-value-row" style="{{ $fTarget === 'hr' ? '' : 'display:none;' }}">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Value (HR fills now)') }}</label>
-                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm" value="{{ $fVal }}" placeholder="Current value">
+                                                <label class="form-label small fw-bold mb-1 gform-hr-val-label">{{ $fType === 'file' ? __('Attach Document / File') : __('Value (HR fills now)') }}</label>
+                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm gform-hr-val-input" value="{{ $fVal }}" placeholder="Current value" style="{{ $fType === 'file' ? 'display:none;' : '' }}">
+                                                <input type="file" name="custom_field_file_{{ $globalCounter - 1 }}" class="form-control form-control-sm gform-hr-file-input" style="{{ $fType === 'file' ? '' : 'display:none;' }}">
+                                                @if ($fType === 'file' && !empty($fVal))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($fVal) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             </div>
                                             <div class="col-12 mt-1">
                                                 <div class="form-check">
@@ -193,7 +215,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('Particulars') }}</th>
-                                        <th width="140px">{{ __('Amount (₹)') }}</th>
+                                        <th width="140px">{{ __('Amount') }} ({{ $currencySymbol }})</th>
                                         <th width="40px"></th>
                                     </tr>
                                 </thead>
@@ -215,7 +237,7 @@
                                 <tfoot>
                                     <tr class="table-success fw-bold">
                                         <td>{{ __('Total Gross Payable (A)') }}</td>
-                                        <td colspan="2" id="display_gross">₹ 0.00</td>
+                                        <td colspan="2" id="display_gross">{{ $currencySymbol }} 0.00</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -233,7 +255,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('Particulars') }}</th>
-                                        <th width="140px">{{ __('Amount (₹)') }}</th>
+                                        <th width="140px">{{ __('Amount') }} ({{ $currencySymbol }})</th>
                                         <th width="40px"></th>
                                     </tr>
                                 </thead>
@@ -255,7 +277,7 @@
                                 <tfoot>
                                     <tr class="table-danger fw-bold">
                                         <td>{{ __('Total Deductions (B)') }}</td>
-                                        <td colspan="2" id="display_deductions">₹ 0.00</td>
+                                        <td colspan="2" id="display_deductions">{{ $currencySymbol }} 0.00</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -268,7 +290,7 @@
                             <h5 class="mb-0 fw-bold">{{ __('NET FINAL SETTLEMENT AMOUNT (A - B):') }}</h5>
                             <small class="text-muted">{{ __('Calculated net balance to disburse to employee.') }}</small>
                         </div>
-                        <div class="fs-3 fw-bold text-primary" id="display_net">₹ 0.00</div>
+                        <div class="fs-3 fw-bold text-primary" id="display_net">{{ $currencySymbol }} 0.00</div>
                     </div>
     
                     {{-- In-Section Google Form Builder: Section 2 Custom Questions --}}
@@ -312,14 +334,15 @@
                                                 <label class="form-label small fw-bold mb-1">{{ __('Input Type') }}</label>
                                                 <select name="custom_field_type[]" class="form-control form-control-sm gform-type-select">
                                                     <option value="text" {{ $fType === 'text' ? 'selected' : '' }}>{{ __('Short Text') }}</option>
-                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph') }}</option>
+                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph (Textarea)') }}</option>
+                                                    <option value="file" {{ $fType === 'file' ? 'selected' : '' }}>{{ __('File / Attachment Upload') }}</option>
                                                     <option value="select" {{ $fType === 'select' ? 'selected' : '' }}>{{ __('Dropdown (Options)') }}</option>
                                                     <option value="date" {{ $fType === 'date' ? 'selected' : '' }}>{{ __('Date') }}</option>
                                                     <option value="number" {{ $fType === 'number' ? 'selected' : '' }}>{{ __('Number') }}</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills This?') }}</label>
+                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills / Uploads This?') }}</label>
                                                 <select name="custom_field_target[]" class="form-control form-control-sm gform-target-select">
                                                     <option value="employee" {{ $fTarget === 'employee' ? 'selected' : '' }}>{{ __('Employee (Online Form)') }}</option>
                                                     <option value="hr" {{ $fTarget === 'hr' ? 'selected' : '' }}>{{ __('HR / Company (Locked for Employee)') }}</option>
@@ -330,8 +353,16 @@
                                                 <input type="text" name="custom_field_options[]" class="form-control form-control-sm" value="{{ $fOptions }}" placeholder="Choice 1, Choice 2, Choice 3">
                                             </div>
                                             <div class="col-md-4 gform-hr-value-row" style="{{ $fTarget === 'hr' ? '' : 'display:none;' }}">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Value (HR fills now)') }}</label>
-                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm" value="{{ $fVal }}" placeholder="Current value">
+                                                <label class="form-label small fw-bold mb-1 gform-hr-val-label">{{ $fType === 'file' ? __('Attach Document / File') : __('Value (HR fills now)') }}</label>
+                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm gform-hr-val-input" value="{{ $fVal }}" placeholder="Current value" style="{{ $fType === 'file' ? 'display:none;' : '' }}">
+                                                <input type="file" name="custom_field_file_{{ $globalCounter - 1 }}" class="form-control form-control-sm gform-hr-file-input" style="{{ $fType === 'file' ? '' : 'display:none;' }}">
+                                                @if ($fType === 'file' && !empty($fVal))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($fVal) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             </div>
                                             <div class="col-12 mt-1">
                                                 <div class="form-check">
@@ -361,27 +392,44 @@
                         <table class="table table-bordered table-sm align-middle" id="clearance_table">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="20%">{{ __('Category') }}</th>
-                                    <th width="45%">{{ __('Checklist Item / Asset') }}</th>
-                                    <th width="25%">{{ __('Status') }}</th>
-                                    <th width="10%" class="text-center">{{ __('Action') }}</th>
+                                    <th width="18%">{{ __('Category') }}</th>
+                                    <th width="40%">{{ __('Checklist Item & Handover Note') }}</th>
+                                    <th width="35%">{{ __('Status & Document / Proof Upload') }}</th>
+                                    <th width="7%" class="text-center">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="clearance_tbody">
                                 @foreach ($settlement->clearance_data ?? [] as $chk)
                                     <tr>
                                         <td>
-                                            <input type="text" name="clearance_category[]" class="form-control form-control-sm" value="{{ $chk['category'] }}" placeholder="{{ __('e.g., IT & Hardware, Admin, HR') }}">
+                                            <input type="text" name="clearance_category[]" class="form-control form-control-sm" value="{{ $chk['category'] ?? '' }}" placeholder="{{ __('e.g., IT & Hardware, Admin, HR') }}">
                                         </td>
                                         <td>
-                                            <input type="text" name="clearance_item[]" class="form-control form-control-sm" value="{{ $chk['item'] }}" placeholder="{{ __('e.g., Company laptop / access card returned') }}">
+                                            <input type="text" name="clearance_item[]" class="form-control form-control-sm mb-1 fw-semibold" value="{{ $chk['item'] ?? '' }}" placeholder="{{ __('Checklist item title...') }}">
+                                            <textarea name="clearance_remarks[]" class="form-control form-control-xs mb-1" rows="1" placeholder="{{ __('Optional note/remarks or handover instruction...') }}" style="font-size: 11.5px;">{{ $chk['remarks'] ?? '' }}</textarea>
+                                            <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                                                <input type="checkbox" name="clearance_required[{{ $loop->index }}]" value="1" class="form-check-input ms-0 clearance-req-check" id="clr_req_{{ $loop->index }}" {{ !empty($chk['required']) ? 'checked' : '' }}>
+                                                <label class="form-check-label text-danger small fw-semibold" for="clr_req_{{ $loop->index }}" style="font-size: 11px;">
+                                                    <i class="ti ti-asterisk me-1"></i>{{ __('Mandatory for Employee to complete') }}
+                                                </label>
+                                            </div>
                                         </td>
                                         <td>
-                                            <select name="clearance_status[]" class="form-control form-control-sm">
-                                                <option value="Pending" {{ ($chk['status'] ?? '') == 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
-                                                <option value="Returned" {{ ($chk['status'] ?? '') == 'Returned' ? 'selected' : '' }}>{{ __('Returned / Cleared') }}</option>
-                                                <option value="Not Applicable" {{ ($chk['status'] ?? '') == 'Not Applicable' ? 'selected' : '' }}>{{ __('Not Applicable (N/A)') }}</option>
-                                            </select>
+                                            <div class="d-flex gap-1 align-items-center">
+                                                <select name="clearance_status[]" class="form-control form-control-sm">
+                                                    <option value="Pending" {{ ($chk['status'] ?? '') == 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                                                    <option value="Returned" {{ ($chk['status'] ?? '') == 'Returned' ? 'selected' : '' }}>{{ __('Returned / Cleared') }}</option>
+                                                    <option value="Not Applicable" {{ ($chk['status'] ?? '') == 'Not Applicable' ? 'selected' : '' }}>{{ __('Not Applicable (N/A)') }}</option>
+                                                </select>
+                                                <input type="file" name="clearance_file_{{ $loop->index }}" class="form-control form-control-xs" style="font-size: 11px;" title="{{ __('Attach document / handover proof') }}">
+                                            </div>
+                                            @if (!empty($chk['attachment']))
+                                                <div class="mt-1">
+                                                    <a href="{{ $settlement->getAttachmentUrl($chk['attachment']) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                                        <i class="ti ti-file-check"></i> {{ \Illuminate\Support\Str::limit($chk['attachment_name'] ?? $chk['attachment'], 22) }}
+                                                    </a>
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="text-center">
                                             <button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button>
@@ -433,14 +481,15 @@
                                                 <label class="form-label small fw-bold mb-1">{{ __('Input Type') }}</label>
                                                 <select name="custom_field_type[]" class="form-control form-control-sm gform-type-select">
                                                     <option value="text" {{ $fType === 'text' ? 'selected' : '' }}>{{ __('Short Text') }}</option>
-                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph') }}</option>
+                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph (Textarea)') }}</option>
+                                                    <option value="file" {{ $fType === 'file' ? 'selected' : '' }}>{{ __('File / Attachment Upload') }}</option>
                                                     <option value="select" {{ $fType === 'select' ? 'selected' : '' }}>{{ __('Dropdown (Options)') }}</option>
                                                     <option value="date" {{ $fType === 'date' ? 'selected' : '' }}>{{ __('Date') }}</option>
                                                     <option value="number" {{ $fType === 'number' ? 'selected' : '' }}>{{ __('Number') }}</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills This?') }}</label>
+                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills / Uploads This?') }}</label>
                                                 <select name="custom_field_target[]" class="form-control form-control-sm gform-target-select">
                                                     <option value="employee" {{ $fTarget === 'employee' ? 'selected' : '' }}>{{ __('Employee (Online Form)') }}</option>
                                                     <option value="hr" {{ $fTarget === 'hr' ? 'selected' : '' }}>{{ __('HR / Company (Locked for Employee)') }}</option>
@@ -451,8 +500,16 @@
                                                 <input type="text" name="custom_field_options[]" class="form-control form-control-sm" value="{{ $fOptions }}" placeholder="Choice 1, Choice 2, Choice 3">
                                             </div>
                                             <div class="col-md-4 gform-hr-value-row" style="{{ $fTarget === 'hr' ? '' : 'display:none;' }}">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Value (HR fills now)') }}</label>
-                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm" value="{{ $fVal }}" placeholder="Current value">
+                                                <label class="form-label small fw-bold mb-1 gform-hr-val-label">{{ $fType === 'file' ? __('Attach Document / File') : __('Value (HR fills now)') }}</label>
+                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm gform-hr-val-input" value="{{ $fVal }}" placeholder="Current value" style="{{ $fType === 'file' ? 'display:none;' : '' }}">
+                                                <input type="file" name="custom_field_file_{{ $globalCounter - 1 }}" class="form-control form-control-sm gform-hr-file-input" style="{{ $fType === 'file' ? '' : 'display:none;' }}">
+                                                @if ($fType === 'file' && !empty($fVal))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($fVal) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             </div>
                                             <div class="col-12 mt-1">
                                                 <div class="form-check">
@@ -596,14 +653,15 @@
                                                 <label class="form-label small fw-bold mb-1">{{ __('Input Type') }}</label>
                                                 <select name="custom_field_type[]" class="form-control form-control-sm gform-type-select">
                                                     <option value="text" {{ $fType === 'text' ? 'selected' : '' }}>{{ __('Short Text') }}</option>
-                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph') }}</option>
+                                                    <option value="textarea" {{ $fType === 'textarea' ? 'selected' : '' }}>{{ __('Paragraph (Textarea)') }}</option>
+                                                    <option value="file" {{ $fType === 'file' ? 'selected' : '' }}>{{ __('File / Attachment Upload') }}</option>
                                                     <option value="select" {{ $fType === 'select' ? 'selected' : '' }}>{{ __('Dropdown (Options)') }}</option>
                                                     <option value="date" {{ $fType === 'date' ? 'selected' : '' }}>{{ __('Date') }}</option>
                                                     <option value="number" {{ $fType === 'number' ? 'selected' : '' }}>{{ __('Number') }}</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills This?') }}</label>
+                                                <label class="form-label small fw-bold mb-1">{{ __('Who Fills / Uploads This?') }}</label>
                                                 <select name="custom_field_target[]" class="form-control form-control-sm gform-target-select">
                                                     <option value="employee" {{ $fTarget === 'employee' ? 'selected' : '' }}>{{ __('Employee (Online Form)') }}</option>
                                                     <option value="hr" {{ $fTarget === 'hr' ? 'selected' : '' }}>{{ __('HR / Company (Locked for Employee)') }}</option>
@@ -614,8 +672,16 @@
                                                 <input type="text" name="custom_field_options[]" class="form-control form-control-sm" value="{{ $fOptions }}" placeholder="Choice 1, Choice 2, Choice 3">
                                             </div>
                                             <div class="col-md-4 gform-hr-value-row" style="{{ $fTarget === 'hr' ? '' : 'display:none;' }}">
-                                                <label class="form-label small fw-bold mb-1">{{ __('Value (HR fills now)') }}</label>
-                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm" value="{{ $fVal }}" placeholder="Current value">
+                                                <label class="form-label small fw-bold mb-1 gform-hr-val-label">{{ $fType === 'file' ? __('Attach Document / File') : __('Value (HR fills now)') }}</label>
+                                                <input type="text" name="custom_field_value[]" class="form-control form-control-sm gform-hr-val-input" value="{{ $fVal }}" placeholder="Current value" style="{{ $fType === 'file' ? 'display:none;' : '' }}">
+                                                <input type="file" name="custom_field_file_{{ $globalCounter - 1 }}" class="form-control form-control-sm gform-hr-file-input" style="{{ $fType === 'file' ? '' : 'display:none;' }}">
+                                                @if ($fType === 'file' && !empty($fVal))
+                                                    <div class="mt-1">
+                                                        <a href="{{ $settlement->getAttachmentUrl($fVal) }}" target="_blank" class="badge bg-light text-primary border text-decoration-none d-inline-flex align-items-center gap-1">
+                                                            <i class="ti ti-paperclip"></i> {{ __('View Existing File') }}
+                                                        </a>
+                                                    </div>
+                                                @endif
                                             </div>
                                             <div class="col-12 mt-1">
                                                 <div class="form-check">
@@ -734,24 +800,47 @@
     });
 
     $('#add_clearance_btn').on('click', function () {
+        const rowIdx = $('#clearance_tbody tr').length;
         $('#clearance_tbody').append(`<tr>
             <td><input type="text" name="clearance_category[]" class="form-control form-control-sm" value="General" placeholder="{{ __('e.g., IT & Hardware, Admin') }}"></td>
-            <td><input type="text" name="clearance_item[]" class="form-control form-control-sm" placeholder="{{ __('e.g., Laptop Charger, Access Key, Official Email Revocation') }}"></td>
             <td>
-                <select name="clearance_status[]" class="form-control form-control-sm">
-                    <option value="Pending" selected>Pending</option>
-                    <option value="Returned">Returned / Cleared</option>
-                    <option value="Not Applicable">Not Applicable</option>
-                </select>
+                <input type="text" name="clearance_item[]" class="form-control form-control-sm mb-1 fw-semibold" placeholder="{{ __('e.g., Laptop Charger, Access Key') }}">
+                <textarea name="clearance_remarks[]" class="form-control form-control-xs mb-1" rows="1" placeholder="{{ __('Optional note/remarks or handover instruction...') }}" style="font-size: 11.5px;"></textarea>
+                <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                    <input type="checkbox" name="clearance_required[${rowIdx}]" value="1" class="form-check-input ms-0 clearance-req-check" id="clr_req_${rowIdx}">
+                    <label class="form-check-label text-danger small fw-semibold" for="clr_req_${rowIdx}" style="font-size: 11px;">
+                        <i class="ti ti-asterisk me-1"></i>{{ __('Mandatory for Employee to complete') }}
+                    </label>
+                </div>
+            </td>
+            <td>
+                <div class="d-flex gap-1 align-items-center">
+                    <select name="clearance_status[]" class="form-control form-control-sm">
+                        <option value="Pending" selected>Pending</option>
+                        <option value="Returned">Returned / Cleared</option>
+                        <option value="Not Applicable">Not Applicable</option>
+                    </select>
+                    <input type="file" name="clearance_file_${rowIdx}" class="form-control form-control-xs" style="font-size: 11px;" title="{{ __('Attach document / handover proof') }}">
+                </div>
             </td>
             <td class="text-center"><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`);
+        reindexClearanceFiles();
     });
 
     $(document).on('click', '.remove-row', function () {
         $(this).closest('tr').remove();
+        reindexClearanceFiles();
         recalculateTotals();
     });
+
+    function reindexClearanceFiles() {
+        $('#clearance_tbody tr').each(function(idx) {
+            $(this).find('input[type="file"][name^="clearance_file_"]').attr('name', `clearance_file_${idx}`);
+            $(this).find('input[type="checkbox"][name^="clearance_required"]').attr('name', `clearance_required[${idx}]`).attr('id', `clr_req_${idx}`);
+            $(this).find('label[for^="clr_req_"]').attr('for', `clr_req_${idx}`);
+        });
+    }
 
     // ==================== IN-SECTION GOOGLE FORM BUILDER ====================
     let globalFieldCounter = {{ $globalCounter }};
@@ -783,14 +872,15 @@
                         <label class="form-label small fw-bold mb-1">Input Type</label>
                         <select name="custom_field_type[]" class="form-control form-control-sm gform-type-select">
                             <option value="text">Short Text</option>
-                            <option value="textarea">Paragraph</option>
+                            <option value="textarea">Paragraph (Textarea)</option>
+                            <option value="file">File / Attachment Upload</option>
                             <option value="select">Dropdown (Options)</option>
                             <option value="date">Date</option>
                             <option value="number">Number</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-bold mb-1">Who Fills This?</label>
+                        <label class="form-label small fw-bold mb-1">Who Fills / Uploads This?</label>
                         <select name="custom_field_target[]" class="form-control form-control-sm gform-target-select">
                             <option value="employee" ${isEmployeeSection ? 'selected' : ''}>Employee (Online Form)</option>
                             <option value="hr" ${!isEmployeeSection ? 'selected' : ''}>HR / Company (Locked for Employee)</option>
@@ -801,12 +891,13 @@
                         <input type="text" name="custom_field_options[]" class="form-control form-control-sm" placeholder="Choice 1, Choice 2, Choice 3">
                     </div>
                     <div class="col-md-4 gform-hr-value-row" style="${isEmployeeSection ? 'display:none;' : ''}">
-                        <label class="form-label small fw-bold mb-1">Value (HR fills now)</label>
-                        <input type="text" name="custom_field_value[]" class="form-control form-control-sm" placeholder="Current value">
+                        <label class="form-label small fw-bold mb-1 gform-hr-val-label">Value (HR fills now)</label>
+                        <input type="text" name="custom_field_value[]" class="form-control form-control-sm gform-hr-val-input" placeholder="Current value">
+                        <input type="file" name="custom_field_file_${globalFieldCounter - 1}" class="form-control form-control-sm gform-hr-file-input" style="display:none;">
                     </div>
                     <div class="col-12 mt-1">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="custom_field_required[]" value="1" id="chk_req_${globalFieldCounter}">
+                            <input class="form-check-input" type="checkbox" name="custom_field_required[${globalFieldCounter - 1}]" value="1" id="chk_req_${globalFieldCounter}">
                             <label class="form-check-label small" for="chk_req_${globalFieldCounter}">Required</label>
                         </div>
                     </div>
@@ -822,8 +913,18 @@
         const card = $(this).closest('.gform-builder-card');
         if (type === 'select') {
             card.find('.gform-options-row').show();
+            card.find('.gform-hr-val-input').show();
+            card.find('.gform-hr-file-input').hide();
+        } else if (type === 'file') {
+            card.find('.gform-options-row').hide();
+            card.find('.gform-hr-val-input').hide();
+            card.find('.gform-hr-file-input').show();
+            card.find('.gform-hr-val-label').text('Attach Document / File');
         } else {
             card.find('.gform-options-row').hide();
+            card.find('.gform-hr-val-input').show();
+            card.find('.gform-hr-file-input').hide();
+            card.find('.gform-hr-val-label').text('Value (HR fills now)');
         }
     });
 
@@ -852,11 +953,13 @@
             $(this).find('[name^="custom_field_target"]').attr('name', `custom_field_target[${idx}]`);
             $(this).find('[name^="custom_field_options"]').attr('name', `custom_field_options[${idx}]`);
             $(this).find('[name^="custom_field_value"]').attr('name', `custom_field_value[${idx}]`);
+            $(this).find('.gform-hr-file-input').attr('name', `custom_field_file_${idx}`);
             $(this).find('[name^="custom_field_required"]').attr('name', `custom_field_required[${idx}]`);
         });
     }
 
     $('#settlementEditForm').on('submit', function () {
+        reindexClearanceFiles();
         reindexCustomFields();
     });
 

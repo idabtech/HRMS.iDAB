@@ -43,10 +43,16 @@
 </style>
 @endpush
 
+@php
+    $creatorId = \Auth::user()->creatorId();
+    $companySettings = \App\Models\Utility::getCompanySettings($creatorId);
+    $currencySymbol = !empty($companySettings['site_currency_symbol']) ? $companySettings['site_currency_symbol'] : '₹';
+@endphp
+
 @section('content')
 <div class="row">
     <div class="col-12">
-        <form action="{{ route('settlement.store') }}" method="POST" id="settlementForm">
+        <form action="{{ route('settlement.store') }}" method="POST" id="settlementForm" enctype="multipart/form-data">
             @csrf
     
             {{-- SECTION 1: EMPLOYEE & SEPARATION DETAILS --}}
@@ -62,11 +68,16 @@
                             <select name="employee_id" id="employee_select" class="form-control select2" required>
                                 <option value="">{{ __('-- Choose Employee --') }}</option>
                                 @foreach ($employees as $emp)
+                                    @php
+                                        $empSalary = $emp->salary ?: ($emp->basic_salary ?: 0);
+                                    @endphp
                                     <option value="{{ $emp->id }}"
+                                        data-name="{{ $emp->name }}"
                                         data-code="{{ $emp->employee_id }}"
-                                        data-dept="{{ $emp->department?->name }}"
-                                        data-desig="{{ $emp->designation?->name }}"
-                                        data-doj="{{ $emp->company_doj }}"
+                                        data-dept="{{ $emp->department?->name ?? 'N/A' }}"
+                                        data-desig="{{ $emp->designation?->name ?? 'N/A' }}"
+                                        data-doj="{{ $emp->company_doj ? \Auth::user()->dateFormat($emp->company_doj) : 'N/A' }}"
+                                        data-salary="{{ $empSalary }}"
                                         {{ (isset($selectedEmployee) && $selectedEmployee->id == $emp->id) ? 'selected' : '' }}>
                                         {{ $emp->name }} ({{ $emp->employee_id }})
                                     </option>
@@ -76,12 +87,40 @@
     
                         <div class="col-md-6">
                             <label class="form-label fw-bold">{{ __('Last Working Day (LWD)') }} <span class="text-danger">*</span></label>
-                            <input type="date" name="last_working_day" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="last_working_day" id="last_working_day" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <small class="text-muted">{{ __('For past terminations, select their actual last working day (e.g., 14-09-2026).') }}</small>
                         </div>
     
                         <div class="col-md-12">
                             <label class="form-label fw-bold">{{ __('Reason for Separation') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="reason_for_separation" class="form-control" placeholder="{{ __('e.g., Resignation accepted, Contract ended, Mutual release') }}" required>
+                            <input type="text" name="reason_for_separation" class="form-control" placeholder="{{ __('e.g., Resignation accepted, Contract ended, Termination on 14-09-2026, Mutual release') }}" required>
+                        </div>
+                    </div>
+
+                    {{-- Live Employee Preview Banner (populated dynamically on select) --}}
+                    <div id="employee_preview_card" class="mt-3 p-3 bg-light rounded-3 border" style="display: none;">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted mb-0">{{ __('Employee') }}</label>
+                                <div class="fw-bold text-dark fs-6" id="prev_emp_name">—</div>
+                                <span class="badge bg-white text-secondary border font-monospace" id="prev_emp_code">—</span>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted mb-0">{{ __('Designation / Department') }}</label>
+                                <div class="fw-semibold text-dark" id="prev_emp_desig">—</div>
+                                <small class="text-muted" id="prev_emp_dept">—</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted mb-0">{{ __('Date of Joining (DOJ)') }}</label>
+                                <div class="fw-semibold text-dark" id="prev_emp_doj">—</div>
+                            </div>
+                            <div class="col-md-3 text-md-end">
+                                <label class="form-label small text-muted mb-0">{{ __('Monthly Base Salary') }}</label>
+                                <div class="fw-bold text-primary fs-6" id="prev_emp_salary">{{ $currencySymbol }} 0.00</div>
+                                <button type="button" class="btn btn-xs btn-outline-primary mt-1" id="autofill_salary_btn">
+                                    <i class="ti ti-arrow-down-circle me-1"></i>{{ __('Fill Salary Payable') }}
+                                </button>
+                            </div>
                         </div>
                     </div>
     
@@ -123,7 +162,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('Particulars') }}</th>
-                                        <th width="140px">{{ __('Amount (₹)') }}</th>
+                                        <th width="140px">{{ __('Amount') }} ({{ $currencySymbol }})</th>
                                         <th width="40px"></th>
                                     </tr>
                                 </thead>
@@ -147,7 +186,7 @@
                                 <tfoot>
                                     <tr class="table-success fw-bold">
                                         <td>{{ __('Total Gross Payable (A)') }}</td>
-                                        <td colspan="2" id="display_gross">₹ 0.00</td>
+                                        <td colspan="2" id="display_gross">{{ $currencySymbol }} 0.00</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -165,7 +204,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('Particulars') }}</th>
-                                        <th width="140px">{{ __('Amount (₹)') }}</th>
+                                        <th width="140px">{{ __('Amount') }} ({{ $currencySymbol }})</th>
                                         <th width="40px"></th>
                                     </tr>
                                 </thead>
@@ -189,7 +228,7 @@
                                 <tfoot>
                                     <tr class="table-danger fw-bold">
                                         <td>{{ __('Total Deductions (B)') }}</td>
-                                        <td colspan="2" id="display_deductions">₹ 0.00</td>
+                                        <td colspan="2" id="display_deductions">{{ $currencySymbol }} 0.00</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -202,7 +241,7 @@
                             <h5 class="mb-0 fw-bold">{{ __('NET FINAL SETTLEMENT AMOUNT (A - B):') }}</h5>
                             <small class="text-muted">{{ __('Calculated net balance to disburse to employee.') }}</small>
                         </div>
-                        <div class="fs-3 fw-bold text-primary" id="display_net">₹ 0.00</div>
+                        <div class="fs-3 fw-bold text-primary" id="display_net">{{ $currencySymbol }} 0.00</div>
                     </div>
     
                     {{-- In-Section Google Form Builder: Section 2 Custom Questions --}}
@@ -226,7 +265,10 @@
             {{-- SECTION 3: DEPARTMENTAL & IT ASSET CLEARANCES --}}
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="ti ti-checklist me-2 text-primary"></i>{{ __('3. Departmental & Asset Clearances Checklist') }}</h5>
+                    <div>
+                        <h5 class="mb-0"><i class="ti ti-checklist me-2 text-primary"></i>{{ __('3. Departmental & Asset Clearances Checklist') }}</h5>
+                        <small class="text-muted">{{ __('Add checkpoints, handover instructions, and attach proof documents or device receipts.') }}</small>
+                    </div>
                     <button type="button" class="btn btn-xs btn-light text-primary border" id="add_clearance_btn">
                         <i class="ti ti-plus"></i> {{ __('Add Checkpoint') }}
                     </button>
@@ -236,10 +278,10 @@
                         <table class="table table-bordered table-sm align-middle" id="clearance_table">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="20%">{{ __('Category') }}</th>
-                                    <th width="45%">{{ __('Checklist Item / Asset') }}</th>
-                                    <th width="25%">{{ __('Status') }}</th>
-                                    <th width="10%">{{ __('Action') }}</th>
+                                    <th width="18%">{{ __('Category') }}</th>
+                                    <th width="40%">{{ __('Checklist Item & Handover Note') }}</th>
+                                    <th width="35%">{{ __('Status & Document / Proof Upload') }}</th>
+                                    <th width="7%" class="text-center">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="clearance_tbody">
@@ -249,14 +291,24 @@
                                             <input type="text" name="clearance_category[]" class="form-control form-control-sm" value="{{ $item['category'] }}" placeholder="{{ __('e.g., IT & Hardware, Admin, HR') }}">
                                         </td>
                                         <td>
-                                            <input type="text" name="clearance_item[]" class="form-control form-control-sm" value="{{ $item['item'] }}" placeholder="{{ __('e.g., Company laptop / access card returned') }}">
+                                            <input type="text" name="clearance_item[]" class="form-control form-control-sm mb-1 fw-semibold" value="{{ $item['item'] }}" placeholder="{{ __('Checklist item title...') }}">
+                                            <textarea name="clearance_remarks[]" class="form-control form-control-xs mb-1" rows="1" placeholder="{{ __('Optional note/remarks or handover instruction...') }}" style="font-size: 11.5px;">{{ $item['remarks'] ?? '' }}</textarea>
+                                            <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                                                <input type="checkbox" name="clearance_required[{{ $loop->index }}]" value="1" class="form-check-input ms-0 clearance-req-check" id="clr_req_{{ $loop->index }}" {{ !empty($item['required']) ? 'checked' : '' }}>
+                                                <label class="form-check-label text-danger small fw-semibold" for="clr_req_{{ $loop->index }}" style="font-size: 11px;">
+                                                    <i class="ti ti-asterisk me-1"></i>{{ __('Mandatory for Employee to complete') }}
+                                                </label>
+                                            </div>
                                         </td>
                                         <td>
-                                            <select name="clearance_status[]" class="form-control form-control-sm">
-                                                <option value="Pending" selected>{{ __('Pending') }}</option>
-                                                <option value="Returned">{{ __('Returned / Cleared') }}</option>
-                                                <option value="Not Applicable">{{ __('Not Applicable (N/A)') }}</option>
-                                            </select>
+                                            <div class="d-flex gap-1 align-items-center">
+                                                <select name="clearance_status[]" class="form-control form-control-sm">
+                                                    <option value="Pending" selected>{{ __('Pending') }}</option>
+                                                    <option value="Returned">{{ __('Returned / Cleared') }}</option>
+                                                    <option value="Not Applicable">{{ __('Not Applicable (N/A)') }}</option>
+                                                </select>
+                                                <input type="file" name="clearance_file_{{ $loop->index }}" class="form-control form-control-xs" style="font-size: 11px;" title="{{ __('Attach document / handover proof') }}">
+                                            </div>
                                         </td>
                                         <td class="text-center">
                                             <button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button>
@@ -406,6 +458,8 @@
 @push('script-page')
 <script>
     const defaultDeclarationText = @json(App\Models\FullAndFinalSettlement::defaultDeclarationText());
+    const currencySymbol = @json($currencySymbol);
+
     $('#reset_declaration_btn').on('click', function () {
         if (confirm('{{ __("Reset declaration text to default legal terms?") }}')) {
             $('#declaration_text').val(defaultDeclarationText);
@@ -423,6 +477,41 @@
         }
     });
 
+    // Live Employee Preview & Salary Helper
+    function updateEmployeePreview() {
+        const sel = $('#employee_select option:selected');
+        const empId = $('#employee_select').val();
+        if (empId) {
+            $('#prev_emp_name').text(sel.data('name') || sel.text());
+            $('#prev_emp_code').text(sel.data('code') || '—');
+            $('#prev_emp_desig').text(sel.data('desig') || '—');
+            $('#prev_emp_dept').text(sel.data('dept') || '—');
+            $('#prev_emp_doj').text(sel.data('doj') || '—');
+            const sal = parseFloat(sel.data('salary')) || 0;
+            $('#prev_emp_salary').text(currencySymbol + ' ' + sal.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
+            $('#employee_preview_card').slideDown(200);
+        } else {
+            $('#employee_preview_card').slideUp(200);
+        }
+    }
+
+    $('#employee_select').on('change', updateEmployeePreview);
+    if ($('#employee_select').val()) {
+        updateEmployeePreview();
+    }
+
+    $('#autofill_salary_btn').on('click', function() {
+        const sel = $('#employee_select option:selected');
+        const sal = parseFloat(sel.data('salary')) || 0;
+        if (sal > 0) {
+            const firstEarning = $('.calc-earning').first();
+            if (firstEarning.length) {
+                firstEarning.val(sal.toFixed(2));
+                recalculateTotals();
+            }
+        }
+    });
+
     // Dynamic Financial Calculations
     function recalculateTotals() {
         let gross = 0;
@@ -431,9 +520,9 @@
         $('.calc-deduction').each(function () { deductions += parseFloat($(this).val()) || 0; });
         let net = Math.max(0, gross - deductions);
 
-        $('#display_gross').text('₹ ' + gross.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
-        $('#display_deductions').text('₹ ' + deductions.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
-        $('#display_net').text('₹ ' + net.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
+        $('#display_gross').text(currencySymbol + ' ' + gross.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
+        $('#display_deductions').text(currencySymbol + ' ' + deductions.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
+        $('#display_net').text(currencySymbol + ' ' + net.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
     }
 
     $(document).on('input', '.calc-earning, .calc-deduction', recalculateTotals);
@@ -455,26 +544,49 @@
     });
 
     $('#add_clearance_btn').on('click', function () {
+        const rowIdx = $('#clearance_tbody tr').length;
         $('#clearance_tbody').append(`<tr>
             <td><input type="text" name="clearance_category[]" class="form-control form-control-sm" value="General" placeholder="{{ __('e.g., IT & Hardware, Admin') }}"></td>
-            <td><input type="text" name="clearance_item[]" class="form-control form-control-sm" placeholder="{{ __('e.g., Laptop Charger, Access Key, Official Email Revocation') }}"></td>
             <td>
-                <select name="clearance_status[]" class="form-control form-control-sm">
-                    <option value="Pending" selected>Pending</option>
-                    <option value="Returned">Returned / Cleared</option>
-                    <option value="Not Applicable">Not Applicable</option>
-                </select>
+                <input type="text" name="clearance_item[]" class="form-control form-control-sm mb-1 fw-semibold" placeholder="{{ __('e.g., Laptop Charger, Access Key') }}">
+                <textarea name="clearance_remarks[]" class="form-control form-control-xs mb-1" rows="1" placeholder="{{ __('Optional note/remarks or handover instruction...') }}" style="font-size: 11.5px;"></textarea>
+                <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                    <input type="checkbox" name="clearance_required[${rowIdx}]" value="1" class="form-check-input ms-0 clearance-req-check" id="clr_req_${rowIdx}">
+                    <label class="form-check-label text-danger small fw-semibold" for="clr_req_${rowIdx}" style="font-size: 11px;">
+                        <i class="ti ti-asterisk me-1"></i>{{ __('Mandatory for Employee to complete') }}
+                    </label>
+                </div>
+            </td>
+            <td>
+                <div class="d-flex gap-1 align-items-center">
+                    <select name="clearance_status[]" class="form-control form-control-sm">
+                        <option value="Pending" selected>Pending</option>
+                        <option value="Returned">Returned / Cleared</option>
+                        <option value="Not Applicable">Not Applicable</option>
+                    </select>
+                    <input type="file" name="clearance_file_${rowIdx}" class="form-control form-control-xs" style="font-size: 11px;" title="{{ __('Attach document / handover proof') }}">
+                </div>
             </td>
             <td class="text-center"><button type="button" class="btn btn-xs text-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`);
+        reindexClearanceFiles();
     });
 
     $(document).on('click', '.remove-row', function () {
         $(this).closest('tr').remove();
+        reindexClearanceFiles();
         recalculateTotals();
     });
 
-    // ==================== IN-SECTION GOOGLE FORM BUILDER ====================
+    function reindexClearanceFiles() {
+        $('#clearance_tbody tr').each(function(idx) {
+            $(this).find('input[type="file"][name^="clearance_file_"]').attr('name', `clearance_file_${idx}`);
+            $(this).find('input[type="checkbox"][name^="clearance_required"]').attr('name', `clearance_required[${idx}]`).attr('id', `clr_req_${idx}`);
+            $(this).find('label[for^="clr_req_"]').attr('for', `clr_req_${idx}`);
+        });
+    }
+
+    // ==================== IN-SECTION FORM BUILDER ====================
     let globalFieldCounter = 0;
 
     $('.add-gform-field-btn').on('click', function () {
@@ -484,7 +596,6 @@
 
         globalFieldCounter++;
         const cardId = 'gfield_' + globalFieldCounter;
-
         const isEmployeeSection = (defaultTarget === 'employee');
 
         const card = `
@@ -498,21 +609,22 @@
                 <div class="row g-2">
                     <div class="col-md-5">
                         <label class="form-label small fw-bold mb-1">Question / Field Title <span class="text-danger">*</span></label>
-                        <input type="text" name="custom_field_label[]" class="form-control form-control-sm" placeholder="e.g., Forwarding Email, Laptop Serial #" required>
+                        <input type="text" name="custom_field_label[]" class="form-control form-control-sm" placeholder="e.g., Forwarding Email, Laptop Serial #, Signed NOC" required>
                         <input type="hidden" name="custom_field_section[]" value="${section}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold mb-1">Input Type</label>
                         <select name="custom_field_type[]" class="form-control form-control-sm gform-type-select">
                             <option value="text">Short Text</option>
-                            <option value="textarea">Paragraph</option>
+                            <option value="textarea">Paragraph (Textarea)</option>
+                            <option value="file">File / Attachment Upload</option>
                             <option value="select">Dropdown (Options)</option>
                             <option value="date">Date</option>
                             <option value="number">Number</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-bold mb-1">Who Fills This?</label>
+                        <label class="form-label small fw-bold mb-1">Who Fills / Uploads This?</label>
                         <select name="custom_field_target[]" class="form-control form-control-sm gform-target-select">
                             <option value="employee" ${isEmployeeSection ? 'selected' : ''}>Employee (Online Form)</option>
                             <option value="hr" ${!isEmployeeSection ? 'selected' : ''}>HR / Company (Locked for Employee)</option>
@@ -523,8 +635,9 @@
                         <input type="text" name="custom_field_options[]" class="form-control form-control-sm" placeholder="Choice 1, Choice 2, Choice 3">
                     </div>
                     <div class="col-md-4 gform-hr-value-row" style="${isEmployeeSection ? 'display:none;' : ''}">
-                        <label class="form-label small fw-bold mb-1">Value (HR fills now)</label>
-                        <input type="text" name="custom_field_value[]" class="form-control form-control-sm" placeholder="Initial value">
+                        <label class="form-label small fw-bold mb-1 gform-hr-val-label">Value (HR fills now)</label>
+                        <input type="text" name="custom_field_value[]" class="form-control form-control-sm gform-hr-val-input" placeholder="Initial value">
+                        <input type="file" name="custom_field_file_${globalFieldCounter - 1}" class="form-control form-control-sm gform-hr-file-input" style="display:none;">
                     </div>
                     <div class="col-12 mt-1">
                         <div class="form-check">
@@ -544,8 +657,18 @@
         const card = $(this).closest('.gform-builder-card');
         if (type === 'select') {
             card.find('.gform-options-row').show();
+            card.find('.gform-hr-val-input').show();
+            card.find('.gform-hr-file-input').hide();
+        } else if (type === 'file') {
+            card.find('.gform-options-row').hide();
+            card.find('.gform-hr-val-input').hide();
+            card.find('.gform-hr-file-input').show();
+            card.find('.gform-hr-val-label').text('Attach Document / File');
         } else {
             card.find('.gform-options-row').hide();
+            card.find('.gform-hr-val-input').show();
+            card.find('.gform-hr-file-input').hide();
+            card.find('.gform-hr-val-label').text('Value (HR fills now)');
         }
     });
 
@@ -574,11 +697,13 @@
             $(this).find('[name^="custom_field_target"]').attr('name', `custom_field_target[${idx}]`);
             $(this).find('[name^="custom_field_options"]').attr('name', `custom_field_options[${idx}]`);
             $(this).find('[name^="custom_field_value"]').attr('name', `custom_field_value[${idx}]`);
+            $(this).find('.gform-hr-file-input').attr('name', `custom_field_file_${idx}`);
             $(this).find('[name^="custom_field_required"]').attr('name', `custom_field_required[${idx}]`);
         });
     }
 
     $('#settlementForm').on('submit', function () {
+        reindexClearanceFiles();
         reindexCustomFields();
     });
 
