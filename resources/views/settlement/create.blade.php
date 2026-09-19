@@ -70,16 +70,17 @@
                                 @foreach ($employees as $emp)
                                     @php
                                         $empSalary = $emp->salary ?: ($emp->basic_salary ?: 0);
+                                        $empFormattedId = \Auth::user()->employeeIdFormat($emp->employee_id);
                                     @endphp
                                     <option value="{{ $emp->id }}"
                                         data-name="{{ $emp->name }}"
-                                        data-code="{{ $emp->employee_id }}"
+                                        data-code="{{ $empFormattedId }}"
                                         data-dept="{{ $emp->department?->name ?? 'N/A' }}"
                                         data-desig="{{ $emp->designation?->name ?? 'N/A' }}"
                                         data-doj="{{ $emp->company_doj ? \Auth::user()->dateFormat($emp->company_doj) : 'N/A' }}"
                                         data-salary="{{ $empSalary }}"
                                         {{ (isset($selectedEmployee) && $selectedEmployee->id == $emp->id) ? 'selected' : '' }}>
-                                        {{ $emp->name }} ({{ $emp->employee_id }})
+                                        {{ $emp->name }} ({{ $empFormattedId }})
                                     </option>
                                 @endforeach
                             </select>

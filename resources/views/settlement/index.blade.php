@@ -129,7 +129,7 @@
                                         </td>
                                         <td>
                                             <div class="font-style">{{ $settlement->employee_name }}</div>
-                                            <small class="text-muted">{{ $settlement->employee_code }}</small>
+                                            <small class="text-muted">{{ \Auth::user()->employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }}</small>
                                         </td>
                                         <td>{{ $settlement->department ?: '-' }}</td>
                                         <td>{{ $settlement->designation ?: '-' }}</td>
@@ -179,7 +179,7 @@
                                                         <a href="javascript:void(0)"
                                                             class="mx-3 btn btn-sm align-items-center open-wa-modal"
                                                             data-name="{{ $settlement->employee_name }}"
-                                                            data-code="{{ $settlement->employee_code }}"
+                                                            data-code="{{ \Auth::user()->employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }}"
                                                             data-phone="{{ preg_replace('/[^0-9]/', '', $settlement->employee->phone ?? '') }}"
                                                             data-url="{{ $settlement->public_url }}"
                                                             data-bs-toggle="tooltip" title=""
@@ -195,7 +195,7 @@
                                                                 class="mx-3 btn btn-sm align-items-center open-email-modal"
                                                                 data-id="{{ $settlement->id }}"
                                                                 data-name="{{ $settlement->employee_name }}"
-                                                                data-code="{{ $settlement->employee_code }}"
+                                                                data-code="{{ \Auth::user()->employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }}"
                                                                 data-email="{{ $settlement->employee->email ?? '' }}"
                                                                 data-number="{{ $settlement->settlement_number }}"
                                                                 data-url="{{ $settlement->public_url }}"

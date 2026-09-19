@@ -178,7 +178,7 @@
                         </div>
                         <div class="col-md-3">
                             <span class="text-muted small">{{ __('Employee ID') }}</span>
-                            <div class="fw-bold">{{ $settlement->employee_code ?: '-' }}</div>
+                            <div class="fw-bold">{{ \Auth::user()->employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }}</div>
                         </div>
                         <div class="col-md-3">
                             <span class="text-muted small">{{ __('Designation & Department') }}</span>
@@ -1112,7 +1112,7 @@
                         <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Recipient Employee') }}</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text bg-light"><i class="ti ti-user"></i></span>
-                            <input type="text" class="form-control bg-light" value="{{ $settlement->employee_name }} ({{ $settlement->employee_code }})" readonly>
+                            <input type="text" class="form-control bg-light" value="{{ $settlement->employee_name }} ({{ \Auth::user()->employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }})" readonly>
                         </div>
                     </div>
 
@@ -1191,7 +1191,7 @@
                                 <label class="form-label fw-bold text-dark small text-uppercase">{{ __('Recipient Employee') }}</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light"><i class="ti ti-user"></i></span>
-                                    <input type="text" class="form-control bg-light" value="{{ $settlement->employee_name }} ({{ $settlement->employee_code }})" readonly>
+                                    <input type="text" class="form-control bg-light" value="{{ $settlement->employee_name }} ({{ \Auth::user()->employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }})" readonly>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
