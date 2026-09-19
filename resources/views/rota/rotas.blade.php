@@ -36,6 +36,7 @@
 .view-tabs .btn { padding: 0.5rem 1rem; }
 .shift-regular  { background:#dcfce7; border:1px solid #86efac; color:#166534; }
 .shift-overtime { background:#e0e7ff; border:1px solid #a5b4fc; color:#3730a3; }
+.bg-indigo      { background-color:#6366f1 !important; color:#fff !important; }
 .shift-holiday  { background:#fef9c2; border:1px solid #fde047; color:#854d0e; }
 .shift-night    { background:#99a1af; color:white; border:1px solid #6b7280; }
 .shift-weekend  { background:#ffedd4; border:1px solid #fdba74; color:#9a3412; }
@@ -638,6 +639,15 @@ function buildShiftBadge(shift, date, viewType) {
             + '</div>';
     }
 
+    // Overtime pill badge below shift hours
+    let overtimeBadge = '';
+    const overtimeVal = (shift.attendance && shift.attendance.overtime) ? shift.attendance.overtime : ((shift.attendance && shift.attendance.extra_time) ? shift.attendance.extra_time : null);
+    if (overtimeVal && overtimeVal !== '00:00:00') {
+        overtimeBadge = '<div class="badge bg-indigo text-white mt-1" style="font-size:0.6rem;line-height:1.2;padding:2px 5px;display:inline-flex;align-items:center;">'
+            + '<i class="ti ti-clock me-1" style="font-size:0.65rem;"></i>OT: ' + overtimeVal
+            + '</div>';
+    }
+
     const editLabel  = isDefault ? '{{ __("Override for this date") }}' : '{{ __("Edit") }}';
     const editOnclick   = isDefault
         ? 'editDefaultShiftForDate(' + shiftId + ', \'' + date + '\')'
@@ -670,6 +680,7 @@ function buildShiftBadge(shift, date, viewType) {
         + '<div style="font-weight:600;">' + typeLabel + defaultLabel + '</div>'
         + (shiftName ? '<div style="font-size:0.6rem;opacity:.8;">' + shiftName + '</div>' : '')
         + (startTime ? '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + timeStr + '</div>' : '')
+        + overtimeBadge
         + leaveOverlay
         + dotsBtnHtml
         + '</div>';
