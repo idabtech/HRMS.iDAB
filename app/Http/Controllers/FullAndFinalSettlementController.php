@@ -119,9 +119,14 @@ class FullAndFinalSettlementController extends Controller
             $creatorId = Auth::user()->creatorId();
             $employee = Employee::where('created_by', $creatorId)->findOrFail($request->employee_id);
 
-            // Generate Settlement Number: FNF-YYYYMM-XXXX
-            $count = FullAndFinalSettlement::where('created_by', $creatorId)->count() + 1;
-            $settlementNumber = 'FNF-' . date('Ym') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            // Generate Settlement Number: FNF-YYYYMM-XXXX with collision check
+            $maxId = FullAndFinalSettlement::where('created_by', $creatorId)->max('id') ?? 0;
+            $seq = $maxId + 1;
+            $settlementNumber = 'FNF-' . date('Ym') . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            while (FullAndFinalSettlement::where('settlement_number', $settlementNumber)->exists()) {
+                $seq++;
+                $settlementNumber = 'FNF-' . date('Ym') . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            }
 
             // Process Earnings
             $earnings = [];
@@ -149,25 +154,44 @@ class FullAndFinalSettlementController extends Controller
                 }
             }
 
-            // Process Clearance Matrix
+            // Process Clearance Matrix with Handover Remarks & Proof Attachments
             $clearance = [];
             if ($request->has('clearance_item') && is_array($request->clearance_item)) {
                 foreach ($request->clearance_item as $idx => $item) {
                     $cat = $request->clearance_category[$idx] ?? 'General';
                     $status = $request->clearance_status[$idx] ?? 'Pending';
                     $remarks = $request->clearance_remarks[$idx] ?? '';
+                    $required = !empty($request->clearance_required[$idx]);
+                    $attachment = null;
+                    $attachmentName = null;
+
+                    if ($request->hasFile("clearance_file_{$idx}")) {
+                        $file = $request->file("clearance_file_{$idx}");
+                        $fileName = time() . '_clearance_' . $idx . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $file->getClientOriginalName());
+                        $uploadRequest = new Request();
+                        $uploadRequest->files->set('file', $file);
+                        $uploadResult = Utility::upload_file($uploadRequest, 'file', $fileName, 'settlement_attachments/', []);
+                        if ($uploadResult['flag'] == 1) {
+                            $attachment = $fileName;
+                            $attachmentName = $file->getClientOriginalName();
+                        }
+                    }
+
                     if (!empty(trim($item))) {
                         $clearance[] = [
                             'category' => trim($cat),
                             'item' => trim($item),
                             'status' => $status,
                             'remarks' => trim($remarks),
+                            'required' => $required,
+                            'attachment' => $attachment,
+                            'attachment_name' => $attachmentName,
                         ];
                     }
                 }
             }
 
-            // Process In-Section Google Form Custom Questions Schema
+            // Process In-Section Custom Questions Schema (supports text, textarea, select, date, number, file)
             $customFieldsSchema = [];
             $customFieldsData = [];
             if ($request->has('custom_field_label') && is_array($request->custom_field_label)) {
@@ -194,7 +218,19 @@ class FullAndFinalSettlementController extends Controller
                         ];
 
                         if ($target === 'hr') {
-                            $customFieldsData[$key] = $initialVal;
+                            if ($type === 'file' && $request->hasFile("custom_field_file_{$idx}")) {
+                                $file = $request->file("custom_field_file_{$idx}");
+                                $fileName = time() . '_custom_' . $idx . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $file->getClientOriginalName());
+                                $uploadRequest = new Request();
+                                $uploadRequest->files->set('file', $file);
+                                $uploadResult = Utility::upload_file($uploadRequest, 'file', $fileName, 'settlement_attachments/', []);
+                                if ($uploadResult['flag'] == 1) {
+                                    $customFieldsData[$key] = $fileName;
+                                    $customFieldsData[$key . '_name'] = $file->getClientOriginalName();
+                                }
+                            } else {
+                                $customFieldsData[$key] = $initialVal;
+                            }
                         }
                     }
                 }
@@ -311,25 +347,49 @@ class FullAndFinalSettlementController extends Controller
                 }
             }
 
-            // Process Clearance Matrix
+            // Process Clearance Matrix - Preserve existing remarks & attachments
             $clearance = [];
+            $existingClearance = $settlement->clearance_data ?? [];
             if ($request->has('clearance_item') && is_array($request->clearance_item)) {
                 foreach ($request->clearance_item as $idx => $item) {
                     $cat = $request->clearance_category[$idx] ?? 'General';
                     $status = $request->clearance_status[$idx] ?? 'Pending';
-                    $remarks = $request->clearance_remarks[$idx] ?? '';
+                    $remarks = isset($request->clearance_remarks[$idx]) ? trim($request->clearance_remarks[$idx]) : ($existingClearance[$idx]['remarks'] ?? '');
+                    $required = !empty($request->clearance_required[$idx]);
+                    $existingAttachment = $existingClearance[$idx]['attachment'] ?? null;
+                    $existingAttachmentName = $existingClearance[$idx]['attachment_name'] ?? null;
+
+                    // Check if new proof file is uploaded for this clearance item
+                    if ($request->hasFile("clearance_file_{$idx}")) {
+                        $file = $request->file("clearance_file_{$idx}");
+                        $fileName = time() . '_clearance_' . $idx . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $file->getClientOriginalName());
+                        $uploadRequest = new Request();
+                        $uploadRequest->files->set('file', $file);
+                        $uploadResult = Utility::upload_file($uploadRequest, 'file', $fileName, 'settlement_attachments/', []);
+                        if ($uploadResult['flag'] == 1) {
+                            $attachment = $fileName;
+                            $attachmentName = $file->getClientOriginalName();
+                        }
+                    } else {
+                        $attachment = $existingAttachment;
+                        $attachmentName = $existingAttachmentName;
+                    }
+
                     if (!empty(trim($item))) {
                         $clearance[] = [
                             'category' => trim($cat),
                             'item' => trim($item),
                             'status' => $status,
-                            'remarks' => trim($remarks),
+                            'remarks' => $remarks,
+                            'required' => $required,
+                            'attachment' => $attachment,
+                            'attachment_name' => $attachmentName,
                         ];
                     }
                 }
             }
 
-            // Process In-Section Google Form Custom Questions Schema
+            // Process In-Section Custom Questions Schema (supports text, textarea, select, date, number, file)
             $customFieldsSchema = [];
             $existingData = $settlement->custom_fields_data ?? [];
             if ($request->has('custom_field_label') && is_array($request->custom_field_label)) {
@@ -354,8 +414,20 @@ class FullAndFinalSettlementController extends Controller
                             'options' => $options,
                         ];
 
-                        if ($target === 'hr' && isset($request->custom_field_value[$idx])) {
-                            $existingData[$key] = $request->custom_field_value[$idx];
+                        if ($target === 'hr') {
+                            if ($type === 'file' && $request->hasFile("custom_field_file_{$idx}")) {
+                                $file = $request->file("custom_field_file_{$idx}");
+                                $fileName = time() . '_custom_' . $idx . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $file->getClientOriginalName());
+                                $uploadRequest = new Request();
+                                $uploadRequest->files->set('file', $file);
+                                $uploadResult = Utility::upload_file($uploadRequest, 'file', $fileName, 'settlement_attachments/', []);
+                                if ($uploadResult['flag'] == 1) {
+                                    $existingData[$key] = $fileName;
+                                    $existingData[$key . '_name'] = $file->getClientOriginalName();
+                                }
+                            } elseif (isset($request->custom_field_value[$idx])) {
+                                $existingData[$key] = $request->custom_field_value[$idx];
+                            }
                         }
                     }
                 }
@@ -578,8 +650,12 @@ class FullAndFinalSettlementController extends Controller
 
         // Update clearance checklist items with optional employee handover remarks
         $clearanceData = $settlement->clearance_data ?? [];
-        if ($request->has('clearance_items') && is_array($request->clearance_items)) {
-            foreach ($request->clearance_items as $itemData) {
+        $submittedClearance = $request->input('clearance_items');
+        if (is_string($submittedClearance)) {
+            $submittedClearance = json_decode($submittedClearance, true);
+        }
+        if (is_array($submittedClearance)) {
+            foreach ($submittedClearance as $itemData) {
                 $idx = $itemData['idx'] ?? null;
                 if ($idx !== null && isset($clearanceData[$idx])) {
                     if (isset($itemData['remarks']) && trim($itemData['remarks']) !== '') {
@@ -589,11 +665,63 @@ class FullAndFinalSettlementController extends Controller
             }
         }
 
+        // Handle checklist proof attachment uploads from employee
+        if ($request->hasFile('clearance_files')) {
+            foreach ($request->file('clearance_files') as $idx => $file) {
+                if ($file && isset($clearanceData[$idx])) {
+                    $fileName = time() . '_proof_' . $idx . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $file->getClientOriginalName());
+                    $uploadRequest = new Request();
+                    $uploadRequest->files->set('file', $file);
+                    $uploadResult = Utility::upload_file($uploadRequest, 'file', $fileName, 'settlement_attachments/', []);
+                    if ($uploadResult['flag'] == 1) {
+                        $clearanceData[$idx]['attachment'] = $fileName;
+                        $clearanceData[$idx]['attachment_name'] = $file->getClientOriginalName();
+                    }
+                }
+            }
+        }
+
+        // Validate that mandatory checklist items are completed (either handover note or proof file provided)
+        foreach ($clearanceData as $cIdx => $cItem) {
+            $isItemRequired = !empty($cItem['required']);
+            $isPending = ($cItem['status'] ?? 'Pending') === 'Pending';
+            if ($isItemRequired && $isPending) {
+                $hasNote = !empty(trim($cItem['remarks'] ?? ''));
+                $hasProof = !empty($cItem['attachment']);
+                if (!$hasNote && !$hasProof) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('Please complete mandatory checklist item: "') . $cItem['item'] . __('" (provide handover notes or attach proof document before submitting).'),
+                    ], 422);
+                }
+            }
+        }
+
         // Merge employee responses for custom fields assigned to 'employee'
         $customData = $settlement->custom_fields_data ?? [];
-        if ($request->has('custom_fields') && is_array($request->custom_fields)) {
-            foreach ($request->custom_fields as $key => $val) {
+        $submittedCustom = $request->input('custom_fields');
+        if (is_string($submittedCustom)) {
+            $submittedCustom = json_decode($submittedCustom, true);
+        }
+        if (is_array($submittedCustom)) {
+            foreach ($submittedCustom as $key => $val) {
                 $customData[$key] = is_array($val) ? implode(', ', $val) : $val;
+            }
+        }
+
+        // Handle custom field file uploads from employee
+        if ($request->hasFile('custom_files')) {
+            foreach ($request->file('custom_files') as $key => $file) {
+                if ($file) {
+                    $fileName = time() . '_custom_' . $key . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $file->getClientOriginalName());
+                    $uploadRequest = new Request();
+                    $uploadRequest->files->set('file', $file);
+                    $uploadResult = Utility::upload_file($uploadRequest, 'file', $fileName, 'settlement_attachments/', []);
+                    if ($uploadResult['flag'] == 1) {
+                        $customData[$key] = $fileName;
+                        $customData[$key . '_name'] = $file->getClientOriginalName();
+                    }
+                }
             }
         }
 

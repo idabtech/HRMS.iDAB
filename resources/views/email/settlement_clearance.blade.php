@@ -31,7 +31,7 @@
                 <tr>
                     <td style="padding: 8px 0 4px 0; color: #64748b; border-top: 1px dashed #cbd5e1;"><strong>{{ __('Net Final Payable:') }}</strong></td>
                     <td style="padding: 8px 0 4px 0; color: #16a34a; font-weight: 700; font-size: 16px; border-top: 1px dashed #cbd5e1;">
-                        {{ \Auth::user()->priceFormat($settlement->net_amount) }}
+                        {{ $settlement->formatPrice($settlement->net_amount) }}
                     </td>
                 </tr>
                 @endif
