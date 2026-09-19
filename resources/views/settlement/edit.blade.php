@@ -81,7 +81,7 @@
                             <div class="col-md-4">
                                 <label class="form-label small text-muted mb-0">{{ __('Employee') }}</label>
                                 <div class="fw-bold text-dark fs-6">{{ $settlement->employee_name }}</div>
-                                <span class="badge bg-white text-secondary border font-monospace">{{ $settlement->employee_code }}</span>
+                                <span class="badge bg-white text-secondary border font-monospace">{{ \Auth::user()->employeeIdFormat($settlement->employee->employee_id ?? $settlement->employee_id) }}</span>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small text-muted mb-0">{{ __('Designation / Department') }}</label>
