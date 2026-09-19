@@ -321,9 +321,9 @@ class RotaController extends Controller
                 $type = $shift->type ?? 'regular';
                 if ($onLeave) {
                     $type = 'leave';
-                } elseif ($attendance && !empty($attendance->overtime) && $attendance->overtime !== '00:00:00') {
-                    $type = 'overtime';
                 }
+
+                $hasExtraTime = ($attendance && !empty($attendance->overtime) && $attendance->overtime !== '00:00:00');
 
                 $dayShifts[] = [
                     'id'          => $shift->id,
@@ -352,6 +352,8 @@ class RotaController extends Controller
                         'total_lunch_time' => $attendance->total_lunch_time,
                         'total_tea_time'   => $attendance->total_tea_time,
                         'status'           => $attendance->status,
+                        'overtime'         => (!empty($attendance->overtime) && $attendance->overtime !== '00:00:00') ? $attendance->overtime : null,
+                        'extra_time'       => $hasExtraTime ? $attendance->overtime : null,
                     ] : null,
                 ];
             }
@@ -814,8 +816,8 @@ class RotaController extends Controller
                     $employees->pluck('id')->toArray(),
                     $request->start_date,
                     $request->end_date,
-                    substr($template->company_start_time, 0, 5),
-                    substr($template->company_end_time, 0, 5),
+                    substr($templateStart, 0, 5),
+                    substr($templateEnd, 0, 5),
                     $idabOptions
                 );
             } catch (\Throwable $e) {
